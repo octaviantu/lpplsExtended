@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-import lppls
-import data_loader
+from lppls import lppls
+from lppls import data_loader
 import pytest
 import numpy as np
 
@@ -24,7 +24,7 @@ def lppls_model(observations):
     """Returns a model instance"""
     return lppls.LPPLS(observations=observations)
 
-@pytest.mark.skip(reason='Reconsider testing approach in v0.6.x')
+# @pytest.mark.skip(reason='Reconsider testing approach in v0.6.x')
 def test_lppls(lppls_model):
     # Test that the base lppls function is giving expected results.
 
