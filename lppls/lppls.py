@@ -9,10 +9,11 @@ from pandas._libs.tslibs.np_datetime import OutOfBoundsDatetime
 from scipy.optimize import minimize
 from tqdm import tqdm
 import xarray as xr
+import json
 
 class LPPLS(object):
 
-    def __init__(self, observations):
+    def __init__(self, observations, filter_file='./lppls/conf/default_filter.json'):
         """
         Args:
             observations (np.array,pd.DataFrame): 2xM matrix with timestamp and observed value.
@@ -23,6 +24,14 @@ class LPPLS(object):
         self.observations = observations
         self.coef_ = {}
         self.indicator_result = []
+        self.filter = self.load_config(filter_file)
+
+    def load_config(self, filter_file):
+        if filter_file:
+            with open(filter_file, 'r') as f:
+                return json.load(f)
+        return None  # Or set default values here
+
 
     @staticmethod
     @njit
@@ -245,10 +254,12 @@ class LPPLS(object):
 
         if filter_conditions_config is None:
             # TODO make configurable again!
-            m_min, m_max = (0.0, 1.0)
-            w_min, w_max = (2.0, 15.0)
-            O_min = 2.5
-            D_min = 0.5
+            w_min = self.filter.get("w_min")
+            w_max = self.filter.get("w_max")
+            m_min = self.filter.get("m_min")
+            m_max = self.filter.get("m_max")
+            O_min = self.filter.get("O_min")
+            D_min = self.filter.get("D_min")
         else:
             # TODO parse user provided conditions
             pass
