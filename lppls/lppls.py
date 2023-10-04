@@ -130,17 +130,19 @@ class LPPLS(object):
         search_count = 0
         # find bubble
         while search_count < max_searches:
-            tc_init_min, tc_init_max = self._get_tc_bounds(obs, 0.50, 0.50)
             t1 = obs[0, 0]
             t2 = obs[0, -1]
+            t_delta = t2 - t1
+            t_delta_lower = t_delta * self.filter.get("tc_delta_min")
+            t_delta_upper = t_delta * self.filter.get("tc_delta_max")
 
             # @TODO make configurable
             # set random initialization limits for non-linear params
             init_limits = [
-                (max(t2 - 60, t2 - 0.5 * (t2 - t1)), min(t2 + 252, t2 + 0.5 * (t2 - t1))),  # tc
+                (max(t2 - 60, t2 - t_delta_lower), min(t2 + 252, t2 + t_delta_upper)),  # tc
                 # (tc_init_min, tc_init_max),
-                (0.0, 1.0),  # m
-                (2.0, 15.0),  # ω
+                (self.filter.get("m_min"), self.filter.get("m_max")),  # m
+                (self.filter.get("w_min"), self.filter.get("w_max")),  # ω
             ]
 
             # randomly choose vals within bounds for non-linear params
@@ -219,7 +221,8 @@ class LPPLS(object):
         first = t_obs[0]
         last = t_obs[-1]
 
-        O = ((w / (2.0 * np.pi)) * np.log((tc - first) / (tc - last)))
+        # O = ((w / (2.0 * np.pi)) * np.log((tc - first) / (tc - last))) - old formula in the code
+        O = ((w / 2.0) * np.log((tc - first) / (last - first)))
         D = (m * np.abs(b)) / (w * np.abs(c))
 
         fig, (ax1) = plt.subplots(nrows=1, ncols=1, sharex=True, figsize=(14, 8))
@@ -284,9 +287,10 @@ class LPPLS(object):
                 O = fits['O']
                 D = fits['D']
 
-                # t_delta = t2 - t1
-                # pct_delta_min = t_delta * 0.5
-                # pct_delta_max = t_delta * 0.5
+                t_delta = t2 - t1                
+                t_delta_lower = t_delta * self.filter.get("tc_delta_min")
+                t_delta_upper = t_delta * self.filter.get("tc_delta_max")
+
                 # tc_min = t2 - pct_delta_min
                 # tc_max = t2 + pct_delta_max
 
@@ -298,7 +302,7 @@ class LPPLS(object):
                 # print('{} < {} < {}'.format(max(t2 - 60, t2 - 0.5 * (t2 - t1)), tc, min(t2 + 252, t2 + 0.5 * (t2 - t1))))
                 # print('______________')
 
-                tc_in_range = max(t2 - 60, t2 - 0.5 * (t2 - t1)) < tc < min(t2 + 252, t2 + 0.5 * (t2 - t1))
+                tc_in_range = max(t2 - 60, t2 - t_delta_lower) < tc < min(t2 + 252, t2 + t_delta_upper)
                 m_in_range = m_min < m < m_max
                 w_in_range = w_min < w < w_max
 
@@ -538,7 +542,7 @@ class LPPLS(object):
             })
 
         # return {'t1': self.ordinal_to_date(t1), 't2': self.ordinal_to_date(t2), 'p2': p2, 'res': res}
-        return {'t1': t1, 't2': t2, 'p2': p2, 'res': res}
+        return {'t1': t1, 't2': t2, 'p1': p1, 'p2': p2, 'res': res}
 
     def _get_tc_bounds(self, obs, lower_bound_pct, upper_bound_pct):
         """

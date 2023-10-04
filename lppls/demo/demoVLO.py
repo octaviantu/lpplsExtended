@@ -22,10 +22,11 @@ def execute_lppls_logic(data_filtered, filter_file=None):
         kwargs['filter_file'] = filter_file
 
     # LPPLS Model for filtered data
-    # MAX_SEARCHES = 25
+    MAX_SEARCHES = 25
+    # print(f'observations_filtered: {observations_filtered}')
     lppls_model_filtered = LPPLS(observations=observations_filtered, **kwargs)
-    # lppls_model_filtered.fit(MAX_SEARCHES)
-    # lppls_model_filtered.plot_fit()
+    lppls_model_filtered.fit(MAX_SEARCHES)
+    lppls_model_filtered.plot_fit()
     
     res_filtered = lppls_model_filtered.mp_compute_nested_fits(
         workers=8,
@@ -33,7 +34,7 @@ def execute_lppls_logic(data_filtered, filter_file=None):
         smallest_window_size=30, 
         outer_increment=1, 
         inner_increment=5, 
-        max_searches=25
+        max_searches=MAX_SEARCHES
     )
     lppls_model_filtered.plot_confidence_indicators(res_filtered)
 
@@ -58,11 +59,11 @@ def main():
     data_filtered = data[data['Date'] <= filter_date]
     
     # First run
-    execute_lppls_logic(data_filtered)
+    # execute_lppls_logic(data_filtered)
     
     # Second run with different config
     execute_lppls_logic(data_filtered, './lppls/conf/shanghai_filter1.json')
-    execute_lppls_logic(data_filtered, './lppls/conf/shanghai_filter2.json')
+    # execute_lppls_logic(data_filtered, './lppls/conf/shanghai_filter2.json')
 
     plt.show()
 
