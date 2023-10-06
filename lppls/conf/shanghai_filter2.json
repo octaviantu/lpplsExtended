@@ -6,5 +6,6 @@
     "O_min": 2.5,
     "D_min": 1.0,
     "tc_delta_min": 0.05,
-    "tc_delta_max": 0.1
+    "tc_delta_max": 0.1,
+    "relative_error_max": 0.2
 }

@@ -92,7 +92,7 @@ lppls_model.plot_fit()
 
 ```python
 # compute the confidence indicator
-res = lppls_model.mp_compute_nested_fits(
+known_price_span = lppls_model.mp_compute_t1_fits(
     workers=8,
     window_size=120, 
     smallest_window_size=30, 
@@ -102,18 +102,18 @@ res = lppls_model.mp_compute_nested_fits(
     # filter_conditions_config={} # not implemented in 0.6.x
 )
 
-lppls_model.plot_bubble_scores(res)
+lppls_model.plot_bubble_scores(known_price_span)
 # should give a plot like the following...
 ```
 ![LPPLS Confidnce Indicator](https://raw.githubusercontent.com/Boulder-Investment-Technologies/lppls/master/img/dotcom_confidence_indicator.png)
 
-If you wish to store `res` as a pd.DataFrame, use `compute_bubble_scores`.
+If you wish to store `known_price_span` as a pd.DataFrame, use `compute_bubble_scores`.
 <details>
   <summary>Example</summary>
 
   ```python
-  res_df = lppls_model.compute_bubble_scores(res)
-  res_df
+  known_price_span_df = lppls_model.compute_bubble_scores(known_price_span)
+  known_price_span_df
   # gives the following...
   ```
   <img src="https://raw.githubusercontent.com/Boulder-Investment-Technologies/lppls/master/img/compute_indicator_df.png"  width="500"/>
@@ -141,3 +141,17 @@ Performance Note: this works well for single fits but can take a long time for c
  - Shu, M. and Zhu, W. Real-time Prediction of Bitcoin Bubble Crashes. 2019.
  - Sornette, D. Why Stock Markets Crash: Critical Events in Complex Financial Systems. Princeton University Press. 2002.
  - Sornette, D. and Demos, G. and Zhang, Q. and Cauwels, P. and Filimonov, V. and Zhang, Q., Real-Time Prediction and Post-Mortem Analysis of the Shanghai 2015 Stock Market Bubble and Crash (August 6, 2015). Swiss Finance Institute Research Paper No. 15-31.
+
+
+
+## Testing
+
+Run test cases
+```python
+./run_tests.sh
+`````
+
+Run demo example
+```python
+python lppls/demo/demoVLO.py
+`````

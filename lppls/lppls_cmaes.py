@@ -34,16 +34,16 @@ class LPPLSCMAES(LPPLS):
             print(e)
 
         t = obs[0, :]
-        res = super().lppls(t, tc, m, w, a, b, c1, c2)
+        known_price_span = super().lppls(t, tc, m, w, a, b, c1, c2)
 
 
 
         # make nan or inf to zero
-        res[np.isnan(res)] = 0.
-        res[np.isinf(res)] = 0.
+        known_price_span[np.isnan(known_price_span)] = 0.
+        known_price_span[np.isinf(known_price_span)] = 0.
 
         # calculate the chi square
-        error, _ = chisquare(f_obs=res, f_exp=obs[1, :])
+        error, _ = chisquare(f_obs=known_price_span, f_exp=obs[1, :])
         return error
 
     def fit(self, max_iteration=1000, factor_sigma=0.1, pop_size=1, obs=None):

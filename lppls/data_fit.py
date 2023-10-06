@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import List, Dict, Any, Union, Tuple
 import numpy as np
 from scipy.optimize import minimize
 import random
@@ -10,6 +10,8 @@ import xarray as xr
 import pandas as pd
 from matplotlib import pyplot as plt
 from multiprocessing import Pool
+from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP, MAX_SEARCHES
+import traceback
 
 class DataFit:
 
@@ -27,17 +29,16 @@ class DataFit:
         """
         print('coef:', coef)
         tc, m, w, a, b, c, c1, c2, O, D = coef.values()
-        time_ord = [pd.Timestamp.fromordinal(d) for d in self.observations[0, :].astype('int32')]
-        t_obs = self.observations[0, :]
 
-        lppls_fit = [LPPLSMath.lppls(t, tc, m, w, a, b, c1, c2) for t in t_obs]
-        price = self.observations[1, :]
+        obs_up_to_tc = LPPLSMath.stop_observation_at_tc(self.observations, tc)
+        time_ord = [pd.Timestamp.fromordinal(int(d)) for d in obs_up_to_tc[0]]
+
+        [price_prediction, actual_prices] = LPPLSMath.get_price_predictions(obs_up_to_tc, tc, m, w, a, b, c1, c2)
 
         _, (ax1) = plt.subplots(nrows=1, ncols=1, sharex=True, figsize=(14, 8))
 
-
-        ax1.plot(time_ord, price, label='price', color='black', linewidth=0.75)
-        ax1.plot(time_ord, lppls_fit, label='lppls fit', color='blue', alpha=0.5)
+        ax1.plot(time_ord, actual_prices, label='price', color='black', linewidth=0.75)
+        ax1.plot(time_ord, price_prediction, label='lppls fit', color='blue', alpha=0.5)
 
         # set grids
         ax1.grid(which='major', axis='both', linestyle='--')
@@ -68,24 +69,32 @@ class DataFit:
             t_delta_lower = t_delta * self.filter.get("tc_delta_min")
             t_delta_upper = t_delta * self.filter.get("tc_delta_max")
 
-            tc = random.uniform(max(t2 - 60, t2 - t_delta_lower), min(t2 + 252, t2 + t_delta_upper))
-            m = random.uniform(self.filter.get("m_min"), self.filter.get("m_max"))
-            w = random.uniform(self.filter.get("w_min"), self.filter.get("w_max"))
+            tc_bounds = (max(t1, t2 - t_delta_lower), t2 + t_delta_upper)
+            m_bounds = (self.filter.get("m_min"), self.filter.get("m_max"))
+            w_bounds = (self.filter.get("w_min"), self.filter.get("w_max"))
+            search_bounds = [tc_bounds, m_bounds, w_bounds]
+
+            tc = random.uniform(*tc_bounds)
+            m = random.uniform(*m_bounds)
+            w = random.uniform(*w_bounds)
+
             seed = np.array([tc, m, w])
 
-            # Increment search count on SVD convergence error, but raise all other exceptions.
             try:
-                tc, m, w, a, b, c, c1, c2 = self.estimate_params(obs, seed, minimizer)
+                tc, m, w, a, b, c, c1, c2 = self.estimate_params(obs, seed, minimizer, search_bounds)
                 O = LPPLSMath.get_oscillations(w, tc, t1, t2)
                 D = LPPLSMath.get_damping(m, w, b, c)
                 return {'tc': tc, 'm': m, 'w': w, 'a': a, 'b': b, 'c': c, 'c1': c1, 'c2': c2, 'O': O, 'D': D}
             except Exception as e:
                 search_count += 1
+                print('Exception in fitting: ' + ''.join(traceback.format_exception(type(e), e, e.__traceback__)))
 
+
+        print('from fitting, returning all parameters 0')
         return {'tc': 0, 'm': 0, 'w': 0, 'a': 0, 'b': 0, 'c': 0, 'c1': 0, 'c2': 0, 'O': 0, 'D': 0}
 
 
-    def estimate_params(self, observations: np.ndarray, seed: np.ndarray, minimizer: str) -> Union[Tuple[float, float, float, float, float, float, float, float], UnboundLocalError]:
+    def estimate_params(self, observations: np.ndarray, seed: np.ndarray, minimizer: str, search_bounds: List[Tuple[float, float]]) -> Union[Tuple[float, float, float, float, float, float, float, float], UnboundLocalError]:
         """
         Args:
             observations (np.ndarray):  the observed time-series data.
@@ -100,15 +109,17 @@ class DataFit:
             args=observations,
             fun=LPPLSMath.sum_of_squared_residuals,
             x0=seed,
-            method=minimizer
+            method=minimizer,
+            bounds=search_bounds
         )
 
         if cofs.success:
             tc = cofs.x[0]
             m = cofs.x[1]
             w = cofs.x[2]
+            obs_up_to_tc = LPPLSMath.stop_observation_at_tc(observations, tc)
 
-            rM = LPPLSMath.matrix_equation(observations, tc, m, w)
+            rM = LPPLSMath.matrix_equation(obs_up_to_tc, tc, m, w)
             a, b, c1, c2 = rM[:, 0].tolist()
 
             c = LPPLSMath.get_c(c1, c2)
@@ -118,88 +129,58 @@ class DataFit:
             raise UnboundLocalError
 
 
-    def mp_compute_nested_fits(self, workers, window_size=80, smallest_window_size=20, outer_increment=5, inner_increment=2, max_searches=25, filter_conditions_config={}):
-        obs_copy = self.observations
-        obs_opy_len = len(obs_copy[0]) - window_size
-        func = self._func_compute_nested_fits
-
-
-        func_arg_map = [(
-            obs_copy[:, i:window_size + i],
-            window_size,
-            i,
-            smallest_window_size,
-            outer_increment,
-            inner_increment,
-            max_searches,
-        ) for i in range(0, obs_opy_len+1, outer_increment)]
-
-        with Pool(processes=workers) as pool:
-            self.indicator_result = list(tqdm(pool.imap(func, func_arg_map), total=len(func_arg_map)))
-
-        return self.indicator_result
-
-
-    def compute_nested_fits(self, window_size=80, smallest_window_size=20, outer_increment=5, inner_increment=2,
-                            max_searches=25):
+    def mp_compute_t1_fits(self, workers, window_size=LARGEST_WINDOW_SIZE, smallest_window_size=SMALLEST_WINDOW_SIZE, outer_increment=T1_STEP, inner_increment=T2_STEP, max_searches=MAX_SEARCHES):
         obs_copy = self.observations
         obs_copy_len = len(obs_copy[0]) - window_size
-        window_delta = window_size - smallest_window_size
-        res = []
-        i_idx = 0
+        func = self.compute_t2_fits
+
+        func_arg_map = []
         for i in range(0, obs_copy_len + 1, outer_increment):
-            j_idx = 0
-            obs = obs_copy[:, i:window_size + i]
-            t1 = obs[0][0]
-            t2 = obs[0][-1]
-            res.append([])
-            i_idx += 1
-            for j in range(0, window_delta, inner_increment):
-                obs_shrinking_slice = obs[:, j:window_size]
-                tc, m, w, a, b, c, c1, c2, O, D = self.fit(max_searches, obs=obs_shrinking_slice)
-                res[i_idx-1].append([])
-                j_idx += 1
-                for k in [t2, t1, a, b, c, m, 0, tc]:
-                    res[i_idx-1][j_idx-1].append(k)
-        return xr.DataArray(
-            data=res,
-            dims=('t2', 'windowsizes', 'params'),
-            coords=dict(
-                        t2=obs_copy[0][(window_size-1):],
-                        windowsizes=range(smallest_window_size, window_size, inner_increment),
-                        params=['t2', 't1', 'a', 'b', 'c', 'm', '0', 'tc'],
-                        )
-        )
+            args = (
+                obs_copy[:, i:window_size + i],
+                window_size,
+                i,
+                smallest_window_size,
+                inner_increment,
+                max_searches,
+            )
+            func_arg_map.append(args)
 
 
-    def _func_compute_nested_fits(self, args):
+        lppls_fits = []
+        with Pool(processes=workers) as pool:
+            lppls_fits = list(tqdm(pool.imap(func, func_arg_map), total=len(func_arg_map)))
 
-        obs, window_size, n_iter, smallest_window_size, outer_increment, inner_increment, max_searches = args
+        return lppls_fits
+
+
+    def compute_t2_fits(self, args):
+
+        obs, window_size, t1_index, smallest_window_size, inner_increment, max_searches = args
 
         window_delta = window_size - smallest_window_size
 
-        res = []
+        windows = []
 
         t1 = obs[0][0]
         t2 = obs[0][-1]
         p1 = obs[1][0]
         p2 = obs[1][-1]
 
+        # have to store two indexes because trading days don't map to calendar days
+        t2_index = t1_index + len(obs[0]) - 1
+
         # run n fits on the observation slice.
         for j in range(0, window_delta, inner_increment):
             obs_shrinking_slice = obs[:, j:window_size]
 
-            # fit the model to the data and get back the params
-            if self.__class__.__name__ == 'LPPLSCMAES':
-                tc, m, w, a, b, c, c1, c2, O, D = self.fit(max_iteration=2500, pop_size=4, obs=obs_shrinking_slice).values()
-            else:
-                tc, m, w, a, b, c, c1, c2, O, D = self.fit(max_searches, obs=obs_shrinking_slice).values()
+            tc, m, w, a, b, c, c1, c2, O, D = self.fit(max_searches, obs=obs_shrinking_slice).values()
 
             nested_t1 = obs_shrinking_slice[0][0]
             nested_t2 = obs_shrinking_slice[0][-1]
 
 
-            res.append({
+            windows.append({
                 'tc_d': self.ordinal_to_date(tc),
                 'tc': tc,
                 'm': m,
@@ -217,7 +198,7 @@ class DataFit:
                 'D': D,
             })
 
-        return {'t1': t1, 't2': t2, 'p1': p1, 'p2': p2, 'res': res}
+        return {'t1': t1, 't2': t2, 'p1': p1, 'p2': p2, 'windows': windows, 't1_index': t1_index, 't2_index': t2_index}
 
 
     def ordinal_to_date(self, ordinal):
@@ -249,3 +230,35 @@ class DataFit:
         tc_init_min = t_last - pct_delta_min
         tc_init_max = t_last + pct_delta_max
         return tc_init_min, tc_init_max
+
+
+    def compute_t1_fits(self, window_size=LARGEST_WINDOW_SIZE, smallest_window_size=LARGEST_WINDOW_SIZE, outer_increment=T1_STEP, inner_increment=T2_STEP,
+                            max_searches=MAX_SEARCHES):
+        obs_copy = self.observations
+        obs_copy_len = len(obs_copy[0]) - window_size
+        window_delta = window_size - smallest_window_size
+        known_price_span = []
+        i_idx = 0
+        for i in range(0, obs_copy_len + 1, outer_increment):
+            j_idx = 0
+            obs = obs_copy[:, i:window_size + i]
+            t1 = obs[0][0]
+            t2 = obs[0][-1]
+            known_price_span.append([])
+            i_idx += 1
+            for j in range(0, window_delta, inner_increment):
+                obs_shrinking_slice = obs[:, j:window_size]
+                tc, m, w, a, b, c, c1, c2, O, D = self.fit(max_searches, obs=obs_shrinking_slice)
+                known_price_span[i_idx-1].append([])
+                j_idx += 1
+                for k in [t2, t1, a, b, c, m, 0, tc]:
+                    known_price_span[i_idx-1][j_idx-1].append(k)
+        return xr.DataArray(
+            data=known_price_span,
+            dims=('t2', 'windowsizes', 'params'),
+            coords=dict(
+                        t2=obs_copy[0][(window_size-1):],
+                        windowsizes=range(smallest_window_size, window_size, inner_increment),
+                        params=['t2', 't1', 'a', 'b', 'c', 'm', '0', 'tc'],
+                        )
+        )

@@ -1,24 +1,24 @@
-from numba import njit
 import numpy as np
+import warnings
+import logging
 
 class LPPLSMath:
 
     @staticmethod
-    @njit
     def lppls(t: float, tc: float, m: float, w: float, a: float, b: float, c1: float, c2: float) -> float:
+        assert t < tc, "we can only predict up to time t smaller than tc"
         return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * np.log(tc - t))) + (c2 * np.sin(w * np.log(tc - t)))))
-    
+
     @staticmethod
-    @njit
     def matrix_equation(observations, tc, m, w):
         """
         Derive linear parameters in LPPLs from nonlinear ones.
         """
+        assert observations[0][-1] < tc # all observations should be before tc
         T = observations[0]
         P = observations[1]
         N = len(T)
 
-        # @TODO make taking tc - t or |tc - t| configurable
         dT = np.abs(tc - T)
         phase = np.log(dT)
 
@@ -71,15 +71,15 @@ class LPPLSMath:
         tc = x[0]
         m = x[1]
         w = x[2]
+        obs_up_to_tc = LPPLSMath.stop_observation_at_tc(observations, tc)
 
-        rM = LPPLSMath.matrix_equation(observations, tc, m, w)
+        rM = LPPLSMath.matrix_equation(obs_up_to_tc, tc, m, w)
         a, b, c1, c2 = rM[:, 0].tolist()
 
-        pricePrediction = [LPPLSMath.lppls(t, tc, m, w, a, b, c1, c2) for t in observations[0, :]]
-        delta = np.subtract(pricePrediction, observations[1, :])
-        delta = np.power(delta, 2)
+        [price_prediction, actual_prices] = LPPLSMath.get_price_predictions(obs_up_to_tc, tc, m, w, a, b, c1, c2)
+        delta = np.subtract(price_prediction, actual_prices)
 
-        return np.sum(delta)
+        return np.sum(np.power(delta, 2))
 
 
     # TODO(octaviant) - find usage or delete
@@ -94,7 +94,7 @@ class LPPLSMath:
 
     @staticmethod
     def get_oscillations(w: float, tc: float, t1: float, t2: float) -> float:
-        # return ((w / (2.0 * np.pi)) * np.log((tc - t1) / (tc - t2))) old formula in the code
+        assert t1 < tc, "we can only compute oscillations above the starting time"
         return ((w / 2.0) * np.log((tc - t1) / (t2 - t1)))
 
     @staticmethod
@@ -108,3 +108,21 @@ class LPPLSMath:
             return c1 / np.cos(np.arctan(c2 / c1))
         else:
             return 0
+
+    @staticmethod
+    def get_price_predictions(observations, tc, m, w, a, b, c1, c2):
+        price_prediction = []
+        actual_prices = []
+        
+        for t, actual_price in zip(observations[0], observations[1]):
+            assert t < tc, "we can only predict up to time t smaller than tc"
+            predicted_price = LPPLSMath.lppls(t, tc, m, w, a, b, c1, c2)
+            price_prediction.append(predicted_price)
+            actual_prices.append(actual_price)
+
+        return [price_prediction, actual_prices]
+
+    @staticmethod
+    def stop_observation_at_tc(observations, tc):
+        first_larger_index = np.searchsorted(observations[0, :], tc, side='left') - 1
+        return [observations[0, :first_larger_index], observations[1, :first_larger_index]]

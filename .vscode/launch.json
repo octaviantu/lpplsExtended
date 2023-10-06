@@ -1,12 +1,23 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-      {
-        "name": "VLO debug",
-        "type": "python",
-        "request": "launch",
-        "program": "${workspaceFolder}/lppls/demo/demoVLO.py"
-      }
-    ]
-  }
-  
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Module",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "-s",
+        "-v",
+        "${workspaceFolder}/lppls/tests/test_lppls.py"
+      ],
+      "justMyCode": true
+    },
+    {
+      "name": "VLO debug",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/lppls/demo/demoVLO.py"
+    }
+  ]
+}

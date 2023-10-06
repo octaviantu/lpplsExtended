@@ -6,8 +6,10 @@ import psycopg2
 from datetime import date
 import matplotlib.pyplot as plt
 from sornette import Sornette
+from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP, MAX_SEARCHES
 
-def execute_lppls_logic(data_filtered, filter_file='./lppls/conf/default_filter.json'):
+
+def execute_lppls_logic(data_filtered, filter_file='./lppls/conf/existing_filter.json'):
     # Convert time to ordinal
     time_filtered = [pd.Timestamp.toordinal(dt) for dt in data_filtered['Date']]
     
@@ -18,17 +20,16 @@ def execute_lppls_logic(data_filtered, filter_file='./lppls/conf/default_filter.
     observations_filtered = np.array([time_filtered, price_filtered])
 
     # LPPLS Model for filtered data
-    MAX_SEARCHES = 25
     sornette = Sornette(observations_filtered, filter_file)
     sornette.fit(MAX_SEARCHES)
     sornette.plot_fit()
     
-    res_filtered = sornette.mp_compute_nested_fits(
+    res_filtered = sornette.mp_compute_t1_fits(
         workers=8,
-        window_size=120, 
-        smallest_window_size=30, 
-        outer_increment=1, 
-        inner_increment=5, 
+        window_size=LARGEST_WINDOW_SIZE, 
+        smallest_window_size=SMALLEST_WINDOW_SIZE, 
+        outer_increment=T1_STEP, 
+        inner_increment=T2_STEP, 
         max_searches=MAX_SEARCHES
     )
     sornette.plot_bubble_scores(res_filtered)
