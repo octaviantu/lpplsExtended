@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
-from lppls import lppls
-from lppls import data_loader
+from sornette import Sornette
+from lppls_math import LPPLSMath
+from data_loader import nasdaq_dotcom
 import pytest
 import numpy as np
 
 
 @pytest.fixture
 def data():
-    return data_loader.nasdaq_dotcom()
+    return nasdaq_dotcom()
 
 
 @pytest.fixture
@@ -22,21 +23,21 @@ def observations(data):
 @pytest.fixture
 def lppls_model(observations):
     """Returns a model instance"""
-    return lppls.LPPLS(observations=observations)
+    return Sornette(observations=observations)
 
 # @pytest.mark.skip(reason='Reconsider testing approach in v0.6.x')
-def test_lppls(lppls_model):
+def test_lppls():
     # Test that the base lppls function is giving expected results.
 
     # Check integrity at period 0
     t, tc, m, w, a, b, c1, c2 = 0.0, 1300.2412888852296, 0.6087189222292106, 6.344318139503496, 3034.166016949172, \
                                 -16.041970137173486, 0.21878280136703082, - 0.14789336333436504
-    assert 1762.3196588471408 == lppls_model.lppls(t, tc, m, w, a, b, c1, c2)
+    assert 1762.3196588471408 == LPPLSMath.lppls(t, tc, m, w, a, b, c1, c2)
 
     # Check integrity at period 500
     t, tc, m, w, a, b, c1, c2 = 500.0, 1428.0641475858731, 0.3473013071950998, 6.052643019980449, 3910.1099206097356, \
                                 -169.93053270790418, 0.05189394517600043, -0.045820295077658835
-    assert 2086.3299554496016 == lppls_model.lppls(t, tc, m, w, a, b, c1, c2)
+    assert 2086.3299554496016 == LPPLSMath.lppls(t, tc, m, w, a, b, c1, c2)
 
 @pytest.mark.skip(reason='Reconsider testing approach in v0.6.x')
 def test_minimize(observations, lppls_model):
@@ -105,14 +106,14 @@ def test__is_O_in_range(lppls_model):
     w = 9.8
     last = 800
     O_min = 2.5
-    assert lppls_model._is_O_in_range(tc, w, last, O_min) == True
+    assert LPPLSMath._is_O_in_range(tc, w, last, O_min) == True
 
     # Case 2, False
     tc = 1000
     w = 9.7
     last = 800
     O_min = 2.5
-    assert lppls_model._is_O_in_range(tc, w, last, O_min) == False
+    assert LPPLSMath._is_O_in_range(tc, w, last, O_min) == False
 
 def test__is_D_in_range(lppls_model):
 
@@ -123,7 +124,7 @@ def test__is_D_in_range(lppls_model):
     c = 100
     D_min = 1.0
     # abs((m * b) / (w * c))
-    assert lppls_model._is_D_in_range(m, w, b, c, D_min) == True
+    assert LPPLSMath._is_D_in_range(m, w, b, c, D_min) == True
 
     # Case 2, False
     m = 0.5
@@ -131,7 +132,7 @@ def test__is_D_in_range(lppls_model):
     b = 1000
     c = 100
     D_min
-    assert lppls_model._is_D_in_range(m, w, b, c, D_min) == False
+    assert LPPLSMath._is_D_in_range(m, w, b, c, D_min) == False
 
     # Case 3, m = 0
     m = 0
@@ -139,7 +140,7 @@ def test__is_D_in_range(lppls_model):
     b = 1000
     c = 100
     D_min
-    assert lppls_model._is_D_in_range(m, w, b, c, D_min) == False
+    assert LPPLSMath._is_D_in_range(m, w, b, c, D_min) == False
 
     # Case 4, w = 0
     m = 0.5
@@ -147,7 +148,7 @@ def test__is_D_in_range(lppls_model):
     b = 1000
     c = 100
     D_min
-    assert lppls_model._is_D_in_range(m, w, b, c, D_min) == False
+    assert LPPLSMath._is_D_in_range(m, w, b, c, D_min) == False
 
     # Case 5, m = 0 and w = 0
     m = 0
@@ -155,4 +156,4 @@ def test__is_D_in_range(lppls_model):
     b = 1000
     c = 100
     D_min
-    assert lppls_model._is_D_in_range(m, w, b, c, D_min) == False
+    assert LPPLSMath._is_D_in_range(m, w, b, c, D_min) == False

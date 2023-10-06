@@ -1,5 +1,8 @@
+# This is old code
+# TODO(octaviant) - figure out what this does
+
 import cma as cm
-from lppls.lppls import LPPLS
+from lppls.bubble_scores import LPPLS
 # import multiprocessing as mp
 import numpy as np
 from scipy.stats import chisquare

@@ -102,17 +102,17 @@ res = lppls_model.mp_compute_nested_fits(
     # filter_conditions_config={} # not implemented in 0.6.x
 )
 
-lppls_model.plot_confidence_indicators(res)
+lppls_model.plot_bubble_scores(res)
 # should give a plot like the following...
 ```
 ![LPPLS Confidnce Indicator](https://raw.githubusercontent.com/Boulder-Investment-Technologies/lppls/master/img/dotcom_confidence_indicator.png)
 
-If you wish to store `res` as a pd.DataFrame, use `compute_indicators`.
+If you wish to store `res` as a pd.DataFrame, use `compute_bubble_scores`.
 <details>
   <summary>Example</summary>
 
   ```python
-  res_df = lppls_model.compute_indicators(res)
+  res_df = lppls_model.compute_bubble_scores(res)
   res_df
   # gives the following...
   ```
