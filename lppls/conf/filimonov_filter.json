@@ -1,0 +1,10 @@
+{
+    "w_min": 6.0,
+    "w_max": 13.0,
+    "m_min": 0.1,
+    "m_max": 0.9,
+    "C_min": -1.0,
+    "C_min": 1.0,
+    "B_max": 0,
+    "relative_error_max": 0.05
+}

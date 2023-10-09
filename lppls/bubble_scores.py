@@ -123,17 +123,17 @@ class BubbleScores:
                     print('All prices in range!!')
 
 
-                tc_in_range = max(t1, t2 - t_delta_lower) < tc < t2 + t_delta_upper
-                m_in_range = m_min < m < m_max
-                w_in_range = w_min < w < w_max
+                tc_in_range = max(t1, t2 - t_delta_lower) <= tc <= t2 + t_delta_upper
+                m_in_range = m_min <= m <= m_max
+                w_in_range = w_min <= w <= w_max
 
                 if b != 0 and c != 0:
                     O = O
                 else:
                     O = np.inf
 
-                O_in_range = O > O_min
-                D_in_range = D > D_min  # if m > 0 and w > 0 else False
+                O_in_range = O >= O_min
+                D_in_range = D >= D_min  # if m > 0 and w > 0 else False
 
                 if tc_in_range and m_in_range and w_in_range and O_in_range and D_in_range and prices_in_range:
                     is_qualified = True

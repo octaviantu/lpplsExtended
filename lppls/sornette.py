@@ -9,7 +9,7 @@ class Sornette:
         self.bubble_scores = BubbleScores(observations, filter)
         
     def fit(self, max_searches):
-        self.lppls_coef = self.data_fit.fit(max_searches, self.data_fit.observations)
+        [_, self.lppls_coef] = self.data_fit.fit(max_searches, self.data_fit.observations)
         
     def plot_fit(self):
         self.data_fit.plot_fit(self.lppls_coef)

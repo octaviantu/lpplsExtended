@@ -11,7 +11,6 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from multiprocessing import Pool
 from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP, MAX_SEARCHES
-import traceback
 
 class DataFit:
 
@@ -49,7 +48,7 @@ class DataFit:
         plt.xticks(rotation=45)
 
 
-    def fit(self, max_searches: int, obs: np.ndarray, minimizer: str = 'Nelder-Mead') -> dict:
+    def fit(self, max_searches: int, obs: np.ndarray, minimizer: str = 'Nelder-Mead') -> Tuple[bool, Dict[str, float]]:
         """
         Args:
             max_searches (int): The maximum number of searches to perform before giving up. The literature suggests 25.
@@ -57,7 +56,7 @@ class DataFit:
             minimizer (str): See list of valid methods to pass to scipy.optimize.minimize:
                 https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize
         Returns:
-            tc, m, w, a, b, c, c1, c2, O, D
+            A tuple with a boolean indicating success, and a dictionary with the values of tc, m, w, a, b, c, c1, c2, O, D
         """
 
         search_count = 0
@@ -80,21 +79,21 @@ class DataFit:
 
             seed = np.array([tc, m, w])
 
-            try:
-                tc, m, w, a, b, c, c1, c2 = self.estimate_params(obs, seed, minimizer, search_bounds)
+            success, params_dict = self.estimate_params(obs, seed, minimizer, search_bounds)
+            
+            if success:
+                tc, m, w, a, b, c, c1, c2 = params_dict.values()
                 O = LPPLSMath.get_oscillations(w, tc, t1, t2)
                 D = LPPLSMath.get_damping(m, w, b, c)
-                return {'tc': tc, 'm': m, 'w': w, 'a': a, 'b': b, 'c': c, 'c1': c1, 'c2': c2, 'O': O, 'D': D}
-            except Exception as e:
+                final_dict = {'tc': tc, 'm': m, 'w': w, 'a': a, 'b': b, 'c': c, 'c1': c1, 'c2': c2, 'O': O, 'D': D}
+                return True, final_dict
+            else:
                 search_count += 1
-                print('Exception in fitting: ' + ''.join(traceback.format_exception(type(e), e, e.__traceback__)))
+
+        return False, {}
 
 
-        print('from fitting, returning all parameters 0')
-        return {'tc': 0, 'm': 0, 'w': 0, 'a': 0, 'b': 0, 'c': 0, 'c1': 0, 'c2': 0, 'O': 0, 'D': 0}
-
-
-    def estimate_params(self, observations: np.ndarray, seed: np.ndarray, minimizer: str, search_bounds: List[Tuple[float, float]]) -> Union[Tuple[float, float, float, float, float, float, float, float], UnboundLocalError]:
+    def estimate_params(self, observations: np.ndarray, seed: np.ndarray, minimizer: str, search_bounds: List[Tuple[float, float]]) -> Tuple[bool, Dict[str, float]]:
         """
         Args:
             observations (np.ndarray):  the observed time-series data.
@@ -102,7 +101,7 @@ class DataFit:
             minimizer (str):  See list of valid methods to pass to scipy.optimize.minimize:
                 https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize
         Returns:
-            tc, m, w, a, b, c, c1, c2
+            A tuple with a boolean indicating success, and a dictionary with the values of tc, m, w, a, b, c, c1, c2.
         """
 
         cofs = minimize(
@@ -124,9 +123,10 @@ class DataFit:
 
             c = LPPLSMath.get_c(c1, c2)
 
-            return tc, m, w, a, b, c, c1, c2
+            params_dict = {'tc': tc, 'm': m, 'w': w, 'a': a, 'b': b, 'c': c, 'c1': c1, 'c2': c2}
+            return True, params_dict
         else:
-            raise UnboundLocalError
+            return False, {}
 
 
     def mp_compute_t1_fits(self, workers, window_size=LARGEST_WINDOW_SIZE, smallest_window_size=SMALLEST_WINDOW_SIZE, outer_increment=T1_STEP, inner_increment=T2_STEP, max_searches=MAX_SEARCHES):
@@ -174,7 +174,12 @@ class DataFit:
         for j in range(0, window_delta, inner_increment):
             obs_shrinking_slice = obs[:, j:window_size]
 
-            tc, m, w, a, b, c, c1, c2, O, D = self.fit(max_searches, obs=obs_shrinking_slice).values()
+            success, params_dict = self.fit(max_searches, obs=obs_shrinking_slice)
+
+            if not success:
+                continue
+
+            tc, m, w, a, b, c, c1, c2, O, D = params_dict.values()
 
             nested_t1 = obs_shrinking_slice[0][0]
             nested_t2 = obs_shrinking_slice[0][-1]
@@ -232,33 +237,33 @@ class DataFit:
         return tc_init_min, tc_init_max
 
 
-    def compute_t1_fits(self, window_size=LARGEST_WINDOW_SIZE, smallest_window_size=LARGEST_WINDOW_SIZE, outer_increment=T1_STEP, inner_increment=T2_STEP,
-                            max_searches=MAX_SEARCHES):
-        obs_copy = self.observations
-        obs_copy_len = len(obs_copy[0]) - window_size
-        window_delta = window_size - smallest_window_size
-        known_price_span = []
-        i_idx = 0
-        for i in range(0, obs_copy_len + 1, outer_increment):
-            j_idx = 0
-            obs = obs_copy[:, i:window_size + i]
-            t1 = obs[0][0]
-            t2 = obs[0][-1]
-            known_price_span.append([])
-            i_idx += 1
-            for j in range(0, window_delta, inner_increment):
-                obs_shrinking_slice = obs[:, j:window_size]
-                tc, m, w, a, b, c, c1, c2, O, D = self.fit(max_searches, obs=obs_shrinking_slice)
-                known_price_span[i_idx-1].append([])
-                j_idx += 1
-                for k in [t2, t1, a, b, c, m, 0, tc]:
-                    known_price_span[i_idx-1][j_idx-1].append(k)
-        return xr.DataArray(
-            data=known_price_span,
-            dims=('t2', 'windowsizes', 'params'),
-            coords=dict(
-                        t2=obs_copy[0][(window_size-1):],
-                        windowsizes=range(smallest_window_size, window_size, inner_increment),
-                        params=['t2', 't1', 'a', 'b', 'c', 'm', '0', 'tc'],
-                        )
-        )
+    # def compute_t1_fits(self, window_size=LARGEST_WINDOW_SIZE, smallest_window_size=LARGEST_WINDOW_SIZE, outer_increment=T1_STEP, inner_increment=T2_STEP,
+    #                         max_searches=MAX_SEARCHES):
+    #     obs_copy = self.observations
+    #     obs_copy_len = len(obs_copy[0]) - window_size
+    #     window_delta = window_size - smallest_window_size
+    #     known_price_span = []
+    #     i_idx = 0
+    #     for i in range(0, obs_copy_len + 1, outer_increment):
+    #         j_idx = 0
+    #         obs = obs_copy[:, i:window_size + i]
+    #         t1 = obs[0][0]
+    #         t2 = obs[0][-1]
+    #         known_price_span.append([])
+    #         i_idx += 1
+    #         for j in range(0, window_delta, inner_increment):
+    #             obs_shrinking_slice = obs[:, j:window_size]
+    #             tc, m, w, a, b, c, c1, c2, O, D = self.fit(max_searches, obs=obs_shrinking_slice)
+    #             known_price_span[i_idx-1].append([])
+    #             j_idx += 1
+    #             for k in [t2, t1, a, b, c, m, 0, tc]:
+    #                 known_price_span[i_idx-1][j_idx-1].append(k)
+    #     return xr.DataArray(
+    #         data=known_price_span,
+    #         dims=('t2', 'windowsizes', 'params'),
+    #         coords=dict(
+    #                     t2=obs_copy[0][(window_size-1):],
+    #                     windowsizes=range(smallest_window_size, window_size, inner_increment),
+    #                     params=['t2', 't1', 'a', 'b', 'c', 'm', '0', 'tc'],
+    #                     )
+    #     )

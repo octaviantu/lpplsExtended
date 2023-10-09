@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/Users/octaviantuchila/Documents/MonteCarlo/Sornette/lppls/lppls')
+sys.path.append('/Users/octaviantuchila/Documents/MonteCarlo/Sornette/lppls_python_updated/lppls')
 import numpy as np
 import pandas as pd
 import psycopg2
