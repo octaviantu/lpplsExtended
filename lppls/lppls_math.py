@@ -54,7 +54,7 @@ class LPPLSMath:
         ])
 
         return np.linalg.solve(matrix_1, matrix_2)
-    
+
 
     @staticmethod
     def sum_of_squared_residuals(x, observations):

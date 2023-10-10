@@ -1,20 +1,19 @@
 from typing import List, Dict, Any, Union, Tuple
 import numpy as np
-from scipy.optimize import minimize
 import random
 from lppls_math import LPPLSMath
 from datetime import datetime as date
 from pandas._libs.tslibs.np_datetime import OutOfBoundsDatetime
 from tqdm import tqdm
-import xarray as xr
 import pandas as pd
 from matplotlib import pyplot as plt
 from multiprocessing import Pool
 from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP, MAX_SEARCHES
+from filter_interface import FilterInterface
 
 class DataFit:
 
-    def __init__(self, observations, filter):
+    def __init__(self, observations, filter: FilterInterface):
         self.observations = observations
         self.filter = filter
 
@@ -49,84 +48,7 @@ class DataFit:
 
 
     def fit(self, max_searches: int, obs: np.ndarray, minimizer: str = 'Nelder-Mead') -> Tuple[bool, Dict[str, float]]:
-        """
-        Args:
-            max_searches (int): The maximum number of searches to perform before giving up. The literature suggests 25.
-            obs (Mx2 numpy array): the observed time-series data. Optional, if not included will use self.scaled_obs
-            minimizer (str): See list of valid methods to pass to scipy.optimize.minimize:
-                https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize
-        Returns:
-            A tuple with a boolean indicating success, and a dictionary with the values of tc, m, w, a, b, c, c1, c2, O, D
-        """
-
-        search_count = 0
-        # find bubble
-        while search_count < max_searches:
-            t1 = obs[0, 0]
-            t2 = obs[0, -1]
-            t_delta = t2 - t1
-            t_delta_lower = t_delta * self.filter.get("tc_delta_min")
-            t_delta_upper = t_delta * self.filter.get("tc_delta_max")
-
-            tc_bounds = (max(t1, t2 - t_delta_lower), t2 + t_delta_upper)
-            m_bounds = (self.filter.get("m_min"), self.filter.get("m_max"))
-            w_bounds = (self.filter.get("w_min"), self.filter.get("w_max"))
-            search_bounds = [tc_bounds, m_bounds, w_bounds]
-
-            tc = random.uniform(*tc_bounds)
-            m = random.uniform(*m_bounds)
-            w = random.uniform(*w_bounds)
-
-            seed = np.array([tc, m, w])
-
-            success, params_dict = self.estimate_params(obs, seed, minimizer, search_bounds)
-            
-            if success:
-                tc, m, w, a, b, c, c1, c2 = params_dict.values()
-                O = LPPLSMath.get_oscillations(w, tc, t1, t2)
-                D = LPPLSMath.get_damping(m, w, b, c)
-                final_dict = {'tc': tc, 'm': m, 'w': w, 'a': a, 'b': b, 'c': c, 'c1': c1, 'c2': c2, 'O': O, 'D': D}
-                return True, final_dict
-            else:
-                search_count += 1
-
-        return False, {}
-
-
-    def estimate_params(self, observations: np.ndarray, seed: np.ndarray, minimizer: str, search_bounds: List[Tuple[float, float]]) -> Tuple[bool, Dict[str, float]]:
-        """
-        Args:
-            observations (np.ndarray):  the observed time-series data.
-            seed (list):  time-critical, omega, and m.
-            minimizer (str):  See list of valid methods to pass to scipy.optimize.minimize:
-                https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize
-        Returns:
-            A tuple with a boolean indicating success, and a dictionary with the values of tc, m, w, a, b, c, c1, c2.
-        """
-
-        cofs = minimize(
-            args=observations,
-            fun=LPPLSMath.sum_of_squared_residuals,
-            x0=seed,
-            method=minimizer,
-            bounds=search_bounds
-        )
-
-        if cofs.success:
-            tc = cofs.x[0]
-            m = cofs.x[1]
-            w = cofs.x[2]
-            obs_up_to_tc = LPPLSMath.stop_observation_at_tc(observations, tc)
-
-            rM = LPPLSMath.matrix_equation(obs_up_to_tc, tc, m, w)
-            a, b, c1, c2 = rM[:, 0].tolist()
-
-            c = LPPLSMath.get_c(c1, c2)
-
-            params_dict = {'tc': tc, 'm': m, 'w': w, 'a': a, 'b': b, 'c': c, 'c1': c1, 'c2': c2}
-            return True, params_dict
-        else:
-            return False, {}
+        return self.filter.fit(max_searches, obs, minimizer)
 
 
     def mp_compute_t1_fits(self, workers, window_size=LARGEST_WINDOW_SIZE, smallest_window_size=SMALLEST_WINDOW_SIZE, outer_increment=T1_STEP, inner_increment=T2_STEP, max_searches=MAX_SEARCHES):

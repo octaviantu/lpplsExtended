@@ -1,10 +1,14 @@
 from bubble_scores import BubbleScores
 from data_fit import DataFit
-import data_loader
+from filter_shanghai import FilterShanghai
 
 class Sornette:
-    def __init__(self, observations, filter_file='./lppls/conf/existing_filter.json'):
-        filter = data_loader.load_config(filter_file)
+    def __init__(self, observations, filter_type, filter_file):
+        if filter_type == 'Shanghai':
+            filter = FilterShanghai(filter_file)
+        else:
+            raise Exception('Filter type not supported')
+    
         self.data_fit = DataFit(observations, filter)
         self.bubble_scores = BubbleScores(observations, filter)
         
