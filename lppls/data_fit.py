@@ -46,9 +46,8 @@ class DataFit:
     def mp_compute_t1_fits(self, workers, window_size=LARGEST_WINDOW_SIZE, smallest_window_size=SMALLEST_WINDOW_SIZE, outer_increment=T1_STEP, inner_increment=T2_STEP, max_searches=MAX_SEARCHES):
         obs_copy = self.observations
         obs_copy_len = len(obs_copy[0]) - window_size
-        func = self.compute_t2_fits
 
-        func_arg_map = []
+        t2_fits_args = []
         for i in range(0, obs_copy_len + 1, outer_increment):
             args = (
                 obs_copy[:, i:window_size + i],
@@ -58,12 +57,12 @@ class DataFit:
                 inner_increment,
                 max_searches,
             )
-            func_arg_map.append(args)
+            t2_fits_args.append(args)
 
 
         lppls_fits = []
         with Pool(processes=workers) as pool:
-            lppls_fits = list(tqdm(pool.imap(func, func_arg_map), total=len(func_arg_map)))
+            lppls_fits = list(tqdm(pool.imap(self.compute_t2_fits, t2_fits_args), total=len(t2_fits_args)))
 
         return lppls_fits
 
