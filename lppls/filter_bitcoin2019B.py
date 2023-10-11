@@ -6,13 +6,14 @@ import random
 from filter_interface import FilterInterface
 import data_loader
 
+
 class FilterBitcoin2019B(FilterInterface):
-
-
-    def __init__(self, filter_file='./lppls/conf/bitcoin2019_filterB.json'):
+    def __init__(self, filter_file="./lppls/conf/bitcoin2019_filterB.json"):
         self.filter_criteria = data_loader.load_config(filter_file)
 
-    def fit(self, max_searches: int, obs: np.ndarray, minimizer: str = 'Nelder-Mead') -> Tuple[bool, Dict[str, float]]:
+    def fit(
+        self, max_searches: int, obs: np.ndarray, minimizer: str = "Nelder-Mead"
+    ) -> Tuple[bool, Dict[str, float]]:
         """
         Args:
             max_searches (int): The maximum number of searches to perform before giving up. The literature suggests 25.
@@ -29,7 +30,7 @@ class FilterBitcoin2019B(FilterInterface):
             t1 = obs[0, 0]
             t2 = obs[0, -1]
 
-            tc_bounds = (t2 + 1, t2 + (t2 - t1)/5)
+            tc_bounds = (t2 + 1, t2 + (t2 - t1) / 5)
             m_bounds = (self.filter_criteria.get("m_min"), self.filter_criteria.get("m_max"))
             w_bounds = (self.filter_criteria.get("w_min"), self.filter_criteria.get("w_max"))
             search_bounds = [tc_bounds, m_bounds, w_bounds]
@@ -41,19 +42,34 @@ class FilterBitcoin2019B(FilterInterface):
             seed = np.array([tc, m, w])
 
             success, params_dict = self.estimate_params(obs, seed, minimizer, search_bounds)
-            
+
             if success:
                 tc, m, w, a, b, c, c1, c2 = params_dict.values()
                 O = FilterBitcoin2019B.get_oscillations(w, tc, t1, t2)
-                final_dict = {'tc': tc, 'm': m, 'w': w, 'a': a, 'b': b, 'c': c, 'c1': c1, 'c2': c2, 'O': O}
+                final_dict = {
+                    "tc": tc,
+                    "m": m,
+                    "w": w,
+                    "a": a,
+                    "b": b,
+                    "c": c,
+                    "c1": c1,
+                    "c2": c2,
+                    "O": O,
+                }
                 return True, final_dict
             else:
                 search_count += 1
 
         return False, {}
 
-
-    def estimate_params(self, observations: np.ndarray, seed: np.ndarray, minimizer: str, search_bounds: List[Tuple[float, float]]) -> Tuple[bool, Dict[str, float]]:
+    def estimate_params(
+        self,
+        observations: np.ndarray,
+        seed: np.ndarray,
+        minimizer: str,
+        search_bounds: List[Tuple[float, float]],
+    ) -> Tuple[bool, Dict[str, float]]:
         """
         Args:
             observations (np.ndarray):  the observed time-series data.
@@ -69,7 +85,7 @@ class FilterBitcoin2019B(FilterInterface):
             fun=LPPLSMath.sum_of_squared_residuals,
             x0=seed,
             method=minimizer,
-            bounds=search_bounds
+            bounds=search_bounds,
         )
 
         if cofs.success:
@@ -83,17 +99,32 @@ class FilterBitcoin2019B(FilterInterface):
 
             c = LPPLSMath.get_c(c1, c2)
 
-            params_dict = {'tc': tc, 'm': m, 'w': w, 'a': a, 'b': b, 'c': c, 'c1': c1, 'c2': c2}
+            params_dict = {"tc": tc, "m": m, "w": w, "a": a, "b": b, "c": c, "c1": c1, "c2": c2}
             return True, params_dict
         else:
             return False, {}
 
-
-    def check_bubble_fit(self, fits: Dict[str, float], observations: List[List[float]], t1_index: int, t2_index: int) -> Tuple[bool, bool]:
-        t1, t2, tc, m, w, a, b, c, c1, c2, O = (fits[key] for key in ['t1', 't2', 'tc', 'm', 'w', 'a', 'b', 'c', 'c1', 'c2', 'O'])
+    def check_bubble_fit(
+        self, fits: Dict[str, float], observations: List[List[float]], t1_index: int, t2_index: int
+    ) -> Tuple[bool, bool]:
+        t1, t2, tc, m, w, a, b, c, c1, c2, O = (
+            fits[key] for key in ["t1", "t2", "tc", "m", "w", "a", "b", "c", "c1", "c2", "O"]
+        )
 
         obs_up_to_tc = LPPLSMath.stop_observation_at_tc(observations, tc)
-        prices_in_range = super().is_price_in_range(obs_up_to_tc, t1_index, t2_index, self.filter_criteria.get("relative_error_max"), tc, m, w, a, b, c1, c2)
+        prices_in_range = super().is_price_in_range(
+            obs_up_to_tc,
+            t1_index,
+            t2_index,
+            self.filter_criteria.get("relative_error_max"),
+            tc,
+            m,
+            w,
+            a,
+            b,
+            c1,
+            c2,
+        )
 
         assert t2 + 1 <= tc <= t2 + ((t2 - t1) / 5)
         assert self.filter_criteria.get("m_min") <= m <= self.filter_criteria.get("m_max")
@@ -106,7 +137,6 @@ class FilterBitcoin2019B(FilterInterface):
 
         O_in_range = O >= self.filter_criteria.get("O_min")
 
-
         if O_in_range and prices_in_range:
             is_qualified = True
         else:
@@ -117,8 +147,7 @@ class FilterBitcoin2019B(FilterInterface):
 
         return is_qualified, is_positive_bubble
 
-
     @staticmethod
     def get_oscillations(w: float, tc: float, t1: float, t2: float) -> float:
         assert t1 < tc, "we can only compute oscillations above the starting time"
-        return ((w / 2.0) * np.log((tc - t1) / (tc - t2)))
+        return (w / 2.0) * np.log((tc - t1) / (tc - t2))

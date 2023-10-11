@@ -6,13 +6,14 @@ import random
 from filter_interface import FilterInterface
 import data_loader
 
+
 class FilterShanghai(FilterInterface):
-
-
-    def __init__(self, filter_file='./lppls/conf/shanghai1_filter.json'):
+    def __init__(self, filter_file="./lppls/conf/shanghai1_filter.json"):
         self.filter_criteria = data_loader.load_config(filter_file)
 
-    def fit(self, max_searches: int, obs: np.ndarray, minimizer: str = 'Nelder-Mead') -> Tuple[bool, Dict[str, float]]:
+    def fit(
+        self, max_searches: int, obs: np.ndarray, minimizer: str = "Nelder-Mead"
+    ) -> Tuple[bool, Dict[str, float]]:
         """
         Args:
             max_searches (int): The maximum number of searches to perform before giving up. The literature suggests 25.
@@ -44,20 +45,35 @@ class FilterShanghai(FilterInterface):
             seed = np.array([tc, m, w])
 
             success, params_dict = self.estimate_params(obs, seed, minimizer, search_bounds)
-            
+
             if success:
                 tc, m, w, a, b, c, c1, c2 = params_dict.values()
                 # O = FilterShanghai.get_oscillations(w, tc, t1, t2)
                 D = FilterShanghai.get_damping(m, w, b, c)
-                final_dict = {'tc': tc, 'm': m, 'w': w, 'a': a, 'b': b, 'c': c, 'c1': c1, 'c2': c2, 'D': D}
+                final_dict = {
+                    "tc": tc,
+                    "m": m,
+                    "w": w,
+                    "a": a,
+                    "b": b,
+                    "c": c,
+                    "c1": c1,
+                    "c2": c2,
+                    "D": D,
+                }
                 return True, final_dict
             else:
                 search_count += 1
 
         return False, {}
 
-
-    def estimate_params(self, observations: np.ndarray, seed: np.ndarray, minimizer: str, search_bounds: List[Tuple[float, float]]) -> Tuple[bool, Dict[str, float]]:
+    def estimate_params(
+        self,
+        observations: np.ndarray,
+        seed: np.ndarray,
+        minimizer: str,
+        search_bounds: List[Tuple[float, float]],
+    ) -> Tuple[bool, Dict[str, float]]:
         """
         Args:
             observations (np.ndarray):  the observed time-series data.
@@ -73,7 +89,7 @@ class FilterShanghai(FilterInterface):
             fun=LPPLSMath.sum_of_squared_residuals,
             x0=seed,
             method=minimizer,
-            bounds=search_bounds
+            bounds=search_bounds,
         )
 
         if cofs.success:
@@ -87,19 +103,34 @@ class FilterShanghai(FilterInterface):
 
             c = LPPLSMath.get_c(c1, c2)
 
-            params_dict = {'tc': tc, 'm': m, 'w': w, 'a': a, 'b': b, 'c': c, 'c1': c1, 'c2': c2}
+            params_dict = {"tc": tc, "m": m, "w": w, "a": a, "b": b, "c": c, "c1": c1, "c2": c2}
             return True, params_dict
         else:
             return False, {}
 
-
-    def check_bubble_fit(self, fits: Dict[str, float], observations: List[List[float]], t1_index: int, t2_index: int) -> Tuple[bool, bool]:
-        t1, t2, tc, m, w, a, b, c, c1, c2, D = (fits[key] for key in ['t1', 't2', 'tc', 'm', 'w', 'a', 'b', 'c', 'c1', 'c2', 'D'])
+    def check_bubble_fit(
+        self, fits: Dict[str, float], observations: List[List[float]], t1_index: int, t2_index: int
+    ) -> Tuple[bool, bool]:
+        t1, t2, tc, m, w, a, b, c, c1, c2, D = (
+            fits[key] for key in ["t1", "t2", "tc", "m", "w", "a", "b", "c", "c1", "c2", "D"]
+        )
 
         obs_up_to_tc = LPPLSMath.stop_observation_at_tc(observations, tc)
-        prices_in_range = super().is_price_in_range(obs_up_to_tc, t1_index, t2_index, self.filter_criteria.get("relative_error_max"), tc, m, w, a, b, c1, c2)
+        prices_in_range = super().is_price_in_range(
+            obs_up_to_tc,
+            t1_index,
+            t2_index,
+            self.filter_criteria.get("relative_error_max"),
+            tc,
+            m,
+            w,
+            a,
+            b,
+            c1,
+            c2,
+        )
 
-        t_delta = t2 - t1                
+        t_delta = t2 - t1
         t_delta_lower = t_delta * self.filter_criteria.get("tc_delta_min")
         t_delta_upper = t_delta * self.filter_criteria.get("tc_delta_max")
 
@@ -115,24 +146,21 @@ class FilterShanghai(FilterInterface):
 
         D_in_range = D >= self.filter_criteria.get("D_min")
 
-        if  D_in_range and prices_in_range:
+        if D_in_range and prices_in_range:
             is_qualified = True
         else:
             is_qualified = False
-
 
         # TODO(octaviant) - understand why the bubble is positive when b < 0
         is_positive_bubble = b < 0
 
         return is_qualified, is_positive_bubble
 
-
     @staticmethod
     def get_oscillations(w: float, tc: float, t1: float, t2: float) -> float:
         assert t1 < tc, "we can only compute oscillations above the starting time"
         # In the Shanghai paper, we divide by (t2 - t1), but that must be incorrect
-        return ((w / 2.0) * np.log((tc - t1) / (tc - t2)))
-
+        return (w / 2.0) * np.log((tc - t1) / (tc - t2))
 
     @staticmethod
     def get_damping(m: float, w: float, b: float, c: float) -> float:

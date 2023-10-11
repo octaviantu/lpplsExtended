@@ -2,9 +2,11 @@ import numpy as np
 import pytest
 from data_fit import DataFit
 
+
 @pytest.fixture
 def observations():
     return np.array([[1, 2, 3, 4, 5], [1, 4, 9, 16, 25]])
+
 
 @pytest.fixture
 def filter_settings():
@@ -14,13 +16,22 @@ def filter_settings():
         "m_min": 0.1,
         "m_max": 1,
         "w_min": 1,
-        "w_max": 20
+        "w_max": 20,
     }
+
 
 def test_basic_case(observations, filter_settings):
     data_fit = DataFit(observations, filter_settings)
-    result = data_fit.mp_compute_t1_fits(workers=2, window_size=5, smallest_window_size=2, outer_increment=1, inner_increment=1, max_searches=10)
+    result = data_fit.mp_compute_t1_fits(
+        workers=2,
+        window_size=5,
+        smallest_window_size=2,
+        outer_increment=1,
+        inner_increment=1,
+        max_searches=10,
+    )
     assert result is not None
+
 
 def test_empty_observations(filter_settings):
     empty_obs = np.array([[], []])

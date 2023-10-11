@@ -3,13 +3,13 @@
 
 import cma as cm
 from lppls.bubble_scores import LPPLS
+
 # import multiprocessing as mp
 import numpy as np
 from scipy.stats import chisquare
 
 
 class LPPLSCMAES(LPPLS):
-
     def __init__(self, observations):
         super().__init__(observations)
         self.observations = observations
@@ -36,11 +36,9 @@ class LPPLSCMAES(LPPLS):
         t = obs[0, :]
         known_price_span = super().lppls(t, tc, m, w, a, b, c1, c2)
 
-
-
         # make nan or inf to zero
-        known_price_span[np.isnan(known_price_span)] = 0.
-        known_price_span[np.isinf(known_price_span)] = 0.
+        known_price_span[np.isnan(known_price_span)] = 0.0
+        known_price_span[np.isinf(known_price_span)] = 0.0
 
         # calculate the chi square
         error, _ = chisquare(f_obs=known_price_span, f_exp=obs[1, :])
@@ -65,7 +63,7 @@ class LPPLSCMAES(LPPLS):
 
         # best guess of the starting values
         m = 0.5
-        w = 9.
+        w = 9.0
         # INFO: so far as I've understand the tc time this cannot be smaller als the max time of the time series
         tc = np.max(obs[0, :])
 
@@ -73,11 +71,13 @@ class LPPLSCMAES(LPPLS):
         opts = cm.CMAOptions()
         # here we define the initial search steps for CMAES usually I use to calculate the range of the
         # max and min bounds of the value and then apply a factor for sigma
-        opts.set('CMA_stds', [factor_sigma * tc, factor_sigma * (0.9 - 0.1), factor_sigma * (13. - 6.)])
-        opts.set('bounds', [(tc, 0.1, 6.), (np.inf, 0.9, 13.)])
-        opts.set('popsize', 10 * 2 ** pop_size)
+        opts.set(
+            "CMA_stds", [factor_sigma * tc, factor_sigma * (0.9 - 0.1), factor_sigma * (13.0 - 6.0)]
+        )
+        opts.set("bounds", [(tc, 0.1, 6.0), (np.inf, 0.9, 13.0)])
+        opts.set("popsize", 10 * 2**pop_size)
 
-        es = cm.CMAEvolutionStrategy(x0=[tc, m, w], sigma0=1., inopts=opts)
+        es = cm.CMAEvolutionStrategy(x0=[tc, m, w], sigma0=1.0, inopts=opts)
 
         # here we go
         while not es.stop() and es.countiter <= max_iteration:
@@ -107,7 +107,7 @@ class LPPLSCMAES(LPPLS):
             c = self.get_c(c1, c2)
 
             # Use sklearn format for storing fit params -> original code from lppls package
-            for coef in ['tc', 'm', 'w', 'a', 'b', 'c', 'c1', 'c2']:
+            for coef in ["tc", "m", "w", "a", "b", "c", "c1", "c2"]:
                 self.coef_[coef] = eval(coef)
 
             O = self.get_oscillations(w, tc, t1, t2)

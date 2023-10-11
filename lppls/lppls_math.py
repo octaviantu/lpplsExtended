@@ -2,19 +2,23 @@ import numpy as np
 import warnings
 import logging
 
-class LPPLSMath:
 
+class LPPLSMath:
     @staticmethod
-    def lppls(t: float, tc: float, m: float, w: float, a: float, b: float, c1: float, c2: float) -> float:
+    def lppls(
+        t: float, tc: float, m: float, w: float, a: float, b: float, c1: float, c2: float
+    ) -> float:
         assert t < tc, "we can only predict up to time t smaller than tc"
-        return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * np.log(tc - t))) + (c2 * np.sin(w * np.log(tc - t)))))
+        return a + np.power(tc - t, m) * (
+            b + ((c1 * np.cos(w * np.log(tc - t))) + (c2 * np.sin(w * np.log(tc - t))))
+        )
 
     @staticmethod
     def matrix_equation(observations, tc, m, w):
         """
         Derive linear parameters in LPPLs from nonlinear ones.
         """
-        assert observations[0][-1] < tc # all observations should be before tc
+        assert observations[0][-1] < tc  # all observations should be before tc
         T = observations[0]
         P = observations[1]
         N = len(T)
@@ -39,22 +43,18 @@ class LPPLSMath:
         yigi = np.multiply(yi, gi)
         yihi = np.multiply(yi, hi)
 
-        matrix_1 = np.array([
-            [N,          np.sum(fi),       np.sum(gi),       np.sum(hi)],
-            [np.sum(fi), np.sum(fi_pow_2), np.sum(figi),     np.sum(fihi)],
-            [np.sum(gi), np.sum(figi),     np.sum(gi_pow_2), np.sum(gihi)],
-            [np.sum(hi), np.sum(fihi),     np.sum(gihi),     np.sum(hi_pow_2)]
-        ])
+        matrix_1 = np.array(
+            [
+                [N, np.sum(fi), np.sum(gi), np.sum(hi)],
+                [np.sum(fi), np.sum(fi_pow_2), np.sum(figi), np.sum(fihi)],
+                [np.sum(gi), np.sum(figi), np.sum(gi_pow_2), np.sum(gihi)],
+                [np.sum(hi), np.sum(fihi), np.sum(gihi), np.sum(hi_pow_2)],
+            ]
+        )
 
-        matrix_2 = np.array([
-            [np.sum(yi)],
-            [np.sum(yifi)],
-            [np.sum(yigi)],
-            [np.sum(yihi)]
-        ])
+        matrix_2 = np.array([[np.sum(yi)], [np.sum(yifi)], [np.sum(yigi)], [np.sum(yihi)]])
 
         return np.linalg.solve(matrix_1, matrix_2)
-
 
     @staticmethod
     def sum_of_squared_residuals(x, observations):
@@ -76,11 +76,12 @@ class LPPLSMath:
         rM = LPPLSMath.matrix_equation(obs_up_to_tc, tc, m, w)
         a, b, c1, c2 = rM[:, 0].tolist()
 
-        [price_prediction, actual_prices] = LPPLSMath.get_price_predictions(obs_up_to_tc, tc, m, w, a, b, c1, c2)
+        [price_prediction, actual_prices] = LPPLSMath.get_price_predictions(
+            obs_up_to_tc, tc, m, w, a, b, c1, c2
+        )
         delta = np.subtract(price_prediction, actual_prices)
 
-        return np.sum(np.power(delta, 2))/len(delta)
-
+        return np.sum(np.power(delta, 2)) / len(delta)
 
     # TODO(octaviant) - find usage or delete
     @staticmethod
@@ -104,7 +105,7 @@ class LPPLSMath:
     def get_price_predictions(observations, tc, m, w, a, b, c1, c2):
         price_prediction = []
         actual_prices = []
-        
+
         for t, actual_price in zip(observations[0], observations[1]):
             assert t < tc, "we can only predict up to time t smaller than tc"
             predicted_price = LPPLSMath.lppls(t, tc, m, w, a, b, c1, c2)
@@ -115,5 +116,5 @@ class LPPLSMath:
 
     @staticmethod
     def stop_observation_at_tc(observations, tc):
-        first_larger_index = np.searchsorted(observations[0, :], tc, side='left') - 1
+        first_larger_index = np.searchsorted(observations[0, :], tc, side="left") - 1
         return [observations[0, :first_larger_index], observations[1, :first_larger_index]]
