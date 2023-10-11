@@ -93,7 +93,6 @@ class BubbleScores:
             pos_conf_lst.append(pos_conf)
             neg_conf_lst.append(neg_conf)
 
-        print(f'pos_conf_lst: {pos_conf_lst}, neg_conf_lst: {neg_conf_lst}')
 
         known_price_span_df = pd.DataFrame({
             'time': ts,

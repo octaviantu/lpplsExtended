@@ -18,15 +18,7 @@ class DataFit:
         self.filter = filter
 
 
-    def plot_fit(self, coef):
-        """
-        Args:
-            observations (Mx2 numpy array): the observed data
-        Returns:
-            nothing, should plot the fit
-        """
-        print('coef:', coef)
-        tc, m, w, a, b, c, c1, c2, O, D = coef.values()
+    def plot_fit(self, tc: float, m: float, w: float, a: float, b: float, c1: float, c2: float)-> None:
 
         obs_up_to_tc = LPPLSMath.stop_observation_at_tc(self.observations, tc)
         time_ord = [pd.Timestamp.fromordinal(int(d)) for d in obs_up_to_tc[0]]
@@ -101,29 +93,19 @@ class DataFit:
             if not success:
                 continue
 
-            tc, m, w, a, b, c, c1, c2, O, D = params_dict.values()
-
             nested_t1 = obs_shrinking_slice[0][0]
             nested_t2 = obs_shrinking_slice[0][-1]
 
-
-            windows.append({
-                'tc_d': self.ordinal_to_date(tc),
-                'tc': tc,
-                'm': m,
-                'w': w,
-                'a': a,
-                'b': b,
-                'c': c,
-                'c1': c1,
-                'c2': c2,
+            # Update params_dict with new key-value pairs
+            params_dict.update({
                 't1_d': self.ordinal_to_date(nested_t1),
                 't2_d': self.ordinal_to_date(nested_t2),
                 't1': nested_t1,
                 't2': nested_t2,
-                'O': O,
-                'D': D,
             })
+
+            # Append updated params_dict to windows
+            windows.append(params_dict)
 
         return {'t1': t1, 't2': t2, 'p1': p1, 'p2': p2, 'windows': windows, 't1_index': t1_index, 't2_index': t2_index}
 

@@ -6,10 +6,10 @@ import random
 from filter_interface import FilterInterface
 import data_loader
 
-class FilterShanghai(FilterInterface):
+class FilterBitcoin2019B(FilterInterface):
 
 
-    def __init__(self, filter_file='./lppls/conf/shanghai1_filter.json'):
+    def __init__(self, filter_file='./lppls/conf/bitcoin2019_filterB.json'):
         self.filter_criteria = data_loader.load_config(filter_file)
 
     def fit(self, max_searches: int, obs: np.ndarray, minimizer: str = 'Nelder-Mead') -> Tuple[bool, Dict[str, float]]:
@@ -28,11 +28,8 @@ class FilterShanghai(FilterInterface):
         while search_count < max_searches:
             t1 = obs[0, 0]
             t2 = obs[0, -1]
-            t_delta = t2 - t1
-            t_delta_lower = t_delta * self.filter_criteria.get("tc_delta_min")
-            t_delta_upper = t_delta * self.filter_criteria.get("tc_delta_max")
 
-            tc_bounds = (max(t1, t2 - t_delta_lower), t2 + t_delta_upper)
+            tc_bounds = (t2 + 1, t2 + (t2 - t1)/5)
             m_bounds = (self.filter_criteria.get("m_min"), self.filter_criteria.get("m_max"))
             w_bounds = (self.filter_criteria.get("w_min"), self.filter_criteria.get("w_max"))
             search_bounds = [tc_bounds, m_bounds, w_bounds]
@@ -47,9 +44,8 @@ class FilterShanghai(FilterInterface):
             
             if success:
                 tc, m, w, a, b, c, c1, c2 = params_dict.values()
-                O = FilterShanghai.get_oscillations(w, tc, t1, t2)
-                D = FilterShanghai.get_damping(m, w, b, c)
-                final_dict = {'tc': tc, 'm': m, 'w': w, 'a': a, 'b': b, 'c': c, 'c1': c1, 'c2': c2, 'O': O, 'D': D}
+                O = FilterBitcoin2019B.get_oscillations(w, tc, t1, t2)
+                final_dict = {'tc': tc, 'm': m, 'w': w, 'a': a, 'b': b, 'c': c, 'c1': c1, 'c2': c2, 'O': O}
                 return True, final_dict
             else:
                 search_count += 1
@@ -94,15 +90,11 @@ class FilterShanghai(FilterInterface):
 
 
     def check_bubble_fit(self, fits: Dict[str, float], observations: List[List[float]], t1_index: int, t2_index: int) -> Tuple[bool, bool]:
-        t1, t2, tc, m, w, a, b, c, c1, c2, O, D = (fits[key] for key in ['t1', 't2', 'tc', 'm', 'w', 'b', 'b', 'c', 'c1', 'c2', 'O', 'D'])
+        t1, t2, tc, m, w, a, b, c, c1, c2, O = (fits[key] for key in ['t1', 't2', 'tc', 'm', 'w', 'a', 'b', 'c', 'c1', 'c2', 'O'])
 
         prices_in_range = super().is_price_in_range(observations, t1_index, t2_index, self.filter_criteria.get("relative_error_max"), tc, m, w, a, b, c1, c2)
 
-        t_delta = t2 - t1                
-        t_delta_lower = t_delta * self.filter_criteria.get("tc_delta_min")
-        t_delta_upper = t_delta * self.filter_criteria.get("tc_delta_max")
-
-        assert max(t1, t2 - t_delta_lower) <= tc <= t2 + t_delta_upper
+        assert t2 + 1 <= tc <= t2 + ((t2 - t1) / 5)
         assert self.filter_criteria.get("m_min") <= m <= self.filter_criteria.get("m_max")
         assert self.filter_criteria.get("w_min") <= w <= self.filter_criteria.get("w_max")
 
@@ -112,13 +104,12 @@ class FilterShanghai(FilterInterface):
             O = np.inf
 
         O_in_range = O >= self.filter_criteria.get("O_min")
-        D_in_range = D >= self.filter_criteria.get("D_min")
 
-        if O_in_range and D_in_range and prices_in_range:
+
+        if O_in_range and prices_in_range:
             is_qualified = True
         else:
             is_qualified = False
-
 
         # TODO(octaviant) - understand why the bubble is positive when b < 0
         is_positive_bubble = b < 0
@@ -129,9 +120,4 @@ class FilterShanghai(FilterInterface):
     @staticmethod
     def get_oscillations(w: float, tc: float, t1: float, t2: float) -> float:
         assert t1 < tc, "we can only compute oscillations above the starting time"
-        return ((w / 2.0) * np.log((tc - t1) / (t2 - t1)))
-
-
-    @staticmethod
-    def get_damping(m: float, w: float, b: float, c: float) -> float:
-        return (m * np.abs(b)) / (w * np.abs(c))
+        return ((w / 2.0) * np.log((tc - t1) / (tc - t2)))

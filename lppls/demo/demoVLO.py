@@ -25,7 +25,7 @@ def execute_lppls_logic(data_filtered, filter_type, filter_file):
     sornette.plot_fit()
     
     res_filtered = sornette.mp_compute_t1_fits(
-        workers=1,
+        workers=8,
         window_size=LARGEST_WINDOW_SIZE, 
         smallest_window_size=SMALLEST_WINDOW_SIZE, 
         outer_increment=T1_STEP, 
@@ -58,8 +58,8 @@ def main():
     # execute_lppls_logic(data_filtered)
     
     # Second run with different config
-    # execute_lppls_logic(data_filtered, './lppls/conf/shanghai_filter1.json')
-    execute_lppls_logic(data_filtered, 'Shanghai', './lppls/conf/shanghai_filter1.json')
+    # execute_lppls_logic(data_filtered, 'Shanghai', './lppls/conf/shanghai_filter1.json')
+    execute_lppls_logic(data_filtered, 'BitcoinB', './lppls/conf/bitcoin_filter2019B.json')
 
     plt.show()
 

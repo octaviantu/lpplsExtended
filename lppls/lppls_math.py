@@ -93,15 +93,6 @@ class LPPLSMath:
         return False if m <= 0 or w <= 0 else abs((m * b) / (w * c)) > D_min
 
     @staticmethod
-    def get_oscillations(w: float, tc: float, t1: float, t2: float) -> float:
-        assert t1 < tc, "we can only compute oscillations above the starting time"
-        return ((w / 2.0) * np.log((tc - t1) / (t2 - t1)))
-
-    @staticmethod
-    def get_damping(m: float, w: float, b: float, c: float) -> float:
-        return (m * np.abs(b)) / (w * np.abs(c))
-
-    @staticmethod
     def get_c(c1: float, c2: float) -> float:
         if c1 and c2:
             # c = (c1 ** 2 + c2 ** 2) ** 0.5
