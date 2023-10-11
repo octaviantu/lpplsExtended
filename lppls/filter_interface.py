@@ -15,8 +15,8 @@ class FilterInterface(ABC):
 
 
     def is_price_in_range(self, observations: List[List[float]], t1_index: int, t2_index: int, relative_error_max: float, tc: float, m: float, w: float, a: float, b: float, c1: float, c2: float) -> bool:
-        for i in range(t1_index, t2_index):
-            t, p = observations[:, i]
+        for i in range(t1_index, min(len(observations[0]), t2_index)):
+            t, p = observations[0][i], observations[1][i]
             predicted_price = np.exp(LPPLSMath.lppls(t, tc, m, w, a, b, c1, c2))
             actual_price = np.exp(p)
 

@@ -92,7 +92,8 @@ class FilterBitcoin2019B(FilterInterface):
     def check_bubble_fit(self, fits: Dict[str, float], observations: List[List[float]], t1_index: int, t2_index: int) -> Tuple[bool, bool]:
         t1, t2, tc, m, w, a, b, c, c1, c2, O = (fits[key] for key in ['t1', 't2', 'tc', 'm', 'w', 'a', 'b', 'c', 'c1', 'c2', 'O'])
 
-        prices_in_range = super().is_price_in_range(observations, t1_index, t2_index, self.filter_criteria.get("relative_error_max"), tc, m, w, a, b, c1, c2)
+        obs_up_to_tc = LPPLSMath.stop_observation_at_tc(observations, tc)
+        prices_in_range = super().is_price_in_range(obs_up_to_tc, t1_index, t2_index, self.filter_criteria.get("relative_error_max"), tc, m, w, a, b, c1, c2)
 
         assert t2 + 1 <= tc <= t2 + ((t2 - t1) / 5)
         assert self.filter_criteria.get("m_min") <= m <= self.filter_criteria.get("m_max")

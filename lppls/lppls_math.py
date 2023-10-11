@@ -79,7 +79,7 @@ class LPPLSMath:
         [price_prediction, actual_prices] = LPPLSMath.get_price_predictions(obs_up_to_tc, tc, m, w, a, b, c1, c2)
         delta = np.subtract(price_prediction, actual_prices)
 
-        return np.sum(np.power(delta, 2))
+        return np.sum(np.power(delta, 2))/len(delta)
 
 
     # TODO(octaviant) - find usage or delete

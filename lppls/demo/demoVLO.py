@@ -58,8 +58,8 @@ def main():
     # execute_lppls_logic(data_filtered)
     
     # Second run with different config
-    # execute_lppls_logic(data_filtered, 'Shanghai', './lppls/conf/shanghai_filter1.json')
-    execute_lppls_logic(data_filtered, 'BitcoinB', './lppls/conf/bitcoin_filter2019B.json')
+    execute_lppls_logic(data_filtered, 'Shanghai', './lppls/conf/shanghai_filter2.json')
+    # execute_lppls_logic(data_filtered, 'BitcoinB', './lppls/conf/bitcoin_filter2019B.json')
 
     plt.show()
 
