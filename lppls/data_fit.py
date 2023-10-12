@@ -1,6 +1,5 @@
-from typing import List, Dict, Any, Union, Tuple
+from typing import Dict, Tuple
 import numpy as np
-import random
 from lppls_math import LPPLSMath
 from datetime import datetime as date
 from pandas._libs.tslibs.np_datetime import OutOfBoundsDatetime
@@ -107,8 +106,8 @@ class DataFit:
             # Update params_dict with new key-value pairs
             params_dict.update(
                 {
-                    "t1_d": self.ordinal_to_date(nested_t1),
-                    "t2_d": self.ordinal_to_date(nested_t2),
+                    "t1_d": LPPLSMath.ordinal_to_date(nested_t1),
+                    "t2_d": LPPLSMath.ordinal_to_date(nested_t2),
                     "t1": nested_t1,
                     "t2": nested_t2,
                 }
@@ -127,14 +126,6 @@ class DataFit:
             "t2_index": t2_index,
         }
 
-    def ordinal_to_date(self, ordinal):
-        # Since pandas represents timestamps in nanosecond resolution,
-        # the time span that can be represented using a 64-bit integer
-        # is limited to approximately 584 years
-        try:
-            return date.fromordinal(int(ordinal)).strftime("%Y-%m-%d")
-        except (ValueError, OutOfBoundsDatetime):
-            return str(pd.NaT)
 
     # This is old code
     # TODO(octaviant) - figure out what this does

@@ -85,7 +85,7 @@ class FilterBitcoin2019B(FilterInterface):
 
         cofs = minimize(
             args=observations,
-            fun=LPPLSMath.sum_of_squared_residuals,
+            fun=LPPLSMath.minimize_squared_residuals,
             x0=seed,
             method=minimizer,
             bounds=search_bounds,
@@ -148,7 +148,7 @@ class FilterBitcoin2019B(FilterInterface):
         else:
             is_qualified = False
 
-        # TODO(octaviant) - understand why the bubble is positive when b < 0
+        # if B is negative, the predicted price will increase in value as t tends to tc (because 0 < m < 1)
         is_positive_bubble = b < 0
 
         return is_qualified, is_positive_bubble

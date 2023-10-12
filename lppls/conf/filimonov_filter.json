@@ -5,6 +5,6 @@
     "m_max": 0.9,
     "C_min": -1.0,
     "C_min": 1.0,
-    "B_max": 0,
-    "relative_error_max": 0.05
+    "tc_lower": 1,
+    "tc_upper": 90
 }
