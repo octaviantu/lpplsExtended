@@ -1,10 +1,13 @@
 from typing import List, Dict, Tuple
 from scipy.optimize import minimize
+from scipy.signal import lombscargle
 from lppls_math import LPPLSMath
 import numpy as np
 import random
 from filter_interface import FilterInterface
 import data_loader
+from statsmodels.tsa.ar_model import AutoReg
+from lppls_defaults import SIGNIFICANCE_LEVEL
 
 
 class FilterBitcoin2019B(FilterInterface):
@@ -137,7 +140,10 @@ class FilterBitcoin2019B(FilterInterface):
 
         O_in_range = O >= self.filter_criteria.get("O_min")
 
-        if O_in_range and prices_in_range:
+        passing_lomb_test = FilterBitcoin2019B.is_passing_lomb_test(obs_up_to_tc, tc, m, a, b)
+        passing_ar1_test = self.is_ar1_process(obs_up_to_tc, tc, m, a, b)
+
+        if O_in_range and prices_in_range and passing_lomb_test and passing_ar1_test:
             is_qualified = True
         else:
             is_qualified = False
@@ -146,6 +152,53 @@ class FilterBitcoin2019B(FilterInterface):
         is_positive_bubble = b < 0
 
         return is_qualified, is_positive_bubble
+
+
+    @staticmethod
+    def is_ar1_process(
+        obs_up_to_tc: List[List[float]], tc: float, m: float, a: float, b: float
+    ) -> bool:
+        # Compute the residuals between predicted and actual log prices
+        residuals = []
+        for i in range(0, len(obs_up_to_tc[0])):
+            time, price = obs_up_to_tc[0][i], obs_up_to_tc[1][i]
+            predicted_log_price = a + b * (tc - time) ** m
+            actual_log_price = np.log(price)
+            residuals.append(predicted_log_price - actual_log_price)
+
+        # Fit an AR(1) model to the residuals
+        ar1_model = AutoReg(residuals, lags=1).fit()
+
+        # Get the p-value for the AR(1) coefficient
+        p_value = ar1_model.pvalues[1]  # p-value for the AR(1) coefficient
+
+        # Check if the p-value is less than or equal to your significance level
+        return p_value <= SIGNIFICANCE_LEVEL
+
+
+    @staticmethod
+    def is_passing_lomb_test(
+        obs_up_to_tc: List[List[float]], tc: float, m: float, a: float, b: float
+    ) -> bool:
+        # Compute the detrended residuals
+        residuals = []
+        for i in range(0, len(obs_up_to_tc[0])):
+            time, price = obs_up_to_tc[0][i], obs_up_to_tc[1][i]
+            residuals.append((tc - time) ** (-m) * (np.log(price) - a - b * (tc - time) ** m))
+
+        # Compute the Lomb-Scargle periodogram
+        f = np.linspace(0.01, 1, len(obs_up_to_tc[0]))  # Frequency range, adjust as needed
+        pgram = lombscargle(obs_up_to_tc[0], residuals, f)
+
+        # Find the peak power
+        peak_power = np.max(pgram)
+
+        # Compute the p-value for the peak power
+        p_lomb = 1 - np.exp(-peak_power)
+
+        # Check if the p-value is less than or equal to your significance level
+        return p_lomb <= SIGNIFICANCE_LEVEL
+
 
     @staticmethod
     def get_oscillations(w: float, tc: float, t1: float, t2: float) -> float:
