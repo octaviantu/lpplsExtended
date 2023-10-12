@@ -47,14 +47,14 @@ def main():
     rows = cursor.fetchall()
     data = pd.DataFrame(rows, columns=["Date", "Adj Close"])
 
-    # Filter data up to Jan 1, 2022
-    filter_date = date(2022, 1, 1)
-    data_filtered = data[data["Date"] >= filter_date]
+    # Filter data up to Jun 1, 2022
+    latest_date = date(2022, 6, 1)
+    # We take 1 year and 6 months back so we have bubble data for 1 year
+    earliest_date = date(2021, 1, 1)
 
-    # First run
-    # execute_lppls_logic(data_filtered)
+    # we want dates BEFORE 1 June 2022, to check with the ETH FCO June 2022 report
+    data_filtered = data[(earliest_date <= data["Date"]) & (data["Date"] <= latest_date)]
 
-    # Second run with different config
     execute_lppls_logic(data_filtered, "Shanghai", "./lppls/conf/shanghai_filter2.json")
     # execute_lppls_logic(data_filtered, 'BitcoinB', './lppls/conf/bitcoin_filter2019B.json')
 
