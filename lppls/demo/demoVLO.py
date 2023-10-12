@@ -47,9 +47,9 @@ def main():
     rows = cursor.fetchall()
     data = pd.DataFrame(rows, columns=["Date", "Adj Close"])
 
-    # Filter data up to June 1, 2022
-    filter_date = date(2022, 6, 1)
-    data_filtered = data[data["Date"] <= filter_date]
+    # Filter data up to Jan 1, 2022
+    filter_date = date(2022, 1, 1)
+    data_filtered = data[data["Date"] >= filter_date]
 
     # First run
     # execute_lppls_logic(data_filtered)
