@@ -2,6 +2,7 @@ from bubble_scores import BubbleScores
 from data_fit import DataFit
 from filter_shanghai import FilterShanghai
 from filter_bitcoin2019B import FilterBitcoin2019B
+from filter_swiss import FilterSwiss
 from filimonov_plot import FilimonovPlot
 
 class Sornette:
@@ -10,6 +11,8 @@ class Sornette:
             filter = FilterShanghai(filter_file)
         elif filter_type == "BitcoinB":
             filter = FilterBitcoin2019B(filter_file)
+        elif filter_type == "Swiss":
+            filter = FilterSwiss(filter_file)
         else:
             raise Exception("Filter type not supported")
 

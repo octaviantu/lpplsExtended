@@ -57,7 +57,8 @@ def main():
     data_filtered = data[(earliest_date <= data["Date"]) & (data["Date"] <= latest_date)]
 
     # execute_lppls_logic(data_filtered, "Shanghai", "./lppls/conf/shanghai_filter2.json")
-    execute_lppls_logic(data_filtered, 'BitcoinB', './lppls/conf/bitcoin_filter2019B.json')
+    # execute_lppls_logic(data_filtered, 'BitcoinB', './lppls/conf/bitcoin_filter2019B.json')
+    execute_lppls_logic(data_filtered, "Swiss", "./lppls/conf/swiss_filter.json")
 
     plt.show()
 
