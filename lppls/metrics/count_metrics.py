@@ -26,14 +26,11 @@ class CountMetrics:
 
 
     @staticmethod
-    def add_rejected_because_of_price():
-        CountMetrics.rejected_because_of_price += 1
-        CountMetrics.bubble_rejected += 1
-
-
-    @staticmethod
-    def add_rejected_because_of_D():
-        CountMetrics.rejected_because_of_D += 1
+    def add_rejected_bubble(D_in_range: bool, prices_in_range: bool):
+        if not D_in_range:
+            CountMetrics.rejected_because_of_price += 1
+        if not prices_in_range:
+            CountMetrics.rejected_because_of_D += 1
         CountMetrics.bubble_rejected += 1
 
 

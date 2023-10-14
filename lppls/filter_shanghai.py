@@ -148,10 +148,7 @@ class FilterShanghai(FilterInterface):
 
         D_in_range = D >= self.filter_criteria.get("D_min")
 
-        if not D_in_range:
-            CountMetrics.add_rejected_because_of_D()
-        if not prices_in_range:
-            CountMetrics.add_rejected_because_of_price()
+        CountMetrics.add_rejected_bubble(D_in_range, prices_in_range)
 
         if D_in_range and prices_in_range:
             is_qualified = True
