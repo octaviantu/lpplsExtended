@@ -5,7 +5,7 @@ import numpy as np
 import random
 from filter_interface import FilterInterface
 import data_loader
-
+from count_metrics import CountMetrics
 
 class FilterShanghai(FilterInterface):
     def __init__(self, filter_file="./lppls/conf/shanghai1_filter.json"):
@@ -65,7 +65,9 @@ class FilterShanghai(FilterInterface):
             else:
                 search_count += 1
 
+        CountMetrics.add_bubble_rejected_because_can_not_fit()
         return False, {}
+
 
     def estimate_params(
         self,
@@ -146,8 +148,14 @@ class FilterShanghai(FilterInterface):
 
         D_in_range = D >= self.filter_criteria.get("D_min")
 
+        if not D_in_range:
+            CountMetrics.add_rejected_because_of_D()
+        if not prices_in_range:
+            CountMetrics.add_rejected_because_of_price()
+
         if D_in_range and prices_in_range:
             is_qualified = True
+            CountMetrics.add_bubble_accepted()
         else:
             is_qualified = False
 

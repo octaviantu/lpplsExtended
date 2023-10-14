@@ -1,5 +1,6 @@
 from matplotlib import pyplot as plt
 import pandas as pd
+from count_metrics import CountMetrics
 
 
 class BubbleScores:
@@ -60,7 +61,9 @@ class BubbleScores:
         ax1_0.legend(loc=2)
         ax2_0.legend(loc=2)
 
+        CountMetrics.print_metrics()
         plt.xticks(rotation=45)
+
 
     def compute_bubble_scores(self, known_price_span):
         pos_conf_lst = []

@@ -1,6 +1,8 @@
 import sys
 
 sys.path.append("/Users/octaviantuchila/Documents/MonteCarlo/Sornette/lppls_python_updated/lppls")
+sys.path.append("/Users/octaviantuchila/Documents/MonteCarlo/Sornette/lppls_python_updated/lppls/metrics")
+
 import numpy as np
 import pandas as pd
 import psycopg2
@@ -56,9 +58,9 @@ def main():
     # we want dates BEFORE 1 June 2022, to check with the ETH FCO June 2022 report
     data_filtered = data[(earliest_date <= data["Date"]) & (data["Date"] <= latest_date)]
 
-    # execute_lppls_logic(data_filtered, "Shanghai", "./lppls/conf/shanghai_filter2.json")
+    execute_lppls_logic(data_filtered, "Shanghai", "./lppls/conf/shanghai_filter2.json")
     # execute_lppls_logic(data_filtered, 'BitcoinB', './lppls/conf/bitcoin_filter2019B.json')
-    execute_lppls_logic(data_filtered, "Swiss", "./lppls/conf/swiss_filter.json")
+    # execute_lppls_logic(data_filtered, "Swiss", "./lppls/conf/swiss_filter.json")
 
     plt.show()
 

@@ -1,9 +1,11 @@
+from count_metrics import CountMetrics
 from bubble_scores import BubbleScores
 from data_fit import DataFit
 from filter_shanghai import FilterShanghai
 from filter_bitcoin2019B import FilterBitcoin2019B
 from filter_swiss import FilterSwiss
 from filimonov_plot import FilimonovPlot
+
 
 class Sornette:
     def __init__(self, observations, filter_type, filter_file):
@@ -19,9 +21,12 @@ class Sornette:
         self.data_fit = DataFit(observations, filter)
         self.bubble_scores = BubbleScores(observations, filter)
         self.filimonov_plot = FilimonovPlot()
+        CountMetrics.reset()
+
 
     def fit(self, max_searches):
         [_, self.lppls_coef] = self.data_fit.fit(max_searches, self.data_fit.observations)
+
 
     def plot_fit(self):
         lppls_equation_terms = {
@@ -29,11 +34,14 @@ class Sornette:
         }
         self.data_fit.plot_fit(**lppls_equation_terms)
 
+
     def mp_compute_t1_fits(self, **kwargs):
         return self.data_fit.mp_compute_t1_fits(**kwargs)
 
+
     def plot_bubble_scores(self, res_filtered):
         self.bubble_scores.plot_bubble_scores(res_filtered)
+
 
     def plot_filimonov(self):
         self.filimonov_plot.plot_optimum(self.data_fit.observations)
