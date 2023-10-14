@@ -148,12 +148,11 @@ class FilterShanghai(FilterInterface):
 
         D_in_range = D >= self.filter_criteria.get("D_min")
 
-        CountMetrics.add_rejected_bubble(D_in_range, prices_in_range)
-
         if D_in_range and prices_in_range:
             is_qualified = True
             CountMetrics.add_bubble_accepted()
         else:
+            CountMetrics.add_rejected_bubble(D_in_range, prices_in_range)
             is_qualified = False
 
         # if B is negative, the predicted price will increase in value as t tends to tc (because 0 < m < 1)
