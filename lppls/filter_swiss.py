@@ -114,7 +114,7 @@ class FilterSwiss(FilterInterface):
             fits[key] for key in ["t1", "t2", "tc", "m", "w", "a", "b", "c", "c1", "c2"]
         )
         O = FilterSwiss.get_oscillations(w, tc, t1, t2)
-        D = FilterSwiss.get_damping(m, w, b, c)
+        D = FilterInterface.get_damping(m, w, b, c)
 
         t_delta = t2 - t1
 
@@ -144,8 +144,3 @@ class FilterSwiss(FilterInterface):
     def get_oscillations(w: float, tc: float, t1: float, t2: float) -> float:
         assert t1 < tc, "we can only compute oscillations above the starting time"
         return (w / (2.0 * np.pi)) * np.log((tc - t1) / (tc - t2))
-
-
-    @staticmethod
-    def get_damping(m: float, w: float, b: float, c: float) -> float:
-        return (m * np.abs(b)) / (w * np.abs(c))

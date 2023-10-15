@@ -42,3 +42,10 @@ class FilterInterface(ABC):
                 return False
 
         return True
+    
+
+    @staticmethod
+    def get_damping(m: float, w: float, b: float, c: float) -> float:
+        # this is the value in the Shanghai paper, but I recomputed
+        # return (m * np.abs(b)) / (w * np.abs(c))
+        return (m * np.abs(b)) / (np.sqrt(pow(w, 2) + pow(m, 2)) * np.abs(c))

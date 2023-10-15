@@ -1,0 +1,11 @@
+{
+    "w_min": 2.0,
+    "w_max": 25.0,
+    "m_min": 0.01,
+    "m_max": 1.2,
+    "O_min": 2.5,
+    "D_min": 1,
+    "tc_delta_min": 0.05,
+    "tc_delta_max": 0.1,
+    "relative_error_max": 0.2
+}

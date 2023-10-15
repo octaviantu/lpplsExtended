@@ -49,7 +49,7 @@ class FilterShanghai(FilterInterface):
             if success:
                 tc, m, w, a, b, c, c1, c2 = params_dict.values()
                 # O = FilterShanghai.get_oscillations(w, tc, t1, t2)
-                D = FilterShanghai.get_damping(m, w, b, c)
+                D = FilterInterface.get_damping(m, w, b, c)
                 final_dict = {
                     "tc": tc,
                     "m": m,
@@ -165,7 +165,3 @@ class FilterShanghai(FilterInterface):
         assert t1 < tc, "we can only compute oscillations above the starting time"
         # In the Shanghai paper, we divide by (t2 - t1), but that must be incorrect
         return (w / 2.0) * np.log((tc - t1) / (tc - t2))
-
-    @staticmethod
-    def get_damping(m: float, w: float, b: float, c: float) -> float:
-        return (m * np.abs(b)) / (w * np.abs(c))
