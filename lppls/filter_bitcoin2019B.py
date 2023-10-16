@@ -150,7 +150,8 @@ class FilterBitcoin2019B(FilterInterface):
         D_in_range = D >= self.filter_criteria.get("D_min")
 
         passing_lomb_test = FilterBitcoin2019B.is_passing_lomb_test(obs_up_to_tc, tc, m, a, b)
-        passing_ar1_test = self.is_ar1_process(obs_up_to_tc, tc, m, a, b)
+        # passing_ar1_test = self.is_ar1_process(obs_up_to_tc, tc, m, a, b)
+        passing_ar1_test = True
 
         conditions = {
             "O": O_in_range,
@@ -180,8 +181,8 @@ class FilterBitcoin2019B(FilterInterface):
         for i in range(0, len(obs_up_to_tc[0])):
             time, price = obs_up_to_tc[0][i], obs_up_to_tc[1][i]
             predicted_log_price = a + b * (tc - time) ** m
-            actual_log_price = np.log(price)
-            residuals.append(predicted_log_price - actual_log_price)
+            # not taking the log of the price because the price is already in log
+            residuals.append(predicted_log_price - price)
 
         # Fit an AR(1) model to the residuals
         ar1_model = AutoReg(residuals, lags=1).fit()
@@ -201,7 +202,8 @@ class FilterBitcoin2019B(FilterInterface):
         residuals = []
         for i in range(0, len(obs_up_to_tc[0])):
             time, price = obs_up_to_tc[0][i], obs_up_to_tc[1][i]
-            residuals.append((tc - time) ** (-m) * (np.log(price) - a - b * (tc - time) ** m))
+            # not taking the log of the price because the price is already in log
+            residuals.append((tc - time) ** (-m) * (price - a - b * (tc - time) ** m))
 
         # Compute the Lomb-Scargle periodogram
         f = np.linspace(0.01, 1, len(obs_up_to_tc[0]))  # Frequency range, adjust as needed

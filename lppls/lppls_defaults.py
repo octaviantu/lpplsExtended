@@ -8,4 +8,7 @@ T2_STEP = 1
 
 MAX_SEARCHES = 25
 
+# Lomb test from:
+# Real-time Prediction of Bitcoin Bubble Crashes (2019)
+# Authors: Min Shu, Wei Zhu
 SIGNIFICANCE_LEVEL = 0.05
