@@ -49,3 +49,18 @@ class FilterInterface(ABC):
         # this is the value in the Shanghai paper, but I recomputed
         # return (m * np.abs(b)) / (w * np.abs(c))
         return (m * np.abs(b)) / (np.sqrt(pow(w, 2) + pow(m, 2)) * np.abs(c))
+
+    @staticmethod
+    def are_oscillations_in_range(w: float, oscillations_divisor: float, tc: float, t1: float, t2: float,
+                                  O_min: float, b: float, c: float, min_c_b_ratio: float) -> bool:
+        #  From Swiss Finance - Dissection of Bitcoin's Multiscale Bubble History (2018)
+        #  G. C. Gerlach, Guilherme Demos, Didier Sornette
+        if np.abs(c/b) < min_c_b_ratio:
+            return True
+
+        assert t1 < tc, "we can only compute oscillations above the starting time"
+        # here the divisior is different:
+        # - in paper 1 it's 2
+        # - in paper 2 it's pi
+        O = (w / oscillations_divisor) * np.log((tc - t1) / (tc - t2))
+        return O >= O_min

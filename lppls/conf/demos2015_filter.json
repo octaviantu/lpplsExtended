@@ -1,0 +1,12 @@
+{
+    "m_min": 0.1,
+    "m_max": 0.9,
+    "w_min": 6,
+    "w_max": 13,
+    "O_min": 2.5,
+    "D_min": 1,
+    "relative_error_max": 0.15,
+    "oscillations_divisor": 3.14,
+    "tc_extra_space": 0.5,
+    "min_c_b_ratio": 0.05
+}

@@ -8,8 +8,16 @@ from filter_interface import FilterInterface
 import data_loader
 from statsmodels.tsa.ar_model import AutoReg
 from lppls_defaults import SIGNIFICANCE_LEVEL
+from count_metrics import CountMetrics
 
-
+# This filter is descipted in paper 1:
+# Real-time Prediction of Bitcoin Bubble Crashes (2019)
+# Authors: Min Shu, Wei Zhu
+# 
+# And also in paper 2:
+# Birth or burst of financial bubbles: which one is easier to diagnose (2015)
+# Authors: Guilherme Demos, Qunzhi Zhang, Didier Sornette
+# https://ssrn.com/abstract=2699164
 class FilterBitcoin2019B(FilterInterface):
     def __init__(self, filter_file="./lppls/conf/bitcoin2019_filterB.json"):
         self.filter_criteria = data_loader.load_config(filter_file)
@@ -27,16 +35,16 @@ class FilterBitcoin2019B(FilterInterface):
             A tuple with a boolean indicating success, and a dictionary with the values of tc, m, w, a, b, c, c1, c2, O, D
         """
 
+        t1 = obs[0, 0]
+        t2 = obs[0, -1]
+        tc_bounds = (t2 + 1, t2 + (t2 - t1) * self.filter_criteria.get("tc_extra_space"))
+        m_bounds = (self.filter_criteria.get("m_min"), self.filter_criteria.get("m_max"))
+        w_bounds = (self.filter_criteria.get("w_min"), self.filter_criteria.get("w_max"))
+        search_bounds = [tc_bounds, m_bounds, w_bounds]
+
         search_count = 0
         # find bubble
         while search_count < max_searches:
-            t1 = obs[0, 0]
-            t2 = obs[0, -1]
-
-            tc_bounds = (t2 + 1, t2 + (t2 - t1) / 5)
-            m_bounds = (self.filter_criteria.get("m_min"), self.filter_criteria.get("m_max"))
-            w_bounds = (self.filter_criteria.get("w_min"), self.filter_criteria.get("w_max"))
-            search_bounds = [tc_bounds, m_bounds, w_bounds]
 
             tc = random.uniform(*tc_bounds)
             m = random.uniform(*m_bounds)
@@ -48,7 +56,6 @@ class FilterBitcoin2019B(FilterInterface):
 
             if success:
                 tc, m, w, a, b, c, c1, c2 = params_dict.values()
-                O = FilterBitcoin2019B.get_oscillations(w, tc, t1, t2)
                 final_dict = {
                     "tc": tc,
                     "m": m,
@@ -57,13 +64,13 @@ class FilterBitcoin2019B(FilterInterface):
                     "b": b,
                     "c": c,
                     "c1": c1,
-                    "c2": c2,
-                    "O": O,
+                    "c2": c2
                 }
                 return True, final_dict
             else:
                 search_count += 1
 
+        CountMetrics.add_bubble_rejected_because_can_not_fit()
         return False, {}
 
     def estimate_params(
@@ -110,8 +117,8 @@ class FilterBitcoin2019B(FilterInterface):
     def check_bubble_fit(
         self, fits: Dict[str, float], observations: List[List[float]], t1_index: int, t2_index: int
     ) -> Tuple[bool, bool]:
-        t1, t2, tc, m, w, a, b, c, c1, c2, O = (
-            fits[key] for key in ["t1", "t2", "tc", "m", "w", "a", "b", "c", "c1", "c2", "O"]
+        t1, t2, tc, m, w, a, b, c, c1, c2 = (
+            fits[key] for key in ["t1", "t2", "tc", "m", "w", "a", "b", "c", "c1", "c2"]
         )
 
         obs_up_to_tc = LPPLSMath.stop_observation_at_tc(observations, tc)
@@ -129,24 +136,34 @@ class FilterBitcoin2019B(FilterInterface):
             c2,
         )
 
-        assert t2 + 1 <= tc <= t2 + ((t2 - t1) / 5)
+        tc_extra_space = self.filter_criteria.get("tc_extra_space")
+        assert t2 + 1 <= tc <= t2 + ((t2 - t1) * tc_extra_space)
         assert self.filter_criteria.get("m_min") <= m <= self.filter_criteria.get("m_max")
         assert self.filter_criteria.get("w_min") <= w <= self.filter_criteria.get("w_max")
 
-        if b != 0 and c != 0:
-            O = O
-        else:
-            O = np.inf
+        oscillations_divisor = self.filter_criteria.get("oscillations_divisor")
+        O_min = self.filter_criteria.get("O_min")
+        min_c_b_ratio = self.filter_criteria.get("min_c_b_ratio")
+        O_in_range = FilterInterface.are_oscillations_in_range(w, oscillations_divisor, tc, t1, t2, O_min, b, c, min_c_b_ratio)
 
-        O_in_range = O >= self.filter_criteria.get("O_min")
+        D = FilterInterface.get_damping(m, w, b, c)
+        D_in_range = D >= self.filter_criteria.get("D_min")
 
         passing_lomb_test = FilterBitcoin2019B.is_passing_lomb_test(obs_up_to_tc, tc, m, a, b)
         passing_ar1_test = self.is_ar1_process(obs_up_to_tc, tc, m, a, b)
 
-        if O_in_range and prices_in_range and passing_lomb_test and passing_ar1_test:
-            is_qualified = True
-        else:
-            is_qualified = False
+        conditions = {
+            "O": O_in_range,
+            "D": D_in_range,
+            "price": prices_in_range,
+            "lomb_test": passing_lomb_test,
+            "ar1_test": passing_ar1_test
+        }
+
+        CountMetrics.add_bubble(conditions)
+
+        is_qualified = O_in_range and D_in_range and prices_in_range and \
+              passing_lomb_test and passing_ar1_test
 
         # if B is negative, the predicted price will increase in value as t tends to tc (because 0 < m < 1)
         is_positive_bubble = b < 0
@@ -198,9 +215,3 @@ class FilterBitcoin2019B(FilterInterface):
 
         # Check if the p-value is less than or equal to your significance level
         return p_lomb <= SIGNIFICANCE_LEVEL
-
-
-    @staticmethod
-    def get_oscillations(w: float, tc: float, t1: float, t2: float) -> float:
-        assert t1 < tc, "we can only compute oscillations above the starting time"
-        return (w / 2.0) * np.log((tc - t1) / (tc - t2))

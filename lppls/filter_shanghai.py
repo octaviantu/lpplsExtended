@@ -7,6 +7,10 @@ from filter_interface import FilterInterface
 import data_loader
 from count_metrics import CountMetrics
 
+# This filter is descipted in paper:
+# Real-time prediction and post-mortem analysis of the Shanghai 2015 stock market bubble and crash (2015)
+# Authors: Didier Sornette, Guilherme Demos, Qun Zhang, Peter Cauwels, Vladimir Filimonov and Qunzhi Zhang
+# http://ssrn.com/abstract=2647354
 class FilterShanghai(FilterInterface):
     def __init__(self, filter_file="./lppls/conf/shanghai1_filter.json"):
         self.filter_criteria = data_loader.load_config(filter_file)
@@ -48,8 +52,6 @@ class FilterShanghai(FilterInterface):
 
             if success:
                 tc, m, w, a, b, c, c1, c2 = params_dict.values()
-                # O = FilterShanghai.get_oscillations(w, tc, t1, t2)
-                D = FilterInterface.get_damping(m, w, b, c)
                 final_dict = {
                     "tc": tc,
                     "m": m,
@@ -58,8 +60,7 @@ class FilterShanghai(FilterInterface):
                     "b": b,
                     "c": c,
                     "c1": c1,
-                    "c2": c2,
-                    "D": D,
+                    "c2": c2
                 }
                 return True, final_dict
             else:
@@ -113,8 +114,8 @@ class FilterShanghai(FilterInterface):
     def check_bubble_fit(
         self, fits: Dict[str, float], observations: List[List[float]], t1_index: int, t2_index: int
     ) -> Tuple[bool, bool]:
-        t1, t2, tc, m, w, a, b, c, c1, c2, D = (
-            fits[key] for key in ["t1", "t2", "tc", "m", "w", "a", "b", "c", "c1", "c2", "D"]
+        t1, t2, tc, m, w, a, b, c, c1, c2 = (
+            fits[key] for key in ["t1", "t2", "tc", "m", "w", "a", "b", "c", "c1", "c2"]
         )
 
         obs_up_to_tc = LPPLSMath.stop_observation_at_tc(observations, tc)
@@ -140,20 +141,25 @@ class FilterShanghai(FilterInterface):
         assert self.filter_criteria.get("m_min") <= m <= self.filter_criteria.get("m_max")
         assert self.filter_criteria.get("w_min") <= w <= self.filter_criteria.get("w_max")
 
-        # if b != 0 and c != 0:
-        #     O = O
-        # else:
-        #     O = np.inf
-        # O_in_range = O >= self.filter_criteria.get("O_min")
 
+        oscillations_divisor = self.filter_criteria.get("oscillations_divisor")
+        O_min = self.filter_criteria.get("O_min")
+        min_c_b_ratio = self.filter_criteria.get("min_c_b_ratio")
+        O_in_range = FilterInterface.are_oscillations_in_range(w, oscillations_divisor, tc, t1, t2, O_min, b, c, min_c_b_ratio)
+
+        D = FilterInterface.get_damping(m, w, b, c)
         D_in_range = D >= self.filter_criteria.get("D_min")
 
-        if D_in_range and prices_in_range:
-            is_qualified = True
-            CountMetrics.add_bubble_accepted()
-        else:
-            CountMetrics.add_rejected_bubble(D_in_range, prices_in_range)
-            is_qualified = False
+
+        conditions = {
+            "O": O_in_range,
+            "D": D_in_range,
+            "price": prices_in_range
+        }
+
+        CountMetrics.add_bubble(conditions)
+
+        is_qualified = O_in_range and D_in_range and prices_in_range
 
         # if B is negative, the predicted price will increase in value as t tends to tc (because 0 < m < 1)
         is_positive_bubble = b < 0

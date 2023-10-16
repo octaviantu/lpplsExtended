@@ -4,6 +4,9 @@
     "w_min": 2.0,
     "w_max": 25.0,
     "O_min": 2.5,
-    "D_min": 0.8,
-    "relative_error_max": 0.15
+    "D_min": 1,
+    "relative_error_max": 0.15,
+    "oscillations_divisor": 2.0,
+    "tc_extra_space": 0.2,
+    "min_c_b_ratio": 0.05
 }

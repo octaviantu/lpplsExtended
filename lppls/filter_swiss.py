@@ -5,7 +5,11 @@ import numpy as np
 import random
 from filter_interface import FilterInterface
 import data_loader
+from count_metrics import CountMetrics
 
+# This filter is descipted in paper:
+#  From Swiss Finance - Dissection of Bitcoin's Multiscale Bubble History (2018)
+#  G. C. Gerlach, Guilherme Demos, Didier Sornette
 class FilterSwiss(FilterInterface):
     def __init__(self, filter_file="./lppls/conf/swiss_filter.json"):
         self.filter_criteria = data_loader.load_config(filter_file)
@@ -62,6 +66,7 @@ class FilterSwiss(FilterInterface):
             else:
                 search_count += 1
 
+        CountMetrics.add_bubble_rejected_because_can_not_fit()
         return False, {}
 
 
@@ -113,8 +118,6 @@ class FilterSwiss(FilterInterface):
         t1, t2, tc, m, w, a, b, c, c1, c2 = (
             fits[key] for key in ["t1", "t2", "tc", "m", "w", "a", "b", "c", "c1", "c2"]
         )
-        O = FilterSwiss.get_oscillations(w, tc, t1, t2)
-        D = FilterInterface.get_damping(m, w, b, c)
 
         t_delta = t2 - t1
 
@@ -122,13 +125,22 @@ class FilterSwiss(FilterInterface):
         assert self.filter_criteria.get("m_min") <= m <= self.filter_criteria.get("m_max")
         assert self.filter_criteria.get("w_min") <= w <= self.filter_criteria.get("w_max")
 
-        O_in_range = self.should_ignore_oscillations(b, c) or O >= self.filter_criteria.get("O_min")
+        oscillations_divisor = self.filter_criteria.get("oscillations_divisor")
+        O_min = self.filter_criteria.get("O_min")
+        min_c_b_ratio = self.filter_criteria.get("min_c_b_ratio")
+        O_in_range = FilterInterface.are_oscillations_in_range(w, oscillations_divisor, tc, t1, t2, O_min, b, c, min_c_b_ratio)
+    
+        D = FilterInterface.get_damping(m, w, b, c)
         D_in_range = D >= self.filter_criteria.get("D_min")
 
-        if O_in_range and D_in_range:
-            is_qualified = True
-        else:
-            is_qualified = False
+        conditions = {
+            "O": O_in_range,
+            "D": D_in_range
+        }
+
+        CountMetrics.add_bubble(conditions)
+
+        is_qualified = O_in_range and D_in_range
 
         # if B is negative, the predicted price will increase in value as t tends to tc (because 0 < m < 1)
         is_positive_bubble = b < 0
@@ -138,9 +150,3 @@ class FilterSwiss(FilterInterface):
 
     def should_ignore_oscillations(self, b: float, c: float) -> bool:
         return np.abs(c / b) < self.filter_criteria.get("c_b_ratio_min")
-
-
-    @staticmethod
-    def get_oscillations(w: float, tc: float, t1: float, t2: float) -> float:
-        assert t1 < tc, "we can only compute oscillations above the starting time"
-        return (w / (2.0 * np.pi)) * np.log((tc - t1) / (tc - t2))

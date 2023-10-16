@@ -5,5 +5,7 @@
     "m_max": 0.999,
     "O_min": 2.5,
     "D_min": 0.5,
-    "c_b_ratio_min": 0.05
+    "oscillations_divisor": 2.0,
+    "tc_extra_space": 0.2,
+    "min_c_b_ratio": 0.05
 }
