@@ -95,9 +95,9 @@ lppls_model.plot_fit()
 known_price_span = lppls_model.mp_compute_t1_fits(
     workers=8,
     window_size=120, 
-    smallest_window_size=30, 
-    outer_increment=1, 
-    inner_increment=5, 
+    smallest_window_size=30,
+    t1_increment=5, 
+    t2_increment=1, 
     max_searches=25,
     # filter_conditions_config={} # not implemented in 0.6.x
 )

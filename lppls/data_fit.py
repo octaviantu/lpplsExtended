@@ -49,21 +49,21 @@ class DataFit:
         workers,
         window_size=LARGEST_WINDOW_SIZE,
         smallest_window_size=SMALLEST_WINDOW_SIZE,
-        outer_increment=T1_STEP,
-        inner_increment=T2_STEP,
+        t1_increment=T1_STEP,
+        t2_increment=T2_STEP,
         max_searches=MAX_SEARCHES,
     ):
         obs_copy = self.observations
         obs_copy_len = len(obs_copy[0]) - window_size
 
         t2_fits_args = []
-        for i in range(0, obs_copy_len + 1, outer_increment):
+        for i in range(0, obs_copy_len + 1, t2_increment):
             args = (
                 obs_copy[:, i : window_size + i],
                 window_size,
                 i,
                 smallest_window_size,
-                inner_increment,
+                t1_increment,
                 max_searches,
             )
             t2_fits_args.append(args)
@@ -77,7 +77,7 @@ class DataFit:
         return lppls_fits
 
     def compute_t2_fits(self, args):
-        obs, window_size, t1_index, smallest_window_size, inner_increment, max_searches = args
+        obs, window_size, t1_index, smallest_window_size, t1_increment, max_searches = args
 
         window_delta = window_size - smallest_window_size
 
@@ -92,7 +92,7 @@ class DataFit:
         t2_index = t1_index + len(obs[0]) - 1
 
         # run n fits on the observation slice.
-        for j in range(0, window_delta, inner_increment):
+        for j in range(0, window_delta, t1_increment):
             obs_shrinking_slice = obs[:, j:window_size]
 
             success, params_dict = self.fit(max_searches, obs=obs_shrinking_slice)
@@ -147,21 +147,21 @@ class DataFit:
         tc_init_max = t_last + pct_delta_max
         return tc_init_min, tc_init_max
 
-    # def compute_t1_fits(self, window_size=LARGEST_WINDOW_SIZE, smallest_window_size=LARGEST_WINDOW_SIZE, outer_increment=T1_STEP, inner_increment=T2_STEP,
+    # def compute_t1_fits(self, window_size=LARGEST_WINDOW_SIZE, smallest_window_size=LARGEST_WINDOW_SIZE, t2_increment=T1_STEP, t1_increment=T2_STEP,
     #                         max_searches=MAX_SEARCHES):
     #     obs_copy = self.observations
     #     obs_copy_len = len(obs_copy[0]) - window_size
     #     window_delta = window_size - smallest_window_size
     #     known_price_span = []
     #     i_idx = 0
-    #     for i in range(0, obs_copy_len + 1, outer_increment):
+    #     for i in range(0, obs_copy_len + 1, t2_increment):
     #         j_idx = 0
     #         obs = obs_copy[:, i:window_size + i]
     #         t1 = obs[0][0]
     #         t2 = obs[0][-1]
     #         known_price_span.append([])
     #         i_idx += 1
-    #         for j in range(0, window_delta, inner_increment):
+    #         for j in range(0, window_delta, t1_increment):
     #             obs_shrinking_slice = obs[:, j:window_size]
     #             tc, m, w, a, b, c, c1, c2, O, D = self.fit(max_searches, obs=obs_shrinking_slice)
     #             known_price_span[i_idx-1].append([])
@@ -173,7 +173,7 @@ class DataFit:
     #         dims=('t2', 'windowsizes', 'params'),
     #         coords=dict(
     #                     t2=obs_copy[0][(window_size-1):],
-    #                     windowsizes=range(smallest_window_size, window_size, inner_increment),
+    #                     windowsizes=range(smallest_window_size, window_size, t1_increment),
     #                     params=['t2', 't1', 'a', 'b', 'c', 'm', '0', 'tc'],
     #                     )
     #     )

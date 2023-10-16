@@ -26,8 +26,8 @@ def test_basic_case(observations, filter_settings):
         workers=2,
         window_size=5,
         smallest_window_size=2,
-        outer_increment=1,
-        inner_increment=1,
+        t2_increment=1,
+        t1_increment=1,
         max_searches=10,
     )
     assert result is not None

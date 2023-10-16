@@ -32,8 +32,8 @@ def execute_lppls_logic(data_filtered, filter_type, filter_file):
         workers=8,
         window_size=LARGEST_WINDOW_SIZE,
         smallest_window_size=SMALLEST_WINDOW_SIZE,
-        outer_increment=T1_STEP,
-        inner_increment=T2_STEP,
+        t1_increment=T1_STEP,
+        t2_increment=T2_STEP,
         max_searches=MAX_SEARCHES,
     )
     sornette.plot_bubble_scores(res_filtered)
