@@ -150,8 +150,7 @@ class FilterBitcoin2019B(FilterInterface):
         D_in_range = D >= self.filter_criteria.get("D_min")
 
         passing_lomb_test = FilterBitcoin2019B.is_passing_lomb_test(obs_up_to_tc, tc, m, a, b)
-        # passing_ar1_test = self.is_ar1_process(obs_up_to_tc, tc, m, a, b)
-        passing_ar1_test = True
+        passing_ar1_test = self.is_ar1_process(obs_up_to_tc, tc, m, a, b)
 
         conditions = {
             "O": O_in_range,
