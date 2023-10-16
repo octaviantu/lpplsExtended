@@ -160,7 +160,7 @@ class FilterBitcoin2019B(FilterInterface):
             "ar1_test": passing_ar1_test
         }
 
-        CountMetrics.add_bubble(conditions)
+        CountMetrics.add_bubble(conditions, t2_index)
 
         is_qualified = O_in_range and D_in_range and prices_in_range and \
               passing_lomb_test and passing_ar1_test

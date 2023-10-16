@@ -138,7 +138,7 @@ class FilterSwiss(FilterInterface):
             "D": D_in_range
         }
 
-        CountMetrics.add_bubble(conditions)
+        CountMetrics.add_bubble(conditions, t2_index)
 
         is_qualified = O_in_range and D_in_range
 
