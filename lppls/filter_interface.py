@@ -32,10 +32,16 @@ class FilterInterface(ABC):
         c2: float,
     ) -> bool:
         for i in range(t1_index, min(len(observations[0]), t2_index)):
-            t, p = observations[0][i], observations[1][i]
-            predicted_price = np.exp(LPPLSMath.lppls(t, tc, m, w, a, b, c1, c2))
-            actual_price = np.exp(p)
+            t, actual_price = observations[0][i], observations[1][i]
+            predicted_price = LPPLSMath.lppls(t, tc, m, w, a, b, c1, c2)
 
+            # In some papers such as the one underneath they are using the price, not its log.
+            # However, in practice that will exclude all large enough windows because there is bound to be a
+            # price difference larger than the prediction error, especially since we are not optimising for that
+            # in the minimizer
+            # 
+            # Real-time Prediction of Bitcoin Bubble Crashes
+            # Authors: Min Shu, Wei Zhu1
             prediction_error = abs(actual_price - predicted_price) / actual_price
 
             if prediction_error > relative_error_max:

@@ -1,5 +1,5 @@
-LARGEST_WINDOW_SIZE = 126  # working days in 6 months
-SMALLEST_WINDOW_SIZE = 20
+LARGEST_WINDOW_SIZE = 150  # working days in 7 months
+SMALLEST_WINDOW_SIZE = 30
 
 # t1 is set to 5 in the Shanghai paper but there they move it between 125 and 750
 T1_STEP = 2
