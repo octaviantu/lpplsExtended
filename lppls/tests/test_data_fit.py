@@ -22,7 +22,7 @@ def filter_settings():
 
 def test_basic_case(observations, filter_settings):
     data_fit = DataFit(observations, filter_settings)
-    result = data_fit.mp_compute_t1_fits(
+    result = data_fit.parallel_compute_t2_fits(
         workers=2,
         window_size=5,
         smallest_window_size=2,
@@ -36,5 +36,5 @@ def test_basic_case(observations, filter_settings):
 def test_empty_observations(filter_settings):
     empty_obs = np.array([[], []])
     data_fit = DataFit(empty_obs, filter_settings)
-    result = data_fit.mp_compute_t1_fits(workers=2)
+    result = data_fit.parallel_compute_t2_fits(workers=2)
     assert result == []

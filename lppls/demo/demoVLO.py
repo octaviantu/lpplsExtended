@@ -28,7 +28,7 @@ def execute_lppls_logic(data_filtered, filter_type, filter_file):
     sornette.fit(MAX_SEARCHES)
     sornette.plot_fit()
 
-    res_filtered = sornette.mp_compute_t1_fits(
+    res_filtered = sornette.parallel_compute_t2_fits(
         workers=8,
         window_size=LARGEST_WINDOW_SIZE,
         smallest_window_size=SMALLEST_WINDOW_SIZE,

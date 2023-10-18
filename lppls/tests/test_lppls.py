@@ -12,7 +12,7 @@ def data():
 
 @pytest.fixture
 def observations(data):
-    data = data.head(130)  # make it smaller so mp_compute_t1_fits runs faster
+    data = data.head(130)  # make it smaller so parallel_compute_t2_fits runs faster
     times = np.linspace(0, len(data) - 1, len(data))
     prices = [p for p in data["Adj Close"]]
     return np.array([times, prices])
@@ -118,7 +118,7 @@ def test_matrix_equation(observations, lppls_model):
 
 
 def test_mp_compute_nested_fits(lppls_model):
-    known_price_span = lppls_model.mp_compute_t1_fits(workers=1)
+    known_price_span = lppls_model.parallel_compute_t2_fits(workers=1)
     assert len(known_price_span) == 1
     assert known_price_span[0]["t1"] == 0.0
     assert known_price_span[0]["t2"] == 125.0

@@ -7,7 +7,7 @@ from tqdm import tqdm
 import pandas as pd
 from matplotlib import pyplot as plt
 from multiprocessing import Pool
-from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP, MAX_SEARCHES
+from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP, MAX_SEARCHES, RECENT_RELEVANT_WINDOWS
 from filter_interface import FilterInterface
 
 
@@ -39,13 +39,20 @@ class DataFit:
 
         plt.xticks(rotation=45)
 
+
     def fit(
         self, max_searches: int, obs: np.ndarray, minimizer: str = "Nelder-Mead"
     ) -> Tuple[bool, Dict[str, float]]:
         return self.filter.fit(max_searches, obs, minimizer)
 
-    def mp_compute_t1_fits(
+
+    def parallel_compute_t2_fits(self, **kwargs):
+       return self.parallel_compute_t2_recent_fits(np.inf, **kwargs)
+
+
+    def parallel_compute_t2_recent_fits(
         self,
+        recent_windows,
         workers,
         window_size=LARGEST_WINDOW_SIZE,
         smallest_window_size=SMALLEST_WINDOW_SIZE,
@@ -53,11 +60,12 @@ class DataFit:
         t2_increment=T2_STEP,
         max_searches=MAX_SEARCHES,
     ):
+        stop_windows_beginnings = len(self.observations[0]) - window_size + 1
+        start_windows_beginnings = max(len(self.observations[0]) - window_size - recent_windows, 0)
+        
         obs_copy = self.observations
-        obs_copy_len = len(obs_copy[0]) - window_size
-
         t2_fits_args = []
-        for i in range(0, obs_copy_len + 1, t2_increment):
+        for i in range(start_windows_beginnings, stop_windows_beginnings, t2_increment):
             args = (
                 obs_copy[:, i : window_size + i],
                 window_size,
@@ -71,12 +79,13 @@ class DataFit:
         lppls_fits = []
         with Pool(processes=workers) as pool:
             lppls_fits = list(
-                tqdm(pool.imap(self.compute_t2_fits, t2_fits_args), total=len(t2_fits_args))
+                tqdm(pool.imap(self.compute_t1_fits, t2_fits_args), total=len(t2_fits_args))
             )
 
         return lppls_fits
 
-    def compute_t2_fits(self, args):
+
+    def compute_t1_fits(self, args):
         obs, window_size, t1_index, smallest_window_size, t1_increment, max_searches = args
 
         window_delta = window_size - smallest_window_size

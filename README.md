@@ -92,7 +92,7 @@ lppls_model.plot_fit()
 
 ```python
 # compute the confidence indicator
-known_price_span = lppls_model.mp_compute_t1_fits(
+known_price_span = lppls_model.parallel_compute_t2_fits(
     workers=8,
     window_size=120, 
     smallest_window_size=30,

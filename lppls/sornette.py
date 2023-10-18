@@ -35,8 +35,8 @@ class Sornette:
         self.data_fit.plot_fit(**lppls_equation_terms)
 
 
-    def mp_compute_t1_fits(self, **kwargs):
-        return self.data_fit.mp_compute_t1_fits(**kwargs)
+    def parallel_compute_t2_fits(self, **kwargs):
+        return self.data_fit.parallel_compute_t2_fits(**kwargs)
 
 
     def plot_bubble_scores(self, res_filtered):
