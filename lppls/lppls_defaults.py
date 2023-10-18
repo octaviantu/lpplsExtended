@@ -15,4 +15,4 @@ SIGNIFICANCE_LEVEL = 0.05
 
 
 # windows that are close to the end of the data, to see if there is a recent bubble
-RECENT_RELEVANT_WINDOWS = 20
+# RECENT_RELEVANT_WINDOWS = 20

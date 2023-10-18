@@ -1,13 +1,11 @@
 from typing import Dict, Tuple
 import numpy as np
 from lppls_math import LPPLSMath
-from datetime import datetime as date
-from pandas._libs.tslibs.np_datetime import OutOfBoundsDatetime
 from tqdm import tqdm
 import pandas as pd
 from matplotlib import pyplot as plt
 from multiprocessing import Pool
-from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP, MAX_SEARCHES, RECENT_RELEVANT_WINDOWS
+from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP, MAX_SEARCHES
 from filter_interface import FilterInterface
 
 
@@ -61,7 +59,7 @@ class DataFit:
         max_searches=MAX_SEARCHES,
     ):
         stop_windows_beginnings = len(self.observations[0]) - window_size + 1
-        start_windows_beginnings = max(len(self.observations[0]) - window_size - recent_windows, 0)
+        start_windows_beginnings = max(len(self.observations[0]) - window_size - recent_windows + 1, 0)
         
         obs_copy = self.observations
         t2_fits_args = []

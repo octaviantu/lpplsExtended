@@ -39,6 +39,10 @@ class Sornette:
         return self.data_fit.parallel_compute_t2_fits(**kwargs)
 
 
+    def parallel_compute_t2_recent_fits(self, **kwargs):
+        return self.data_fit.parallel_compute_t2_recent_fits(**kwargs)
+
+
     def plot_bubble_scores(self, res_filtered):
         self.bubble_scores.plot_bubble_scores(res_filtered)
 

@@ -18,6 +18,15 @@
       "type": "python",
       "request": "launch",
       "program": "${workspaceFolder}/lppls/demo/demoVLO.py"
+    },
+    {
+      "name": "SP debug",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/lppls/demo/demoSP.py",
+      "args": [
+        "--display"
+      ]
     }
   ]
 }
