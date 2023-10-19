@@ -36,6 +36,17 @@
       "args": [
         "--specific"
       ]
-    }
+    },
+    {
+      "name": "SP debug only etf",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/lppls/demo/demoSP.py",
+      "args": [
+        "--display",
+        "--type",
+        "etf"
+      ]
+    },
   ]
 }

@@ -69,12 +69,12 @@ def plot_specific(cursor: psycopg2.extensions.cursor) -> None:
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
     )
     cursor = conn.cursor()
-    for symbol in SPECIFIC_TICKERS:
-        query = f"SELECT date, close_price FROM stock_data WHERE ticker='{symbol}' ORDER BY date ASC;"
+    for ticker in SPECIFIC_TICKERS:
+        query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' ORDER BY date ASC;"
         cursor.execute(query)
         rows = cursor.fetchall()
         closing_prices = pd.DataFrame(rows, columns=["Date", "Adj Close"])
-        plot_bubble_fits(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json', symbol)
+        plot_bubble_fits(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json', ticker)
 
     plt.show()
 
@@ -83,33 +83,44 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--display", action="store_true", help="Display bubble scores plot for each company")
     parser.add_argument("--specific", action="store_true", help="Plot only specific stocks")
+    parser.add_argument("--type", type=str, help="Type of asset to consider ('stock' or 'etf')")
+
     args = parser.parse_args()
 
-    
     conn = psycopg2.connect(
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
     )
     cursor = conn.cursor()
+
     if args.specific:
         plot_specific(cursor)
         return
 
-    cursor.execute(f"SELECT symbol, company FROM sp500_components ORDER BY CAST(portfolio_percent as FLOAT) DESC LIMIT {LIMIT_OF_LARGEST_COMPANIES}")
-    symbols = cursor.fetchall()
-    symbols_with_criteria = []
+    if args.type and args.type.lower() == 'stock':
+        sql_query = "SELECT ticker, company FROM sp500_components ORDER BY CAST(portfolio_percent as FLOAT) DESC LIMIT {LIMIT_OF_LARGEST_COMPANIES}"
+    elif args.type and args.type.lower() == 'etf':
+        sql_query = "SELECT ticker, etf FROM etfs"
+    else:
+        sql_query = f"""(SELECT ticker, company FROM sp500_components ORDER BY CAST(portfolio_percent as FLOAT) DESC LIMIT {LIMIT_OF_LARGEST_COMPANIES})
+                        UNION
+                        SELECT ticker, etf FROM etfs"""
 
-    for symbol, _ in symbols:
-        query = f"SELECT date, close_price FROM stock_data WHERE ticker='{symbol}' ORDER BY date ASC;"
+    cursor.execute(sql_query)
+    tickers = cursor.fetchall()
+    tickers_with_criteria = []
+
+    for ticker, _ in tickers:
+        query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' ORDER BY date ASC;"
         cursor.execute(query)
         rows = cursor.fetchall()
         closing_prices = pd.DataFrame(rows, columns=["Date", "Adj Close"])
 
         if is_in_bubble_state(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json'):
-            symbols_with_criteria.append(symbol)
+            tickers_with_criteria.append(ticker)
             if args.display:
-                plot_bubble_fits(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json', symbol)            
+                plot_bubble_fits(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json', ticker)            
 
-    print("Stocks that meet the criteria:", symbols_with_criteria)
+    print("Stocks that meet the criteria:", tickers_with_criteria)
 
     if args.display:
         plt.show()
@@ -125,3 +136,9 @@ if __name__ == "__main__":
 
 # To show only a specific set of tickers:
 # python demoSP.py --specific
+
+# To display only stocks:
+# python demoSP.py --display --type stocks
+
+# To display only etfs:
+# python demoSP.py --display --type etf

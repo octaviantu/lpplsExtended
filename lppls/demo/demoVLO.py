@@ -45,7 +45,7 @@ def main():
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
     )
     cursor = conn.cursor()
-    query = "SELECT date, close_price FROM stock_data WHERE ticker='VLO' ORDER BY date ASC;"
+    query = "SELECT date, close_price FROM pricing_history WHERE ticker='VLO' ORDER BY date ASC;"
     cursor.execute(query)
     rows = cursor.fetchall()
     data = pd.DataFrame(rows, columns=["Date", "Adj Close"])
