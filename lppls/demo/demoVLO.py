@@ -36,7 +36,7 @@ def execute_lppls_logic(data_filtered, filter_type, filter_file):
         t2_increment=T2_STEP,
         max_searches=MAX_SEARCHES,
     )
-    sornette.plot_bubble_scores(res_filtered)
+    sornette.plot_bubble_scores(res_filtered, 'VLO')
 
 
 def main():

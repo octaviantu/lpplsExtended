@@ -8,7 +8,7 @@ class BubbleScores:
         self.observations = observations
         self.filter = filter
 
-    def plot_bubble_scores(self, known_price_span):
+    def plot_bubble_scores(self, known_price_span, ticker):
         """
         Args:
             known_price_span (list): result from mp_compute_indicator
@@ -18,7 +18,8 @@ class BubbleScores:
             nothing, should plot the indicator
         """
         known_price_span_df = self.compute_bubble_scores(known_price_span)
-        _, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(18, 10))
+        fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(18, 10))
+        fig.canvas.manager.set_window_title(ticker)
 
         ord = known_price_span_df["time"].astype("int32")
         ts = [pd.Timestamp.fromordinal(d) for d in ord]

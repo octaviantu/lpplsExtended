@@ -11,9 +11,9 @@ import argparse
 from matplotlib import pyplot as plt
 
 
-BUBBLE_THRESHOLD = 0.2
+BUBBLE_THRESHOLD = 0.25
 # windows that are close to the end of the data, to see if there is a recent bubble
-RECENT_RELEVANT_WINDOWS = 20
+RECENT_RELEVANT_WINDOWS = 5
 RECENT_VISIBLE_WINDOWS = 200
 LIMIT_OF_LARGEST_COMPANIES = 200
 
@@ -43,7 +43,7 @@ def is_in_bubble_state(closing_prices, filter_type, filter_file):
 
 
 
-def plot_bubble_fits(closing_prices, filter_type, filter_file):
+def plot_bubble_fits(closing_prices, filter_type, filter_file, ticker):
     times = [pd.Timestamp.toordinal(dt) for dt in closing_prices["Date"]]
     prices = np.log(closing_prices["Adj Close"].values)
 
@@ -59,24 +59,44 @@ def plot_bubble_fits(closing_prices, filter_type, filter_file):
         t2_increment=T2_STEP,
         max_searches=MAX_SEARCHES,
     )
-    sornette.plot_bubble_scores(fits)
+    sornette.plot_bubble_scores(fits, ticker)
 
+
+
+SPECIFIC_TICKERS = ['CSCO', 'UNP', 'TJX', 'ETN', 'FI', 'MPC', 'ROP', 'AJG', 'AFL', 'GIS', 'CEG', 'BIIB']
+def plot_specific(cursor: psycopg2.extensions.cursor) -> None:
+    conn = psycopg2.connect(
+        host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
+    )
+    cursor = conn.cursor()
+    for symbol in SPECIFIC_TICKERS:
+        query = f"SELECT date, close_price FROM stock_data WHERE ticker='{symbol}' ORDER BY date ASC;"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        closing_prices = pd.DataFrame(rows, columns=["Date", "Adj Close"])
+        plot_bubble_fits(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json', symbol)
+
+    plt.show()
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--display", action="store_true", help="Display bubble scores plot for each company")
+    parser.add_argument("--specific", action="store_true", help="Plot only specific stocks")
     args = parser.parse_args()
 
+    
     conn = psycopg2.connect(
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
     )
     cursor = conn.cursor()
+    if args.specific:
+        plot_specific(cursor)
+        return
+
     cursor.execute(f"SELECT symbol, company FROM sp500_components ORDER BY CAST(portfolio_percent as FLOAT) DESC LIMIT {LIMIT_OF_LARGEST_COMPANIES}")
     symbols = cursor.fetchall()
-
     symbols_with_criteria = []
-    # selected_closing_prices = {}
 
     for symbol, _ in symbols:
         query = f"SELECT date, close_price FROM stock_data WHERE ticker='{symbol}' ORDER BY date ASC;"
@@ -87,22 +107,21 @@ def main():
         if is_in_bubble_state(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json'):
             symbols_with_criteria.append(symbol)
             if args.display:
-                plot_bubble_fits(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json')
-            
-        
+                plot_bubble_fits(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json', symbol)            
+
     print("Stocks that meet the criteria:", symbols_with_criteria)
 
     if args.display:
         plt.show()
-    #     #  We display a larger time window for the bubble scores plot
-    #     for symbol, closing_prices in selected_closing_prices.items():
-    #         plot_bubble_fits(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json')
-    #     plt.show()
+
 
 
 if __name__ == "__main__":
     main()
 
 
-# To display the plots, run:
+# To display the plots:
 # python demoSP.py --display
+
+# To show only a specific set of tickers:
+# python demoSP.py --specific

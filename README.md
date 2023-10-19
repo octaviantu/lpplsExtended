@@ -102,7 +102,7 @@ known_price_span = lppls_model.parallel_compute_t2_fits(
     # filter_conditions_config={} # not implemented in 0.6.x
 )
 
-lppls_model.plot_bubble_scores(known_price_span)
+lppls_model.plot_bubble_scores(known_price_span, ticker)
 # should give a plot like the following...
 ```
 ![LPPLS Confidnce Indicator](https://raw.githubusercontent.com/Boulder-Investment-Technologies/lppls/master/img/dotcom_confidence_indicator.png)

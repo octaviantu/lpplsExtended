@@ -27,6 +27,15 @@
       "args": [
         "--display"
       ]
+    },
+    {
+      "name": "SP debug specific",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/lppls/demo/demoSP.py",
+      "args": [
+        "--specific"
+      ]
     }
   ]
 }
