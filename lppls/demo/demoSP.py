@@ -109,9 +109,6 @@ def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) ->
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--display", action="store_true", help="Display bubble scores plot for each company"
-    )
     parser.add_argument("--specific", action="store_true", help="Plot only specific stocks")
     parser.add_argument("--type", type=str, help="Type of asset to consider ('stock' or 'etf')")
     parser.add_argument(
@@ -179,51 +176,44 @@ def main():
             elif bubble_state == BubbleType.NEGATIVE:
                 negative_bubbles.append(ticker)
 
-            if args.display:
-                plot_bubble_fits(
-                    closing_prices,
-                    "BitcoinB",
-                    "./lppls/conf/demos2015_filter.json",
-                    ticker,
-                    default_fitting_params,
-                )
+            plot_bubble_fits(
+                closing_prices,
+                "BitcoinB",
+                "./lppls/conf/demos2015_filter.json",
+                ticker,
+                default_fitting_params,
+            )
+
+            # Define the directory path
+            today_date = datetime.today().strftime('%Y-%m-%d')
+            dir_path = os.path.join('plots', today_date)
+
+            # Create the directory if it doesn't exist
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
+
+            # Save the figure
+            file_name = f"{ticker}.png"
+            file_path = os.path.join(dir_path, file_name)
+            plt.savefig(file_path, dpi=300, bbox_inches='tight')
+
 
     print("Positive bubbles: ", positive_bubbles)
     print("Negative bubbles: ", negative_bubbles)
-
-    if args.display:
-        # Define the directory path
-        today_date = datetime.today().strftime('%Y-%m-%d')
-        dir_path = os.path.join('plots', today_date)
-
-        # Create the directory if it doesn't exist
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
-
-        # Save the figure
-        file_name = f"{ticker}.png"
-        file_path = os.path.join(dir_path, file_name)
-        plt.savefig(file_path, dpi=300, bbox_inches='tight')
-        
-        # Display the plot
-        plt.show()
 
 
 if __name__ == "__main__":
     main()
 
 
-# To display the plots:
-# python demoSP.py --display
-
 # To show only a specific set of tickers:
 # python demoSP.py --specific
 
 # To display only stocks:
-# python demoSP.py --display --type stocks
+# python demoSP.py --type stocks
 
 # To display only etfs:
-# python demoSP.py --display --type etf
+# python demoSP.py --type etf
 
 # To Use more windows for fitting:
-# python demoSP.py --display --strict
+# python demoSP.py --strict

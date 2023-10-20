@@ -23,10 +23,7 @@
       "name": "SP debug",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/lppls/demo/demoSP.py",
-      "args": [
-        "--display"
-      ]
+      "program": "${workspaceFolder}/lppls/demo/demoSP.py"
     },
     {
       "name": "SP debug specific",
@@ -43,7 +40,6 @@
       "request": "launch",
       "program": "${workspaceFolder}/lppls/demo/demoSP.py",
       "args": [
-        "--display",
         "--type",
         "etf"
       ]
@@ -54,7 +50,6 @@
       "request": "launch",
       "program": "${workspaceFolder}/lppls/demo/demoSP.py",
       "args": [
-        "--display",
         "--type",
         "stock"
       ]

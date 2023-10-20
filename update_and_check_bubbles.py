@@ -15,8 +15,8 @@ scripts_to_run = [
         "log": "Fetching latest S&P500 pricing",
     },
     {
-        "cmd": ("python", "lppls/demo/demoSP.py", "--display"),
-        "log": "Running demoSP.py with display",
+        "cmd": ("python", "lppls/demo/demoSP.py"),
+        "log": "Running fits on all available stocks and etfs",
     },
 ]
 
