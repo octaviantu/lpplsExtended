@@ -21,6 +21,7 @@ from lppls_defaults import (
 )
 import argparse
 from matplotlib import pyplot as plt
+from enum import Enum
 
 
 BUBBLE_THRESHOLD = 0.25
@@ -28,6 +29,10 @@ BUBBLE_THRESHOLD = 0.25
 RECENT_RELEVANT_WINDOWS = 5
 RECENT_VISIBLE_WINDOWS = 200
 LIMIT_OF_MOST_TRADED_COMPANIES = 200
+
+class BubbleType(Enum):
+    POSITIVE = "positive"
+    NEGATIVE = "negative"
 
 
 def is_in_bubble_state(closing_prices, filter_type, filter_file, default_fitting_params):
@@ -48,10 +53,12 @@ def is_in_bubble_state(closing_prices, filter_type, filter_file, default_fitting
     )
     bubble_scores = sornette.bubble_scores.compute_bubble_scores(fits)
     for _, row in bubble_scores.iterrows():
-        if row["pos_conf"] > BUBBLE_THRESHOLD or row["neg_conf"] > BUBBLE_THRESHOLD:
-            return True
+        if row["pos_conf"] > BUBBLE_THRESHOLD:
+            return BubbleType.POSITIVE
+        elif row["neg_conf"] > BUBBLE_THRESHOLD:
+            return BubbleType.NEGATIVE
 
-    return False
+    return None
 
 
 def plot_bubble_fits(closing_prices, filter_type, filter_file, ticker, default_fitting_params):
@@ -148,7 +155,7 @@ def main():
 
     cursor.execute(sql_query)
     tickers = cursor.fetchall()
-    tickers_with_criteria = []
+    positive_bubbles, negative_bubbles = [], []
 
     print(f"Will go through {len(tickers)} tickers.")
     for index, (ticker,) in enumerate(tickers):
@@ -158,11 +165,17 @@ def main():
         rows = cursor.fetchall()
         closing_prices = pd.DataFrame(rows, columns=["Date", "Adj Close"])
 
-        if is_in_bubble_state(
+        bubble_state = is_in_bubble_state(
             closing_prices, "BitcoinB", "./lppls/conf/demos2015_filter.json", default_fitting_params
-        ):
+        )
+
+        if bubble_state:
             print(f"{ticker} meets criteria")
-            tickers_with_criteria.append(ticker)
+            if bubble_state == BubbleType.POSITIVE:
+                positive_bubbles.append(ticker)
+            elif bubble_state == BubbleType.NEGATIVE:
+                negative_bubbles.append(ticker)
+
             if args.display:
                 plot_bubble_fits(
                     closing_prices,
@@ -172,7 +185,8 @@ def main():
                     default_fitting_params,
                 )
 
-    print("Assets that meet the criteria:", tickers_with_criteria)
+    print("Positive bubbles: ", positive_bubbles)
+    print("Negative bubbles: ", negative_bubbles)
 
     if args.display:
         plt.show()
