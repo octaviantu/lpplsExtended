@@ -1,12 +1,24 @@
 import sys
+
 sys.path.append("/Users/octaviantuchila/Documents/MonteCarlo/Sornette/lppls_python_updated/lppls")
-sys.path.append("/Users/octaviantuchila/Documents/MonteCarlo/Sornette/lppls_python_updated/lppls/metrics")
+sys.path.append(
+    "/Users/octaviantuchila/Documents/MonteCarlo/Sornette/lppls_python_updated/lppls/metrics"
+)
 
 import numpy as np
 import pandas as pd
 import psycopg2
 from sornette import Sornette
-from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP, MAX_SEARCHES, T1_STEP_STRICT, SMALLEST_WINDOW_SIZE_STRICT, LARGEST_WINDOW_SIZE_STRICT
+from lppls_defaults import (
+    LARGEST_WINDOW_SIZE,
+    SMALLEST_WINDOW_SIZE,
+    T1_STEP,
+    T2_STEP,
+    MAX_SEARCHES,
+    T1_STEP_STRICT,
+    SMALLEST_WINDOW_SIZE_STRICT,
+    LARGEST_WINDOW_SIZE_STRICT,
+)
 import argparse
 from matplotlib import pyplot as plt
 
@@ -28,9 +40,9 @@ def is_in_bubble_state(closing_prices, filter_type, filter_file, default_fitting
     fits = sornette.parallel_compute_t2_recent_fits(
         workers=8,
         recent_windows=RECENT_RELEVANT_WINDOWS,
-        window_size=default_fitting_params['largest_window_size'],
-        smallest_window_size=default_fitting_params['smallest_window_size'],
-        t1_increment=default_fitting_params['t1_step'],
+        window_size=default_fitting_params["largest_window_size"],
+        smallest_window_size=default_fitting_params["smallest_window_size"],
+        t1_increment=default_fitting_params["t1_step"],
         t2_increment=T2_STEP,
         max_searches=MAX_SEARCHES,
     )
@@ -40,7 +52,6 @@ def is_in_bubble_state(closing_prices, filter_type, filter_file, default_fitting
             return True
 
     return False
-
 
 
 def plot_bubble_fits(closing_prices, filter_type, filter_file, ticker, default_fitting_params):
@@ -53,17 +64,18 @@ def plot_bubble_fits(closing_prices, filter_type, filter_file, ticker, default_f
     fits = sornette.parallel_compute_t2_recent_fits(
         workers=8,
         recent_windows=RECENT_VISIBLE_WINDOWS,
-        window_size=default_fitting_params['largest_window_size'],
-        smallest_window_size=default_fitting_params['smallest_window_size'],
-        t1_increment=default_fitting_params['t1_step'],
+        window_size=default_fitting_params["largest_window_size"],
+        smallest_window_size=default_fitting_params["smallest_window_size"],
+        t1_increment=default_fitting_params["t1_step"],
         t2_increment=T2_STEP,
         max_searches=MAX_SEARCHES,
     )
     sornette.plot_bubble_scores(fits, ticker)
 
 
+SPECIFIC_TICKERS = ["AJG", "AFL", "GIS"]
 
-SPECIFIC_TICKERS = ['AJG', 'AFL', 'GIS']
+
 def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) -> None:
     conn = psycopg2.connect(
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
@@ -74,17 +86,30 @@ def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) ->
         cursor.execute(query)
         rows = cursor.fetchall()
         closing_prices = pd.DataFrame(rows, columns=["Date", "Adj Close"])
-        plot_bubble_fits(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json', ticker, default_fitting_params)
+        plot_bubble_fits(
+            closing_prices,
+            "BitcoinB",
+            "./lppls/conf/demos2015_filter.json",
+            ticker,
+            default_fitting_params,
+        )
 
     plt.show()
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--display", action="store_true", help="Display bubble scores plot for each company")
+    parser.add_argument(
+        "--display", action="store_true", help="Display bubble scores plot for each company"
+    )
     parser.add_argument("--specific", action="store_true", help="Plot only specific stocks")
     parser.add_argument("--type", type=str, help="Type of asset to consider ('stock' or 'etf')")
-    parser.add_argument("--strict", action="store_true", help="Apply smaller and more fitting windows", default=False)
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Apply smaller and more fitting windows",
+        default=False,
+    )
 
     args = parser.parse_args()
 
@@ -94,9 +119,11 @@ def main():
     cursor = conn.cursor()
 
     default_fitting_params = {
-        't1_step': T1_STEP_STRICT if args.strict else T1_STEP,
-        'smallest_window_size': SMALLEST_WINDOW_SIZE_STRICT if args.strict else SMALLEST_WINDOW_SIZE,
-        'largest_window_size': LARGEST_WINDOW_SIZE_STRICT if args.strict else LARGEST_WINDOW_SIZE
+        "t1_step": T1_STEP_STRICT if args.strict else T1_STEP,
+        "smallest_window_size": SMALLEST_WINDOW_SIZE_STRICT
+        if args.strict
+        else SMALLEST_WINDOW_SIZE,
+        "largest_window_size": LARGEST_WINDOW_SIZE_STRICT if args.strict else LARGEST_WINDOW_SIZE,
     }
 
     if args.specific:
@@ -112,38 +139,43 @@ def main():
                     FROM pricing_history
                     WHERE type = 'ETF'"""
 
-    if args.type and args.type.lower() == 'stock':
+    if args.type and args.type.lower() == "stock":
         sql_query = stock_query
-    elif args.type and args.type.lower() == 'etf':
+    elif args.type and args.type.lower() == "etf":
         sql_query = etf_query
     else:
         sql_query = f"({stock_query}) UNION ({etf_query})"
-
 
     cursor.execute(sql_query)
     tickers = cursor.fetchall()
     tickers_with_criteria = []
 
-    print(f'Will go through {len(tickers)} tickers.')
+    print(f"Will go through {len(tickers)} tickers.")
     for index, (ticker,) in enumerate(tickers):
-
-        print(f'Now checking {ticker}, step {index} of {len(tickers)}')
+        print(f"Now checking {ticker}, step {index} of {len(tickers)}")
         query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' ORDER BY date ASC;"
         cursor.execute(query)
         rows = cursor.fetchall()
         closing_prices = pd.DataFrame(rows, columns=["Date", "Adj Close"])
 
-        if is_in_bubble_state(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json', default_fitting_params):
-            print(f'{ticker} meets criteria')
+        if is_in_bubble_state(
+            closing_prices, "BitcoinB", "./lppls/conf/demos2015_filter.json", default_fitting_params
+        ):
+            print(f"{ticker} meets criteria")
             tickers_with_criteria.append(ticker)
             if args.display:
-                plot_bubble_fits(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json', ticker, default_fitting_params)            
+                plot_bubble_fits(
+                    closing_prices,
+                    "BitcoinB",
+                    "./lppls/conf/demos2015_filter.json",
+                    ticker,
+                    default_fitting_params,
+                )
 
     print("Assets that meet the criteria:", tickers_with_criteria)
 
     if args.display:
         plt.show()
-
 
 
 if __name__ == "__main__":

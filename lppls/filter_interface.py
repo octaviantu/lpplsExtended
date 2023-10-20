@@ -39,7 +39,7 @@ class FilterInterface(ABC):
             # However, in practice that will exclude all large enough windows because there is bound to be a
             # price difference larger than the prediction error, especially since we are not optimising for that
             # in the minimizer
-            # 
+            #
             # Real-time Prediction of Bitcoin Bubble Crashes
             # Authors: Min Shu, Wei Zhu1
             prediction_error = abs(actual_price - predicted_price) / actual_price
@@ -48,7 +48,6 @@ class FilterInterface(ABC):
                 return False
 
         return True
-    
 
     @staticmethod
     def get_damping(m: float, w: float, b: float, c: float) -> float:
@@ -57,11 +56,20 @@ class FilterInterface(ABC):
         return (m * np.abs(b)) / (np.sqrt(pow(w, 2) + pow(m, 2)) * np.abs(c))
 
     @staticmethod
-    def are_oscillations_in_range(w: float, oscillations_divisor: float, tc: float, t1: float, t2: float,
-                                  O_min: float, b: float, c: float, min_c_b_ratio: float) -> bool:
+    def are_oscillations_in_range(
+        w: float,
+        oscillations_divisor: float,
+        tc: float,
+        t1: float,
+        t2: float,
+        O_min: float,
+        b: float,
+        c: float,
+        min_c_b_ratio: float,
+    ) -> bool:
         #  From Swiss Finance - Dissection of Bitcoin's Multiscale Bubble History (2018)
         #  G. C. Gerlach, Guilherme Demos, Didier Sornette
-        if np.abs(c/b) < min_c_b_ratio:
+        if np.abs(c / b) < min_c_b_ratio:
             return True
 
         assert t1 < tc, "we can only compute oscillations above the starting time"

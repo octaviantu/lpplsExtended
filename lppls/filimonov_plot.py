@@ -8,10 +8,10 @@ from lppls_defaults import MAX_SEARCHES, SMALLEST_WINDOW_SIZE
 from math import floor, ceil
 import matplotlib.pyplot as plt
 
-class FilimonovPlot():
+
+class FilimonovPlot:
     def __init__(self, filter_file="./lppls/conf/filimonov_filter.json"):
         self.filter_criteria = data_loader.load_config(filter_file)
-
 
     def plot_optimum(self, obs: np.ndarray, minimizer: str = "Nelder-Mead") -> None:
         t1, t2 = obs[0, 0], obs[0, -1]
@@ -31,8 +31,14 @@ class FilimonovPlot():
                     tc_lower = self.filter_criteria.get("tc_lower")
                     tc_upper = self.filter_criteria.get("tc_upper")
 
-                    m_bounds = (self.filter_criteria.get("m_min"), self.filter_criteria.get("m_max"))
-                    w_bounds = (self.filter_criteria.get("w_min"), self.filter_criteria.get("w_max"))
+                    m_bounds = (
+                        self.filter_criteria.get("m_min"),
+                        self.filter_criteria.get("m_max"),
+                    )
+                    w_bounds = (
+                        self.filter_criteria.get("w_min"),
+                        self.filter_criteria.get("w_max"),
+                    )
                     search_bounds = [m_bounds, w_bounds]
 
                     m = random.uniform(*m_bounds)
@@ -40,11 +46,15 @@ class FilimonovPlot():
 
                     seed = np.array([m, w])
 
-                    success, params_dict = self.estimate_params(obs_up_to_tc, seed, minimizer, search_bounds, tc)
+                    success, params_dict = self.estimate_params(
+                        obs_up_to_tc, seed, minimizer, search_bounds, tc
+                    )
 
                     if success:
                         m, w, a, b, _, c1, c2 = params_dict.values()
-                        ssr = LPPLSMath.sum_of_squared_residuals(obs_up_to_tc, tc, m, w, a, b, c1, c2)
+                        ssr = LPPLSMath.sum_of_squared_residuals(
+                            obs_up_to_tc, tc, m, w, a, b, c1, c2
+                        )
                         if ssr < min_ssr:
                             min_ssr = ssr
                             best_m = m
@@ -63,32 +73,30 @@ class FilimonovPlot():
 
         # Plotting ssr
         ax1 = plt.subplot(3, 1, 1)
-        plt.plot(dates, ssrs, 'k-', label='F2(tc)')
-        plt.ylabel('F2(tc)')
-        plt.title('Dependence of the cost function and estimated parameters')
+        plt.plot(dates, ssrs, "k-", label="F2(tc)")
+        plt.ylabel("F2(tc)")
+        plt.title("Dependence of the cost function and estimated parameters")
         self.set_four_x_ticks(ax1, dates)
 
         # Plotting m
         ax2 = plt.subplot(3, 1, 2)
-        plt.plot(dates, ms, 'k-', label='m(tc)')
-        plt.ylabel('m(tc)')
+        plt.plot(dates, ms, "k-", label="m(tc)")
+        plt.ylabel("m(tc)")
         self.set_four_x_ticks(ax2, dates)
 
         # Plotting w
         ax3 = plt.subplot(3, 1, 3)
-        plt.plot(dates, ws, 'k-', label='w(tc)')
-        plt.ylabel('w(tc)')
-        plt.xlabel('tc')
+        plt.plot(dates, ws, "k-", label="w(tc)")
+        plt.ylabel("w(tc)")
+        plt.xlabel("tc")
         self.set_four_x_ticks(ax3, dates)
 
         plt.tight_layout()
         plt.show()
 
-
     def set_four_x_ticks(self, ax, tc_dates):
-        ax.set_xticks(tc_dates[::len(tc_dates)//3])  # 3 intervals -> 4 ticks
-        ax.set_xticklabels([date for date in tc_dates[::len(tc_dates)//3]])
-
+        ax.set_xticks(tc_dates[:: len(tc_dates) // 3])  # 3 intervals -> 4 ticks
+        ax.set_xticklabels([date for date in tc_dates[:: len(tc_dates) // 3]])
 
     def estimate_params(
         self,
@@ -96,7 +104,7 @@ class FilimonovPlot():
         seed: np.ndarray,
         minimizer: str,
         search_bounds: List[Tuple[float, float]],
-        tc: float
+        tc: float,
     ) -> Tuple[bool, Dict[str, float]]:
         """
         Args:
@@ -130,10 +138,8 @@ class FilimonovPlot():
         else:
             return False, {}
 
-
     @staticmethod
     def minimize_squared_residuals_with_fixed_tc(x, obs_up_to_tc, tc):
-        
         m = x[0]
         w = x[1]
 

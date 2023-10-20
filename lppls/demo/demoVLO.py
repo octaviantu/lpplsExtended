@@ -1,7 +1,9 @@
 import sys
 
 sys.path.append("/Users/octaviantuchila/Documents/MonteCarlo/Sornette/lppls_python_updated/lppls")
-sys.path.append("/Users/octaviantuchila/Documents/MonteCarlo/Sornette/lppls_python_updated/lppls/metrics")
+sys.path.append(
+    "/Users/octaviantuchila/Documents/MonteCarlo/Sornette/lppls_python_updated/lppls/metrics"
+)
 
 import numpy as np
 import pandas as pd
@@ -36,7 +38,7 @@ def execute_lppls_logic(data_filtered, filter_type, filter_file):
         t2_increment=T2_STEP,
         max_searches=MAX_SEARCHES,
     )
-    sornette.plot_bubble_scores(res_filtered, 'VLO')
+    sornette.plot_bubble_scores(res_filtered, "VLO")
 
 
 def main():
@@ -61,7 +63,7 @@ def main():
     # execute_lppls_logic(data_filtered, "Shanghai", "./lppls/conf/shanghai_filter_1relaxed.json")
     # execute_lppls_logic(data_filtered, "Shanghai", "./lppls/conf/shanghai_filter2.json")
     # execute_lppls_logic(data_filtered, 'BitcoinB', './lppls/conf/bitcoin_filter2019B.json')
-    execute_lppls_logic(data_filtered, 'BitcoinB', './lppls/conf/demos2015_filter.json')
+    execute_lppls_logic(data_filtered, "BitcoinB", "./lppls/conf/demos2015_filter.json")
     # execute_lppls_logic(data_filtered, "Swiss", "./lppls/conf/swiss_filter.json")
 
     plt.show()

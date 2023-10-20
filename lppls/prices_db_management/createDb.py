@@ -3,23 +3,22 @@ import psycopg2
 try:
     # Connect to Postgres server
     conn = psycopg2.connect(
-        host="localhost",
-        database="asset_prices",
-        user="sornette",
-        password="sornette",
-        port="5432"
+        host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
     )
 
     conn.autocommit = True
 
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TYPE asset_type AS ENUM ('ETF', 'STOCK');
-    """)             
+    """
+    )
 
     # Create a table for stock prices
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS pricing_history (
             date DATE,
             ticker VARCHAR(10),
@@ -32,7 +31,8 @@ try:
             volume BIGINT,
             PRIMARY KEY (date, ticker, type)
         );
-    """)
+    """
+    )
 
     print("Database created successfully")
 
@@ -40,6 +40,6 @@ except Exception as e:
     print(f"Error: {e}")
 
 finally:
-    if 'conn' in locals():
+    if "conn" in locals():
         cursor.close()
         conn.close()

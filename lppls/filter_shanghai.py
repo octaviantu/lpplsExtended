@@ -7,6 +7,7 @@ from filter_interface import FilterInterface
 import data_loader
 from count_metrics import CountMetrics
 
+
 # This filter is descipted in paper:
 # Real-time prediction and post-mortem analysis of the Shanghai 2015 stock market bubble and crash (2015)
 # Authors: Didier Sornette, Guilherme Demos, Qun Zhang, Peter Cauwels, Vladimir Filimonov and Qunzhi Zhang
@@ -52,23 +53,13 @@ class FilterShanghai(FilterInterface):
 
             if success:
                 tc, m, w, a, b, c, c1, c2 = params_dict.values()
-                final_dict = {
-                    "tc": tc,
-                    "m": m,
-                    "w": w,
-                    "a": a,
-                    "b": b,
-                    "c": c,
-                    "c1": c1,
-                    "c2": c2
-                }
+                final_dict = {"tc": tc, "m": m, "w": w, "a": a, "b": b, "c": c, "c1": c1, "c2": c2}
                 return True, final_dict
             else:
                 search_count += 1
 
         CountMetrics.add_bubble_rejected_because_can_not_fit()
         return False, {}
-
 
     def estimate_params(
         self,
@@ -141,21 +132,17 @@ class FilterShanghai(FilterInterface):
         assert self.filter_criteria.get("m_min") <= m <= self.filter_criteria.get("m_max")
         assert self.filter_criteria.get("w_min") <= w <= self.filter_criteria.get("w_max")
 
-
         oscillations_divisor = self.filter_criteria.get("oscillations_divisor")
         O_min = self.filter_criteria.get("O_min")
         min_c_b_ratio = self.filter_criteria.get("min_c_b_ratio")
-        O_in_range = FilterInterface.are_oscillations_in_range(w, oscillations_divisor, tc, t1, t2, O_min, b, c, min_c_b_ratio)
+        O_in_range = FilterInterface.are_oscillations_in_range(
+            w, oscillations_divisor, tc, t1, t2, O_min, b, c, min_c_b_ratio
+        )
 
         D = FilterInterface.get_damping(m, w, b, c)
         D_in_range = D >= self.filter_criteria.get("D_min")
 
-
-        conditions = {
-            "O": O_in_range,
-            "D": D_in_range,
-            "price": prices_in_range
-        }
+        conditions = {"O": O_in_range, "D": D_in_range, "price": prices_in_range}
 
         CountMetrics.add_bubble(conditions, t2_index)
 

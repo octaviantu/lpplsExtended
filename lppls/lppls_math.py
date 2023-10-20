@@ -4,6 +4,7 @@ from datetime import datetime as date
 from pandas._libs.tslibs.np_datetime import OutOfBoundsDatetime
 import pandas as pd
 
+
 class LPPLSMath:
     @staticmethod
     def lppls(
@@ -57,7 +58,6 @@ class LPPLSMath:
 
         return np.linalg.solve(matrix_1, matrix_2)
 
-
     @staticmethod
     def minimize_squared_residuals(x, observations):
         """
@@ -79,17 +79,24 @@ class LPPLSMath:
         a, b, c1, c2 = rM[:, 0].tolist()
 
         return LPPLSMath.sum_of_squared_residuals(obs_up_to_tc, tc, m, w, a, b, c1, c2)
-    
 
     @staticmethod
-    def sum_of_squared_residuals(obs_up_to_tc: List[List[float]], tc: float, m: float, w: float, a: float, b: float, c1: float, c2: float) -> float:
+    def sum_of_squared_residuals(
+        obs_up_to_tc: List[List[float]],
+        tc: float,
+        m: float,
+        w: float,
+        a: float,
+        b: float,
+        c1: float,
+        c2: float,
+    ) -> float:
         [price_prediction, actual_prices] = LPPLSMath.get_price_predictions(
             obs_up_to_tc, tc, m, w, a, b, c1, c2
         )
         delta = np.subtract(price_prediction, actual_prices)
 
         return np.sum(np.power(delta, 2)) / len(delta)
-        
 
     # TODO(octaviant) - find usage or delete
     @staticmethod
@@ -126,7 +133,6 @@ class LPPLSMath:
     def stop_observation_at_tc(observations: List[List[float]], tc: float) -> List[List[float]]:
         first_larger_index = np.searchsorted(observations[0], tc, side="left") - 1
         return [observations[0][:first_larger_index], observations[1][:first_larger_index]]
-    
 
     @staticmethod
     def ordinal_to_date(ordinal: int) -> str:

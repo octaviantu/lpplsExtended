@@ -37,16 +37,13 @@ class DataFit:
 
         plt.xticks(rotation=45)
 
-
     def fit(
         self, max_searches: int, obs: np.ndarray, minimizer: str = "Nelder-Mead"
     ) -> Tuple[bool, Dict[str, float]]:
         return self.filter.fit(max_searches, obs, minimizer)
 
-
     def parallel_compute_t2_fits(self, **kwargs):
-       return self.parallel_compute_t2_recent_fits(np.inf, **kwargs)
-
+        return self.parallel_compute_t2_recent_fits(np.inf, **kwargs)
 
     def parallel_compute_t2_recent_fits(
         self,
@@ -59,8 +56,10 @@ class DataFit:
         max_searches=MAX_SEARCHES,
     ):
         stop_windows_beginnings = len(self.observations[0]) - window_size + 1
-        start_windows_beginnings = max(len(self.observations[0]) - window_size - recent_windows + 1, 0)
-        
+        start_windows_beginnings = max(
+            len(self.observations[0]) - window_size - recent_windows + 1, 0
+        )
+
         obs_copy = self.observations
         t2_fits_args = []
         for i in range(start_windows_beginnings, stop_windows_beginnings, t2_increment):
@@ -81,7 +80,6 @@ class DataFit:
             )
 
         return lppls_fits
-
 
     def compute_t1_fits(self, args):
         obs, window_size, t1_index, smallest_window_size, t1_increment, max_searches = args

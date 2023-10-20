@@ -10,10 +10,11 @@ from statsmodels.tsa.ar_model import AutoReg
 from lppls_defaults import SIGNIFICANCE_LEVEL
 from count_metrics import CountMetrics
 
+
 # This filter is descipted in paper 1:
 # Real-time Prediction of Bitcoin Bubble Crashes (2019)
 # Authors: Min Shu, Wei Zhu
-# 
+#
 # And also in paper 2:
 # Birth or burst of financial bubbles: which one is easier to diagnose (2015)
 # Authors: Guilherme Demos, Qunzhi Zhang, Didier Sornette
@@ -45,7 +46,6 @@ class FilterBitcoin2019B(FilterInterface):
         search_count = 0
         # find bubble
         while search_count < max_searches:
-
             tc = random.uniform(*tc_bounds)
             m = random.uniform(*m_bounds)
             w = random.uniform(*w_bounds)
@@ -56,16 +56,7 @@ class FilterBitcoin2019B(FilterInterface):
 
             if success:
                 tc, m, w, a, b, c, c1, c2 = params_dict.values()
-                final_dict = {
-                    "tc": tc,
-                    "m": m,
-                    "w": w,
-                    "a": a,
-                    "b": b,
-                    "c": c,
-                    "c1": c1,
-                    "c2": c2
-                }
+                final_dict = {"tc": tc, "m": m, "w": w, "a": a, "b": b, "c": c, "c1": c1, "c2": c2}
                 return True, final_dict
             else:
                 search_count += 1
@@ -144,7 +135,9 @@ class FilterBitcoin2019B(FilterInterface):
         oscillations_divisor = self.filter_criteria.get("oscillations_divisor")
         O_min = self.filter_criteria.get("O_min")
         min_c_b_ratio = self.filter_criteria.get("min_c_b_ratio")
-        O_in_range = FilterInterface.are_oscillations_in_range(w, oscillations_divisor, tc, t1, t2, O_min, b, c, min_c_b_ratio)
+        O_in_range = FilterInterface.are_oscillations_in_range(
+            w, oscillations_divisor, tc, t1, t2, O_min, b, c, min_c_b_ratio
+        )
 
         D = FilterInterface.get_damping(m, w, b, c)
         D_in_range = D >= self.filter_criteria.get("D_min")
@@ -157,19 +150,19 @@ class FilterBitcoin2019B(FilterInterface):
             "D": D_in_range,
             "price": prices_in_range,
             "lomb_test": passing_lomb_test,
-            "ar1_test": passing_ar1_test
+            "ar1_test": passing_ar1_test,
         }
 
         CountMetrics.add_bubble(conditions, t2_index)
 
-        is_qualified = O_in_range and D_in_range and prices_in_range and \
-              passing_lomb_test and passing_ar1_test
+        is_qualified = (
+            O_in_range and D_in_range and prices_in_range and passing_lomb_test and passing_ar1_test
+        )
 
         # if B is negative, the predicted price will increase in value as t tends to tc (because 0 < m < 1)
         is_positive_bubble = b < 0
 
         return is_qualified, is_positive_bubble
-
 
     @staticmethod
     def is_ar1_process(
@@ -191,7 +184,6 @@ class FilterBitcoin2019B(FilterInterface):
 
         # Check if the p-value is less than or equal to your significance level
         return p_value <= SIGNIFICANCE_LEVEL
-
 
     @staticmethod
     def is_passing_lomb_test(
