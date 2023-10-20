@@ -15,7 +15,7 @@ BUBBLE_THRESHOLD = 0.25
 # windows that are close to the end of the data, to see if there is a recent bubble
 RECENT_RELEVANT_WINDOWS = 5
 RECENT_VISIBLE_WINDOWS = 200
-LIMIT_OF_LARGEST_COMPANIES = 200
+LIMIT_OF_MOST_TRADED_COMPANIES = 200
 
 
 def is_in_bubble_state(closing_prices, filter_type, filter_file):
@@ -96,26 +96,38 @@ def main():
         plot_specific(cursor)
         return
 
+    stock_query = f"""SELECT ticker
+                    FROM pricing_history
+                    WHERE type = 'STOCK'
+                    AND date = (SELECT MAX(date) FROM pricing_history WHERE type = 'STOCK')
+                    ORDER BY volume DESC LIMIT {LIMIT_OF_MOST_TRADED_COMPANIES}"""
+    etf_query = """SELECT ticker
+                    FROM pricing_history
+                    WHERE type = 'ETF'"""
+
     if args.type and args.type.lower() == 'stock':
-        sql_query = "SELECT ticker, company FROM sp500_components ORDER BY CAST(portfolio_percent as FLOAT) DESC LIMIT {LIMIT_OF_LARGEST_COMPANIES}"
+        sql_query = stock_query
     elif args.type and args.type.lower() == 'etf':
-        sql_query = "SELECT ticker, etf FROM etfs"
+        sql_query = etf_query
     else:
-        sql_query = f"""(SELECT ticker, company FROM sp500_components ORDER BY CAST(portfolio_percent as FLOAT) DESC LIMIT {LIMIT_OF_LARGEST_COMPANIES})
-                        UNION
-                        SELECT ticker, etf FROM etfs"""
+        sql_query = f"({stock_query}) UNION ({etf_query})"
+
 
     cursor.execute(sql_query)
     tickers = cursor.fetchall()
     tickers_with_criteria = []
 
-    for ticker, _ in tickers:
+    print(f'Will go through {len(tickers)} tickers.')
+    for index, ticker in enumerate(tickers):
+
+        print(f'Now checking {ticker}, step {index} of {len(tickers)}')
         query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' ORDER BY date ASC;"
         cursor.execute(query)
         rows = cursor.fetchall()
         closing_prices = pd.DataFrame(rows, columns=["Date", "Adj Close"])
 
         if is_in_bubble_state(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json'):
+            print(f'{ticker} meets criteria')
             tickers_with_criteria.append(ticker)
             if args.display:
                 plot_bubble_fits(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json', ticker)            
