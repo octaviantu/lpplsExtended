@@ -63,7 +63,7 @@ def plot_bubble_fits(closing_prices, filter_type, filter_file, ticker):
 
 
 
-SPECIFIC_TICKERS = ['CSCO', 'UNP', 'TJX', 'ETN', 'FI', 'MPC', 'ROP', 'AJG', 'AFL', 'GIS', 'CEG', 'BIIB']
+SPECIFIC_TICKERS = ['AJG', 'AFL', 'GIS']
 def plot_specific(cursor: psycopg2.extensions.cursor) -> None:
     conn = psycopg2.connect(
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
@@ -118,7 +118,7 @@ def main():
     tickers_with_criteria = []
 
     print(f'Will go through {len(tickers)} tickers.')
-    for index, ticker in enumerate(tickers):
+    for index, (ticker,) in enumerate(tickers):
 
         print(f'Now checking {ticker}, step {index} of {len(tickers)}')
         query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' ORDER BY date ASC;"
@@ -132,7 +132,7 @@ def main():
             if args.display:
                 plot_bubble_fits(closing_prices, 'BitcoinB', './lppls/conf/demos2015_filter.json', ticker)            
 
-    print("Stocks that meet the criteria:", tickers_with_criteria)
+    print("Assets that meet the criteria:", tickers_with_criteria)
 
     if args.display:
         plt.show()
