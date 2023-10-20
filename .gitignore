@@ -3,6 +3,7 @@ lppls.egg-info/
 __pycache__/
 build/
 temp_out/
+plots/
 
 .idea
 .DS_Store

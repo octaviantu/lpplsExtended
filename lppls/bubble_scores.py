@@ -65,6 +65,7 @@ class BubbleScores:
         CountMetrics.print_metrics()
         plt.xticks(rotation=45)
 
+
     def compute_bubble_scores(self, known_price_span):
         pos_conf_lst = []
         neg_conf_lst = []

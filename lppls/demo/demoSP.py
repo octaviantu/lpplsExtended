@@ -22,6 +22,8 @@ from lppls_defaults import (
 import argparse
 from matplotlib import pyplot as plt
 from enum import Enum
+import os
+from datetime import datetime
 
 
 BUBBLE_THRESHOLD = 0.25
@@ -29,6 +31,7 @@ BUBBLE_THRESHOLD = 0.25
 RECENT_RELEVANT_WINDOWS = 5
 RECENT_VISIBLE_WINDOWS = 200
 LIMIT_OF_MOST_TRADED_COMPANIES = 200
+
 
 class BubbleType(Enum):
     POSITIVE = "positive"
@@ -189,6 +192,20 @@ def main():
     print("Negative bubbles: ", negative_bubbles)
 
     if args.display:
+        # Define the directory path
+        today_date = datetime.today().strftime('%Y-%m-%d')
+        dir_path = os.path.join('plots', today_date)
+
+        # Create the directory if it doesn't exist
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
+        # Save the figure
+        file_name = f"{ticker}.png"
+        file_path = os.path.join(dir_path, file_name)
+        plt.savefig(file_path, dpi=300, bbox_inches='tight')
+        
+        # Display the plot
         plt.show()
 
 
