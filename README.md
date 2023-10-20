@@ -14,9 +14,11 @@ Format the code:
 python setup.py format
 ```
 
+To debug, check the configurations in `launch.json` and the files under '/lppls/demo'
+
 
 # Other notes 
 
 The Jupyter code and `lppls_cmaes` are from the repository I've forked.
 They don't work.
-TODO(octavian) - update or more likely, remove
+TODO(octaviant) - update or more likely, remove
