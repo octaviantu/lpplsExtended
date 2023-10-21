@@ -32,3 +32,6 @@ launchctl bootstrap gui/501 /Users/octaviantuchila/Library/LaunchAgents/com.octa
 The Jupyter code and `lppls_cmaes` are from the repository I've forked.
 They don't work.
 TODO(octaviant) - update or more likely, remove
+
+
+Testing - not functional; TODO(octaviant) - fix existing testing and add new tests.
