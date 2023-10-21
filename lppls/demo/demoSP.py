@@ -171,10 +171,17 @@ def main():
 
         if bubble_state:
             print(f"{ticker} meets criteria")
+
+            # Define the directory path based on the bubble state
+            today_date = datetime.today().strftime('%Y-%m-%d')
+
             if bubble_state == BubbleType.POSITIVE:
                 positive_bubbles.append(ticker)
+                dir_path = os.path.join('plots', today_date, 'positive')
+
             elif bubble_state == BubbleType.NEGATIVE:
                 negative_bubbles.append(ticker)
+                dir_path = os.path.join('plots', today_date, 'negative')
 
             plot_bubble_fits(
                 closing_prices,
@@ -183,10 +190,6 @@ def main():
                 ticker,
                 default_fitting_params,
             )
-
-            # Define the directory path
-            today_date = datetime.today().strftime('%Y-%m-%d')
-            dir_path = os.path.join('plots', today_date)
 
             # Create the directory if it doesn't exist
             if not os.path.exists(dir_path):
