@@ -98,15 +98,6 @@ class LPPLSMath:
 
         return np.sum(np.power(delta, 2)) / len(delta)
 
-    # TODO(octaviant) - find usage or delete
-    @staticmethod
-    def _is_O_in_range(tc: float, w: float, last: float, O_min: float) -> bool:
-        return ((w / (2 * np.pi)) * np.log(abs(tc / (tc - last)))) > O_min
-
-    # TODO(octaviant) - find usage or delete
-    @staticmethod
-    def _is_D_in_range(m: float, w: float, b: float, c: float, D_min: float) -> bool:
-        return False if m <= 0 or w <= 0 else abs((m * b) / (w * c)) > D_min
 
     @staticmethod
     def get_c(c1: float, c2: float) -> float:
