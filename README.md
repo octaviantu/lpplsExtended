@@ -21,10 +21,10 @@ To debug, check the configurations in `launch.json` and the files under '/lppls/
 
 I run this daily on the mac using the files under `mac_automation".
 
-I place the launch agent under '~Library/LaunchAgents', then run:
+I place the launch agent under '~/Library/LaunchAgents', then run:
 
 ```
-launchctl bootstrap gui/501 /Users/octaviantuchila/Library/LaunchAgents/com.octaviantuchila.daily_sornette.plist
+launchctl bootstrap gui/501 ~/Library/LaunchAgents/com.octaviantuchila.daily_sornette.plist
 ```
 
 # Other notes 
