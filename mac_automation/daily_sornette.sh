@@ -29,6 +29,7 @@ fi
 # Log the status as "RUNNING"
 echo "$TODAY RUNNING" >> "$LOG_FILE"
 
+osascript -e 'display notification "Sornette started" with title "Sornette Status"'
 # Run the Python script
 /Users/octaviantuchila/.pyenv/shims/python3 update_and_check_bubbles.py >> "$LOG_DIR/python_output.log" 2>&1
 EXIT_CODE=$?
@@ -36,6 +37,7 @@ EXIT_CODE=$?
 # Update the log with today's status based on the Python script's exit code
 if [[ $EXIT_CODE -eq 0 ]]; then
     echo "$TODAY SUCCESS" >> "$LOG_FILE"
+        osascript -e 'display notification "Sornette finished successfully" with title "Sornette Status"'
 else
     echo "$TODAY FAILED" >> "$LOG_FILE"
 fi
