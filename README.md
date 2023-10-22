@@ -24,7 +24,7 @@ I run this daily on the mac using the files under `mac_automation".
 I place the launch agent under '~/Library/LaunchAgents', then run:
 
 ```
-launchctl bootstrap gui/501 ~/Library/LaunchAgents/com.octaviantuchila.daily_sornette.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.octaviantuchila.daily_sornette.plist
 ```
 
 # Other notes 

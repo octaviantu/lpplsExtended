@@ -4,9 +4,11 @@
 cd /Users/octaviantuchila/Documents/MonteCarlo/Sornette/lppls_python_updated
 
 TODAY=$(date "+%Y-%m-%d")
+CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
 
 LOG_DIR="$HOME/.lppls_logs"
-LOG_FILE="$LOG_DIR/run_status.log"
+LOG_FILE="$LOG_DIR/daily_run_status.log"
+CALLS_LOG_FILE="$LOG_DIR/script_calls.log"
 
 # Create log directory if it doesn't exist
 mkdir -p $LOG_DIR
@@ -16,10 +18,10 @@ if [[ -f $LOG_FILE ]]; then
     LAST_LOG_ENTRY=$(tail -n 1 "$LOG_FILE")
     LAST_RUN_DATE=$(echo $LAST_LOG_ENTRY | cut -d ' ' -f 1)
     LAST_STATUS=$(echo $LAST_LOG_ENTRY | cut -d ' ' -f 2)
-    TODAY=$(date "+%Y-%m-%d")
 
-    # If the script was run today with a status of "SUCCESS" or "RUNNING", exit
+    # If the script was run today with a status of "SUCCESS" or "RUNNING", log and exit
     if [[ "$LAST_RUN_DATE" == "$TODAY" && ( "$LAST_STATUS" == "SUCCESS" || "$LAST_STATUS" == "RUNNING" ) ]]; then
+        echo "$CURRENT_TIME SCRIPT_EXITED_EARLY with status $LAST_STATUS" >> "$CALLS_LOG_FILE"
         exit 0
     fi
 fi
@@ -37,3 +39,5 @@ if [[ $EXIT_CODE -eq 0 ]]; then
 else
     echo "$TODAY FAILED" >> "$LOG_FILE"
 fi
+
+echo "$CURRENT_TIME SCRIPT_FINISHED_WITH_CODE_$EXIT_CODE" >> "$CALLS_LOG_FILE"
