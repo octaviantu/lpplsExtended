@@ -4,6 +4,7 @@ __pycache__/
 build/
 temp_out/
 plots/
+mac_automation/logs/
 
 .idea
 .DS_Store

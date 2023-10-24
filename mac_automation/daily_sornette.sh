@@ -6,7 +6,7 @@ cd /Users/octaviantuchila/Documents/MonteCarlo/Sornette/lppls_python_updated
 TODAY=$(date "+%Y-%m-%d")
 CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
 
-LOG_DIR="$HOME/.lppls_logs"
+LOG_DIR="./logs"
 LOG_FILE="$LOG_DIR/daily_run_status.log"
 CALLS_LOG_FILE="$LOG_DIR/script_calls.log"
 
@@ -19,11 +19,15 @@ if [[ -f $LOG_FILE ]]; then
     LAST_RUN_DATE=$(echo $LAST_LOG_ENTRY | cut -d ' ' -f 1)
     LAST_STATUS=$(echo $LAST_LOG_ENTRY | cut -d ' ' -f 2)
 
+    echo "$CURRENT_TIME SCRIPT_STARTED" >> "$CALLS_LOG_FILE"
+
     # If the script was run today with a status of "SUCCESS" or "RUNNING", log and exit
     if [[ "$LAST_RUN_DATE" == "$TODAY" && ( "$LAST_STATUS" == "SUCCESS" || "$LAST_STATUS" == "RUNNING" ) ]]; then
         echo "$CURRENT_TIME SCRIPT_EXITED_EARLY with status $LAST_STATUS" >> "$CALLS_LOG_FILE"
         exit 0
     fi
+else
+    echo "$CURRENT_TIME SCRIPT_STARTED" >> "$CALLS_LOG_FILE"
 fi
 
 # Log the status as "RUNNING"
