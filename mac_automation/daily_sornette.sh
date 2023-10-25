@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Change directory to the desired location
-cd /Users/octaviantuchila/Documents/MonteCarlo/Sornette/lppls_python_updated
+cd /Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated
 
 TODAY=$(date "+%Y-%m-%d")
 CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
 
-LOG_DIR="./logs"
+LOG_DIR="mac_automation/logs"
 LOG_FILE="$LOG_DIR/daily_run_status.log"
 CALLS_LOG_FILE="$LOG_DIR/script_calls.log"
 

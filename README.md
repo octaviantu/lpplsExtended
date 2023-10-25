@@ -28,6 +28,8 @@ launchctl unload  ~/Library/LaunchAgents/com.octaviantuchila.daily_sornette.plis
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.octaviantuchila.daily_sornette.plist
 ```
 
+DO NOT put the codebase under `Documents`, because the mac launcher won't be allowed to access it.
+
 # Other notes 
 
 The Jupyter code and `lppls_cmaes` are from the repository I've forked.

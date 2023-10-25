@@ -6,7 +6,8 @@
     <string>com.octaviantuchila.daily_sornette</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/octaviantuchila/Documents/MonteCarlo/Sornette/lppls_python_updated/mac_automation/daily_sornette.sh</string>
+        <string>/Users/octaviantuchila/local_bash</string>
+        <string>/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/mac_automation/daily_sornette.sh</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -17,5 +18,11 @@
             <integer>0</integer>
         </dict>
     </array>
+
+    <key>StandardOutPath</key>
+    <string>/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/mac_automation/logs/plist_output.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/mac_automation/logs/plist_error.log</string>
+
 </dict>
 </plist>
