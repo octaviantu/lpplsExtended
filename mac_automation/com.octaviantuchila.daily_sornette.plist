@@ -6,7 +6,6 @@
     <string>com.octaviantuchila.daily_sornette</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/octaviantuchila/local_bash</string>
         <string>/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/mac_automation/daily_sornette.sh</string>
     </array>
     <key>RunAtLoad</key>
