@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from multiprocessing import Pool
 from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP, MAX_SEARCHES
 from filter_interface import FilterInterface
-
+import sys
 
 class DataFit:
     def __init__(self, observations, filter: FilterInterface):
@@ -76,7 +76,7 @@ class DataFit:
         lppls_fits = []
         with Pool(processes=workers) as pool:
             lppls_fits = list(
-                tqdm(pool.imap(self.compute_t1_fits, t2_fits_args), total=len(t2_fits_args))
+                tqdm(pool.imap(self.compute_t1_fits, t2_fits_args), total=len(t2_fits_args), dynamic_ncols=True, file=sys.stdout, position=0)
             )
 
         return lppls_fits
