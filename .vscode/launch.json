@@ -54,5 +54,13 @@
         "stock"
       ]
     },
+    {
+      "name": "Python: Daily Sornette",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/mac_automation/daily_sornette.py",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
   ]
 }
