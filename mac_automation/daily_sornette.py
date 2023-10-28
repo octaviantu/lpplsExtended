@@ -71,7 +71,7 @@ exit_code = process.returncode
 # Update log based on the Python script's exit code
 with open(daily_run_status_log, 'a') as f:
     if exit_code == 0:
-        f.write(f"{today} {current_time} SUCCESS\n")
+        f.write(f"{current_time} SUCCESS\n")
         subprocess.run(["osascript", "-e", 'display notification "Sornette finished successfully" with title "Sornette Status"'])
     else:
         f.write(f"{current_time} FAILED\n")
