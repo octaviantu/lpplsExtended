@@ -20,7 +20,7 @@ if not os.path.exists(log_dir):
 
 # Get current date and time
 today = datetime.now().strftime('%Y-%m-%d')
-current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 current_datetime = datetime.now()
 
 # Read the last log entry
@@ -33,7 +33,7 @@ if os.path.exists(daily_run_status_log):
 
 # Log that the script has started
 with open(daily_all_calls_log, 'a') as f:
-    f.write(f"{current_time} SCRIPT_STARTED\n")
+    f.write(f"{start_time} SCRIPT_STARTED\n")
 
 if last_log_entry:
     last_run_date, last_run_time, last_status = last_log_entry.split(' ')
@@ -43,15 +43,15 @@ if last_log_entry:
 
     if today == last_run_date and (last_status == 'SUCCESS' or (last_status == 'RUNNING' and time_difference < timedelta(hours=3))):
         with open(daily_all_calls_log, 'a') as f:
-            f.write(f"{current_time} SCRIPT_EXITED_EARLY with status {last_status}\n")
+            f.write(f"{start_time} SCRIPT_EXITED_EARLY with status {last_status}\n")
         exit(0)
 else:
     with open(daily_all_calls_log, 'a') as f:
-        f.write(f"{current_time} SCRIPT_STARTED\n")
+        f.write(f"{start_time} SCRIPT_STARTED\n")
 
 # Log that the script is running
 with open(daily_run_status_log, 'a') as f:
-    f.write(f"{current_time} RUNNING\n")
+    f.write(f"{start_time} RUNNING\n")
 
 # Show macOS notification
 subprocess.run(["osascript", "-e", 'display notification "Sornette started" with title "Sornette Status"'])
@@ -68,14 +68,16 @@ with open(execution_output_log, 'w') as out_log, open(execution_error_log, 'w') 
 # Get exit code of the Python script
 exit_code = process.returncode
 
+end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
 # Update log based on the Python script's exit code
 with open(daily_run_status_log, 'a') as f:
     if exit_code == 0:
-        f.write(f"{current_time} SUCCESS\n")
+        f.write(f"{end_time} SUCCESS\n")
         subprocess.run(["osascript", "-e", 'display notification "Sornette finished successfully" with title "Sornette Status"'])
     else:
-        f.write(f"{current_time} FAILED\n")
+        f.write(f"{end_time} FAILED\n")
 
 # Log that the script finished
 with open(daily_all_calls_log, 'a') as f:
-    f.write(f"{current_time} SCRIPT_FINISHED_WITH_CODE_{exit_code}\n")
+    f.write(f"{end_time} SCRIPT_FINISHED_WITH_CODE_{exit_code}\n")
