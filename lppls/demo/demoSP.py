@@ -85,7 +85,8 @@ def plot_bubble_fits(closing_prices, filter_type, filter_file, ticker, default_f
         t2_increment=T2_STEP,
         max_searches=MAX_SEARCHES,
     )
-    sornette.plot_bubble_scores(fits, ticker)
+    burst_time = sornette.bounds.compute_burst_time(closing_prices)
+    sornette.plot_bubble_scores(fits, ticker, burst_time)
 
 
 SPECIFIC_TICKERS = ["AGG", "EMCR", "ET", "AAPL"]

@@ -22,6 +22,7 @@ class Sornette:
         self.bubble_scores = BubbleScores(observations, filter)
         self.filimonov_plot = FilimonovPlot()
         CountMetrics.reset()
+        self.bounds = Bounds()
 
     def fit(self, max_searches):
         [_, self.lppls_coef] = self.data_fit.fit(max_searches, self.data_fit.observations)
@@ -38,8 +39,11 @@ class Sornette:
     def parallel_compute_t2_recent_fits(self, **kwargs):
         return self.data_fit.parallel_compute_t2_recent_fits(**kwargs)
 
-    def plot_bubble_scores(self, res_filtered, ticker):
-        self.bubble_scores.plot_bubble_scores(res_filtered, ticker)
+    def plot_bubble_scores(self, res_filtered, ticker, burst_time):
+        self.bubble_scores.plot_bubble_scores(res_filtered, ticker, burst_time)
 
     def plot_filimonov(self):
         self.filimonov_plot.plot_optimum(self.data_fit.observations)
+
+    def compute_burst_time(self):
+        return self.bounds.compute_burst_time()
