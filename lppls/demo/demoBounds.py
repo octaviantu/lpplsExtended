@@ -25,21 +25,35 @@ def main():
     rows = cursor.fetchall()
     data = pd.DataFrame(rows, columns=["Date", "Adj Close"])
 
-    drawups = Peaks().find_drawups(data)
+    # Find drawups and drawdowns
+    peaks = Peaks()
+    drawups = peaks.find_extremities(data, is_max=True)
+    drawdowns = peaks.find_extremities(data, is_max=False)
 
+    # Create subplots for drawups and drawdowns
+    _, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(14, 10))
 
-    _, (ax1) = plt.subplots(nrows=1, ncols=1, sharex=True, figsize=(14, 8))
-    ax1.plot(data['Date'], data['Adj Close'], label="price", color="black", linewidth=0.75)
-
-    # Plot the vertical red bars and annotate
+    # Plot the drawups
+    ax1.plot(data['Date'], data['Adj Close'], label="Price", color="black", linewidth=0.75)
     for date, value in drawups.items():
-        # Find the index for the date in the DataFrame
         index = data.index[data['Date'] == date].tolist()
-        if index:  # Check if the date is found in the DataFrame
+        if index:
             index = index[0]
             ax1.axvline(x=pd.to_datetime(date), color='red', linewidth=0.5)
             ax1.text(pd.to_datetime(date), data['Adj Close'][index], f'{date}({value:.2f})', color='red', rotation=90, verticalalignment='bottom')
 
+    ax1.set_title('Drawups')
+
+    # Plot the drawdowns
+    ax2.plot(data['Date'], data['Adj Close'], label="Price", color="black", linewidth=0.75)
+    for date, value in drawdowns.items():
+        index = data.index[data['Date'] == date].tolist()
+        if index:
+            index = index[0]
+            ax2.axvline(x=pd.to_datetime(date), color='blue', linewidth=0.5)
+            ax2.text(pd.to_datetime(date), data['Adj Close'][index], f'{date}({value:.2f})', color='blue', rotation=90, verticalalignment='top')
+
+    ax2.set_title('Drawdowns')
     plt.show()
 
 

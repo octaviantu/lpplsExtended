@@ -12,14 +12,14 @@ class Peaks:
         self.N_epsilon = len(self.epsilon_range) * len(self.w_range)
 
 
-    def find_drawups(self, closing_prices: pd.DataFrame) -> List[int]:
+    def find_extremities(self, closing_prices: pd.DataFrame, is_max: bool) -> List[int]:
         # We add a dummy first element to maintain the same index.
         log_returns = [0]
         for i in range(1, len(closing_prices)):
             log_returns.append(np.log(closing_prices["Adj Close"][i]) - np.log(closing_prices["Adj Close"][i - 1]))
 
-        peak_times_counter = self.epsilon_drawups(log_returns, closing_prices)
-    
+        peak_times_counter = self.count_extremities(log_returns, closing_prices, is_max)
+
         selected_peaks = dict()
         for peak in peak_times_counter:
             freq = peak_times_counter[peak] / self.N_epsilon
@@ -29,10 +29,9 @@ class Peaks:
         return selected_peaks
 
 
-    def epsilon_drawups(self, log_returns: np.ndarray, closing_prices: pd.DataFrame) -> Set[pd.Timestamp]:
-        # peak_times = set()
+    def count_extremities(self, log_returns: np.ndarray, closing_prices: pd.DataFrame, is_max: bool) -> Set[pd.Timestamp]:
         peak_times_counter = defaultdict(float)
-        max_cum_return = 0
+        peak_cum_return = 0
         cum_return = 0
         current_peak = 0
 
@@ -41,7 +40,7 @@ class Peaks:
                 vol = np.std(log_returns[0:w])
                 window_sum = np.sum(log_returns[0:w])
                 window_sq_sum = sum(x ** 2 for x in log_returns[0:w])
-                max_cum_return = 0
+                peak_cum_return = 0
                 cum_return = 0
                 current_peak = 0
 
@@ -64,18 +63,19 @@ class Peaks:
                     epsilon = epsilon_0 * vol
 
                     cum_return += log_returns[i]
-                    if cum_return > max_cum_return:
-                        max_cum_return = cum_return
+                    if (is_max and cum_return > peak_cum_return) or (not is_max and cum_return < peak_cum_return):
+                        peak_cum_return = cum_return
                         current_peak = i
                     
-                    deviation = max_cum_return - cum_return
+                    sign = 2 * int(is_max) - 1
+                    deviation = (peak_cum_return - cum_return) * sign
 
                     if deviation > epsilon:
                         # End of drawup phase, register the peak time
                         peak_time_index = current_peak
                         peak_date = closing_prices["Date"].iloc[peak_time_index]
                         peak_times_counter[peak_date] += 1
-                        max_cum_return = 0  # Reset for the new drawup phase
+                        peak_cum_return = 0  # Reset for the new drawup phase
                         cum_return = 0
                         current_peak = i + 1
 
