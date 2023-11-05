@@ -1,4 +1,5 @@
 import sys
+import csv
 
 sys.path.append("/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls")
 sys.path.append(
@@ -31,6 +32,8 @@ BUBBLE_THRESHOLD = 0.25
 RECENT_RELEVANT_WINDOWS = 5
 RECENT_VISIBLE_WINDOWS = 200
 LIMIT_OF_MOST_TRADED_COMPANIES = 200
+PLOTS_DIR = 'plots'
+CSV_COLUMN_NAMES = ["Ticker", "Name", "Asset Type", "Bubble Type", "Max Confidence"]
 
 
 class BubbleType(Enum):
@@ -55,13 +58,15 @@ def is_in_bubble_state(closing_prices, filter_type, filter_file, default_fitting
         max_searches=MAX_SEARCHES,
     )
     bubble_scores = sornette.bubble_scores.compute_bubble_scores(fits)
-    for _, row in bubble_scores.iterrows():
-        if row["pos_conf"] > BUBBLE_THRESHOLD:
-            return BubbleType.POSITIVE
-        elif row["neg_conf"] > BUBBLE_THRESHOLD:
-            return BubbleType.NEGATIVE
+    max_pos_conf = bubble_scores["pos_conf"].max()
+    max_neg_conf = bubble_scores["neg_conf"].max()
 
-    return None
+    if max_pos_conf > BUBBLE_THRESHOLD:
+        return BubbleType.POSITIVE, max_pos_conf
+    elif max_neg_conf > BUBBLE_THRESHOLD:
+        return BubbleType.NEGATIVE, max_neg_conf
+
+    return None, 0
 
 
 def plot_bubble_fits(closing_prices, filter_type, filter_file, ticker, default_fitting_params):
@@ -83,9 +88,7 @@ def plot_bubble_fits(closing_prices, filter_type, filter_file, ticker, default_f
     sornette.plot_bubble_scores(fits, ticker)
 
 
-SPECIFIC_TICKERS = ["AJG", "AFL", "GIS"]
-
-
+SPECIFIC_TICKERS = ["AGG", "EMCR", "ET", "AAPL"]
 def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) -> None:
     conn = psycopg2.connect(
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
@@ -156,6 +159,7 @@ def main():
     cursor.execute(sql_query)
     tickers = cursor.fetchall()
     positive_bubbles, negative_bubbles = [], []
+    bubble_assets = []
 
     print(f"Will go through {len(tickers)} tickers.")
     for index, (ticker,) in enumerate(tickers):
@@ -165,23 +169,32 @@ def main():
         rows = cursor.fetchall()
         closing_prices = pd.DataFrame(rows, columns=["Date", "Adj Close"])
 
-        bubble_state = is_in_bubble_state(
+        bubble_state, max_conf = is_in_bubble_state(
             closing_prices, "BitcoinB", "./lppls/conf/demos2015_filter.json", default_fitting_params
         )
 
         if bubble_state:
             print(f"{ticker} meets criteria")
+            cursor.execute(f"SELECT name, type FROM pricing_history WHERE ticker='{ticker}' LIMIT 1;")
+            name, asset_type = cursor.fetchone()
+            bubble_assets.append({
+                CSV_COLUMN_NAMES[0]: ticker,
+                CSV_COLUMN_NAMES[1]: name,
+                CSV_COLUMN_NAMES[2]: asset_type,
+                CSV_COLUMN_NAMES[3]: bubble_state.value,
+                CSV_COLUMN_NAMES[4]: f'{max_conf:.2f}'
+            })
 
             # Define the directory path based on the bubble state
             today_date = datetime.today().strftime('%Y-%m-%d')
 
             if bubble_state == BubbleType.POSITIVE:
                 positive_bubbles.append(ticker)
-                dir_path = os.path.join('plots', today_date, 'positive')
+                dir_path = os.path.join(PLOTS_DIR, today_date, 'positive')
 
             elif bubble_state == BubbleType.NEGATIVE:
                 negative_bubbles.append(ticker)
-                dir_path = os.path.join('plots', today_date, 'negative')
+                dir_path = os.path.join(PLOTS_DIR, today_date, 'negative')
 
             plot_bubble_fits(
                 closing_prices,
@@ -200,6 +213,13 @@ def main():
             file_path = os.path.join(dir_path, file_name)
             plt.savefig(file_path, dpi=300, bbox_inches='tight')
 
+
+    csv_file_path = os.path.join(PLOTS_DIR, today_date, 'bubble_assets.csv')
+    with open(csv_file_path, mode='w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=CSV_COLUMN_NAMES)
+        writer.writeheader()
+        for asset in bubble_assets:
+            writer.writerow(asset)
 
     print("Positive bubbles: ", positive_bubbles)
     print("Negative bubbles: ", negative_bubbles)
