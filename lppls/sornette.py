@@ -22,7 +22,7 @@ class Sornette:
         self.bubble_scores = BubbleScores(observations, filter)
         self.filimonov_plot = FilimonovPlot()
         CountMetrics.reset()
-        self.bounds = Bounds()
+        # self.bounds = Bounds()
 
     def fit(self, max_searches):
         [_, self.lppls_coef] = self.data_fit.fit(max_searches, self.data_fit.observations)
@@ -45,5 +45,5 @@ class Sornette:
     def plot_filimonov(self):
         self.filimonov_plot.plot_optimum(self.data_fit.observations)
 
-    def compute_burst_time(self):
-        return self.bounds.compute_burst_time()
+    # def compute_burst_time(self):
+    #     return self.bounds.compute_burst_time()
