@@ -14,6 +14,12 @@
       "justMyCode": true
     },
     {
+      "name": "Starts debug",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/lppls/bubble_bounds/starts.py"
+    },
+    {
       "name": "Bounds debug",
       "type": "python",
       "request": "launch",
