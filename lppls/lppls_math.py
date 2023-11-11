@@ -91,7 +91,7 @@ class LPPLSMath:
         c1: float,
         c2: float,
     ) -> float:
-        [price_prediction, actual_prices] = LPPLSMath.get_price_predictions(
+        [price_prediction, actual_prices] = LPPLSMath.get_log_price_predictions(
             obs_up_to_tc, tc, m, w, a, b, c1, c2
         )
         delta = np.subtract(price_prediction, actual_prices)
@@ -108,7 +108,7 @@ class LPPLSMath:
             return 0
 
     @staticmethod
-    def get_price_predictions(observations, tc, m, w, a, b, c1, c2):
+    def get_log_price_predictions(observations, tc, m, w, a, b, c1, c2):
         price_prediction = []
         actual_prices = []
 

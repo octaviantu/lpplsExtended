@@ -27,7 +27,6 @@ def execute_lppls_logic(data_filtered, filter_type, filter_file):
     # LPPLS Model for filtered data
     sornette = Sornette(observations_filtered, filter_type, filter_file)
     # sornette.plot_filimonov()
-    sornette.fit(MAX_SEARCHES)
     sornette.plot_fit()
 
     res_filtered = sornette.parallel_compute_t2_fits(

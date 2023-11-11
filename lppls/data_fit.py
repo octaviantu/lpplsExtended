@@ -20,7 +20,7 @@ class DataFit:
         obs_up_to_tc = LPPLSMath.stop_observation_at_tc(self.observations, tc)
         time_ord = [pd.Timestamp.fromordinal(int(d)) for d in obs_up_to_tc[0]]
 
-        [price_prediction, actual_prices] = LPPLSMath.get_price_predictions(
+        [price_prediction, actual_prices] = LPPLSMath.get_log_price_predictions(
             obs_up_to_tc, tc, m, w, a, b, c1, c2
         )
 

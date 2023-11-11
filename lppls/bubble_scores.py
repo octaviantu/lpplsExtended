@@ -1,14 +1,15 @@
 from matplotlib import pyplot as plt
 import pandas as pd
 from count_metrics import CountMetrics
-
+from lppls_defaults import BubbleType, BubbleStart
+from datetime import datetime
 
 class BubbleScores:
     def __init__(self, observations, filter):
         self.observations = observations
         self.filter = filter
 
-    def plot_bubble_scores(self, known_price_span, ticker, burst_time):
+    def plot_bubble_scores(self, known_price_span, ticker: str, bubble_start: BubbleType) -> None:
         """
         Args:
             known_price_span (list): result from mp_compute_indicator
@@ -20,8 +21,8 @@ class BubbleScores:
         known_price_span_df = self.compute_bubble_scores(known_price_span)
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(18, 10))
         fig.canvas.manager.set_window_title(ticker)
-        if burst_time:
-            fig.canvas.manager.set_window_subtitle('Burst time: ' + burst_time)
+        # if burst_time:
+        #     fig.canvas.manager.set_window_subtitle('Burst time: ' + burst_time)
 
         ord = known_price_span_df["time"].astype("int32")
         ts = [pd.Timestamp.fromordinal(d) for d in ord]
@@ -50,6 +51,14 @@ class BubbleScores:
             alpha=0.5,
         )
 
+        # Highlight start_time with a vertical line
+        if bubble_start.type == BubbleType.POSITIVE:
+            self.draw_bubble_start(ax1, bubble_start, known_price_span)
+        elif bubble_start.type == BubbleType.NEGATIVE:
+            self.draw_bubble_start(ax2, bubble_start, known_price_span)
+        else:
+            raise ValueError("Bubble type not recognized")
+
         # set grids
         ax1.grid(which="major", axis="both", linestyle="--")
         ax2.grid(which="major", axis="both", linestyle="--")
@@ -61,11 +70,24 @@ class BubbleScores:
         ax1_0.set_ylabel("bubble indicator (pos)")
         ax2_0.set_ylabel("bubble indicator (neg)")
 
-        ax1_0.legend(loc=2)
-        ax2_0.legend(loc=2)
+        legend1 = ax1_0.legend(loc=2, facecolor='white')
+        legend1.get_frame().set_alpha(1)
+
+        legend2 = ax2_0.legend(loc=2, facecolor='white')
+        legend2.get_frame().set_alpha(1)
 
         CountMetrics.print_metrics()
         plt.xticks(rotation=45)
+
+
+    def draw_bubble_start(self, axis, bubble_start: BubbleStart, known_price_span) -> None:
+        bubble_start_label = f'Start Date ({bubble_start.date.strftime("%Y-%m-%d")})'  # Format the date
+
+        # Draw the vertical line if it's later than the earliest fit
+        # This is a complicated way to do it - TODO(octaviant) simplify
+        if pd.Timestamp.fromordinal(int(known_price_span[0]['t1'])) <= bubble_start.date: 
+            axis.axvline(x=bubble_start.date, color='blue', linestyle='--', linewidth=2)
+        axis.text(bubble_start.date, axis.get_ylim()[1], bubble_start_label, color='blue', ha='left', va='bottom')
 
 
     def compute_bubble_scores(self, known_price_span):

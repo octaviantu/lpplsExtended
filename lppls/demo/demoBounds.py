@@ -12,48 +12,29 @@ import pandas as pd
 import psycopg2
 import matplotlib.pyplot as plt
 from peaks import Peaks
-
+from lppls_defaults import BubbleType
+from bounds import Bounds
 
 def main():
+    ticker = "BIV"
     # Fetch VLO data from the database
     conn = psycopg2.connect(
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
     )
     cursor = conn.cursor()
-    query = "SELECT date, close_price FROM pricing_history WHERE ticker='AAPL' ORDER BY date ASC;"
+    query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' ORDER BY date ASC;"
     cursor.execute(query)
     rows = cursor.fetchall()
-    data = pd.DataFrame(rows, columns=["Date", "Adj Close"])
+    
+    # Separate the dates and prices into two lists
+    dates = [pd.Timestamp.toordinal(row[0]) for row in rows]
+    prices = [row[1] for row in rows]
 
-    # Find drawups and drawdowns
-    peaks = Peaks()
-    drawups = peaks.find_extremities(data, is_max=True)
-    drawdowns = peaks.find_extremities(data, is_max=False)
+    _, drawdowns, _ = Peaks(dates, prices, ticker).plot_peaks()
 
-    # Create subplots for drawups and drawdowns
-    _, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(14, 10))
+    bounds = Bounds()
+    bounds.compute_start_time(dates, prices, prices, BubbleType.NEGATIVE, drawdowns)
 
-    # Plot the drawups
-    ax1.plot(data['Date'], data['Adj Close'], label="Price", color="black", linewidth=0.75)
-    for date, value in drawups.items():
-        index = data.index[data['Date'] == date].tolist()
-        if index:
-            index = index[0]
-            ax1.axvline(x=pd.to_datetime(date), color='red', linewidth=0.5)
-            ax1.text(pd.to_datetime(date), data['Adj Close'][index], f'{date}({value:.2f})', color='red', rotation=90, verticalalignment='bottom')
-
-    ax1.set_title('Drawups')
-
-    # Plot the drawdowns
-    ax2.plot(data['Date'], data['Adj Close'], label="Price", color="black", linewidth=0.75)
-    for date, value in drawdowns.items():
-        index = data.index[data['Date'] == date].tolist()
-        if index:
-            index = index[0]
-            ax2.axvline(x=pd.to_datetime(date), color='blue', linewidth=0.5)
-            ax2.text(pd.to_datetime(date), data['Adj Close'][index], f'{date}({value:.2f})', color='blue', rotation=90, verticalalignment='top')
-
-    ax2.set_title('Drawdowns')
     plt.show()
 
 
