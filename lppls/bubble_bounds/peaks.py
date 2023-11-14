@@ -3,7 +3,7 @@ import pandas as pd
 from typing import List, Set
 from collections import defaultdict
 from lppls_defaults import PEAK_THRESHOLD
-from lppls_defaults import BubbleType
+from lppls_defaults import BubbleType, Peak
 from lppls_defaults import EPSILON_RANGE_START, EPSILON_RANGE_END, EPSILON_STEP, W_RANGE_END, W_RANGE_START, W_STEP
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -19,7 +19,7 @@ class Peaks:
         self.ticker = ticker
 
 
-    def find_extremities(self, bubble_type: BubbleType) -> List[int]:
+    def find_extremities(self, bubble_type: BubbleType) -> List[Peak]:
         # We add a dummy first element to maintain the same index.
         log_returns = [0]
         for i in range(1, len(self.prices)):
@@ -27,11 +27,11 @@ class Peaks:
 
         peak_times_counter = self.count_extremities(log_returns, bubble_type)
 
-        selected_peaks = dict()
+        selected_peaks = []
         for peak in peak_times_counter:
             freq = peak_times_counter[peak] / self.N_epsilon
             if freq >= self.D:
-                selected_peaks[peak] = freq
+                selected_peaks.append(Peak(bubble_type, peak, freq))
 
         return selected_peaks
 
@@ -96,19 +96,19 @@ class Peaks:
 
         # Plot the drawups
         ax1.plot(formated_dates, self.prices, label="Price", color="black", linewidth=0.75)
-        for date, value in drawups.items():
-            formatted_drawup_date = pd.Timestamp.fromordinal(date)
+        for drawup in drawups:
+            formatted_drawup_date = pd.Timestamp.fromordinal(drawup.date_index)
             ax1.axvline(x=formatted_drawup_date, color='red', linewidth=0.5)
-            ax1.text(formatted_drawup_date, value, f'{formatted_drawup_date}({value:.2f})', color='red', rotation=90, verticalalignment='bottom')
+            ax1.text(formatted_drawup_date, drawup.score, f'{formatted_drawup_date}({drawup.score:.2f})', color='red', rotation=90, verticalalignment='bottom')
 
         ax1.set_title('Drawups')
 
         # Plot the drawdowns
         ax2.plot(formated_dates, self.prices, label="Price", color="black", linewidth=0.75)
-        for date, value in drawdowns.items():
-            formatted_drawdown_date = pd.Timestamp.fromordinal(date)
+        for drawup in drawups:
+            formatted_drawdown_date = pd.Timestamp.fromordinal(drawup.date_index)
             ax2.axvline(x=formatted_drawdown_date, color='blue', linewidth=0.5)
-            ax2.text(formatted_drawdown_date, value, f'{formatted_drawdown_date}({value:.2f})', color='blue', rotation=90, verticalalignment='top')
+            ax2.text(formatted_drawdown_date, drawup.score, f'{formatted_drawdown_date}({drawup.score:.2f})', color='blue', rotation=90, verticalalignment='top')
 
         ax2.set_title('Drawdowns')
 

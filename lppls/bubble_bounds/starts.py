@@ -5,10 +5,12 @@ sys.path.append(
 
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from lppls_defaults import SMALLEST_WINDOW_SIZE
 from typing import List, Tuple
 from matplotlib import pyplot as plt
 from numpy.typing import NDArray
+import pandas as pd
+from lppls_defaults import SMALLEST_WINDOW_SIZE
+from lppls_defaults import BubbleStart
 
 class Starts:
     def getSSE(self, Y, Yhat, p=1, normed=False):
@@ -59,47 +61,38 @@ class Starts:
         return ssrn_lgrn, lambda_coeff
 
 
-    def fitDataViaOlsGetBetaAndLine(self, X: NDArray, Y: NDArray) -> NDArray:
-        """ Fit synthetic OLS """
-        # Assuming X is a vector and needs to be a matrix with an intercept term
-        X_matrix = np.vstack((np.ones(len(X)), X)).T  # Add a column of ones for the intercept
-        # Calculate beta_hat using the OLS formula (X'X)^-1X'Y
-        beta_hat = np.dot(np.linalg.inv(np.dot(X_matrix.T, X_matrix)), np.dot(X_matrix.T, Y))
-        # Calculate predicted Y values
-        Y_hat = np.dot(X_matrix, beta_hat)
-        return Y_hat
-
-
-    def getSSE_and_SSEN_as_a_func_of_dt(self, X: List[float], Y: List[float]):
+    def getSSE_and_SSEN_as_a_func_of_dt(self, actualP: List[float], predictedP: List[float]):
         """ Obtain SSE and SSE/N for a given shrinking fitting window """
 
         # Get a piece of it: Shrinking Window
         _sse = []
         _ssen = []
-        for i in range(len(X)-10):  # loop t1 until: t1 = t2 - 10:
-            xBatch = X[i:-1]
-            yBatch = Y[i:-1]
-            YhatBatch = self.fitDataViaOlsGetBetaAndLine(xBatch, yBatch)
-            sse = self.getSSE(yBatch, YhatBatch, normed=False)
-            ssen = self.getSSE(yBatch, YhatBatch, normed=True)
+        for i in range(len(actualP) - SMALLEST_WINDOW_SIZE):  # loop t1 until: t1 = t2 - 10:
+            actualPBatch = actualP[i:-1]
+            predictedPBatch = predictedP[i:-1]
+            sse = self.getSSE(actualPBatch, predictedPBatch, normed=False)
+            ssen = self.getSSE(actualPBatch, predictedPBatch, normed=True)
             _sse.append(sse)
             _ssen.append(ssen)
 
         return _sse/max(_sse), _ssen/max(_ssen), _ssen  # returns results + data
 
 
-    def plot_all_fit_measures(self, X, Y):
+    def plot_all_fit_measures(self, actualP, predictedP, dates):
 
-        bounded_sse, bounded_ssen, _ = self.getSSE_and_SSEN_as_a_func_of_dt(X, Y)
-        Yhat = self.fitDataViaOlsGetBetaAndLine(X,Y) # Get Model fit
-        ssen_reg, lambda_coeff = self.getLagrangeScore(Y, Yhat)
+        bounded_sse, bounded_ssen, _ = self.getSSE_and_SSEN_as_a_func_of_dt(actualP, predictedP)
+        ssen_reg, lambda_coeff = self.getLagrangeScore(actualP, predictedP)
+        formated_dates = [pd.Timestamp.fromordinal(d) for d in dates]
 
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(10, 6))        
 
         # Plot SSE, SSEN, SSEN Reg
-        plt.plot(bounded_sse, color='green', label='SSE')
-        plt.plot(bounded_ssen, color='blue', linestyle='--', label='SSEN')
-        plt.plot(ssen_reg, color='red', linestyle=':', label='SSEN Reg')
+        scores_len = len(bounded_sse)
+        assert(len(bounded_ssen) == scores_len and len(ssen_reg) == scores_len)
+
+        plt.plot(formated_dates[:scores_len], bounded_sse, color='green', label='SSE')
+        plt.plot(formated_dates[:scores_len], bounded_ssen, color='blue', linestyle='--', label='SSEN')
+        plt.plot(formated_dates[:scores_len], ssen_reg, color='red', linestyle=':', label='SSEN Reg')
 
         # Set labels, title, and legend for the fit measures plot
         plt.xlabel('Time')
@@ -115,13 +108,27 @@ class Starts:
 
         # Create a completely separate plot for 'prices'
         plt.figure(figsize=(10, 6))
-        plt.plot(Y, color='purple', label='Prices')
+        plt.plot(formated_dates, actualP, color='purple', label='Prices')
 
         # Set labels and title for the prices plot
+
         plt.xlabel('Time')
         plt.ylabel('Price')
         plt.title('Price Over Time')
         plt.legend()
 
         plt.tight_layout()
-        plt.show()
+
+
+    def compute_start_time(self, dates: List[int], actual_prices, expected_prices, bubble_type, extremities) -> BubbleStart:
+        # "We impose the constraint that, for a given developingbubble, its start time t1*
+        # cannot be earlier than the previous peak, as determined in Figure 1.""
+        # 
+        # Dissection of Bitcoin’s Multiscale Bubble History from January 2012 to February 2018
+        last_extremity_index = 0
+        if len(extremities) > 0:
+            last_extremity_index = dates.index(extremities[-1].date_index)
+        ssrn_lgrn, _ = self.getLagrangeScore(actual_prices[last_extremity_index:], expected_prices[last_extremity_index:])
+
+        min_index = last_extremity_index + ssrn_lgrn.index(min(ssrn_lgrn))
+        return BubbleStart(dates[min_index], bubble_type)

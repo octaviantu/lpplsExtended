@@ -7,6 +7,8 @@ SMALLEST_WINDOW_SIZE = 30
 LARGEST_WINDOW_SIZE_STRICT = 180
 SMALLEST_WINDOW_SIZE_STRICT = 20
 
+RECENT_VISIBLE_WINDOWS = 200
+
 # t1 is set to 5 in the Shanghai paper but there they move it between 125 and 750
 T1_STEP = 2
 T1_STEP_STRICT = 1
@@ -38,6 +40,7 @@ W_RANGE_START = 10
 W_RANGE_END = 60
 W_STEP = 5
 
+
 class BubbleType(Enum):
     POSITIVE = "positive"
     NEGATIVE = "negative"
@@ -45,5 +48,12 @@ class BubbleType(Enum):
 
 @dataclass
 class BubbleStart:
-    date: int
+    date_index: int
     type: BubbleType
+
+@dataclass
+class Peak:
+    type: BubbleType
+    date_index: int
+    score: float
+

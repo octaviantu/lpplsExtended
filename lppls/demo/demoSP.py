@@ -19,6 +19,7 @@ from lppls_defaults import (
     T1_STEP_STRICT,
     SMALLEST_WINDOW_SIZE_STRICT,
     LARGEST_WINDOW_SIZE_STRICT,
+    RECENT_VISIBLE_WINDOWS
 )
 import argparse
 from matplotlib import pyplot as plt
@@ -36,7 +37,6 @@ warnings.filterwarnings('error', category=RuntimeWarning)
 BUBBLE_THRESHOLD = 0.25
 # windows that are close to the end of the data, to see if there is a recent bubble
 RECENT_RELEVANT_WINDOWS = 5
-RECENT_VISIBLE_WINDOWS = 200
 LIMIT_OF_MOST_TRADED_COMPANIES = 200
 PLOTS_DIR = 'plots'
 PEAKS_DIR = PLOTS_DIR + '/peaks'
@@ -177,7 +177,7 @@ def main():
             # Define the directory path based on the bubble state
             today_date = datetime.today().strftime('%Y-%m-%d')
 
-            drawups, drawdowns, peak_image_name = Peaks(dates, prices, ticker).plot_peaks(bubble_type)
+            drawups, drawdowns, peak_image_name = Peaks(dates, prices, ticker).plot_peaks()
             peak_file_name = f"{peak_image_name}.png"
             peak_file_path = os.path.join(PEAKS_DIR, peak_file_name)
             plt.savefig(peak_file_path, dpi=300, bbox_inches='tight')

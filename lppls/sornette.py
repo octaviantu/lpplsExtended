@@ -10,8 +10,8 @@ from filter_bitcoin2019B import FilterBitcoin2019B
 from filter_swiss import FilterSwiss
 from filimonov_plot import FilimonovPlot
 from lppls_math import LPPLSMath
-from bounds import Bounds
 from lppls_defaults import MAX_SEARCHES
+from starts import Starts
 
 class Sornette:
     def __init__(self, observations, filter_type, filter_file):
@@ -28,8 +28,10 @@ class Sornette:
         self.bubble_scores = BubbleScores(observations, filter)
         self.filimonov_plot = FilimonovPlot()
         CountMetrics.reset()
-        self.bounds = Bounds()
+        self.starts = Starts()
 
+    def estimate_prices(self):
+        return LPPLSMath.get_log_price_predictions(self.data_fit.observations, **self.lppls_equation_terms())[0]
 
     def plot_fit(self):
         self.data_fit.plot_fit(**self.lppls_equation_terms())
@@ -51,7 +53,7 @@ class Sornette:
             [times, actual_prices], **self.lppls_equation_terms()
         )
         expected_prices = [np.exp(p) for p in expected_log_prices]
-        return self.bounds.compute_start_time(times, actual_prices, expected_prices, bubble_type, extremities)
+        return self.starts.compute_start_time(times, actual_prices, expected_prices, bubble_type, extremities)
 
     def lppls_equation_terms(self):
         [_, lppls_coef] = self.data_fit.fit(MAX_SEARCHES, self.data_fit.observations)

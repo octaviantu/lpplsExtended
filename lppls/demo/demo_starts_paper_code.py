@@ -11,6 +11,10 @@ sys.path.append(
 import numpy as np
 from numpy.typing import NDArray
 from starts import Starts
+from matplotlib import pyplot as plt
+from datetime import datetime, timedelta
+import pandas as pd
+from lppls_defaults import SMALLEST_WINDOW_SIZE
 
 
 def simulateOLS() -> tuple[NDArray, NDArray]:
@@ -31,9 +35,29 @@ def simulateOLS() -> tuple[NDArray, NDArray]:
     return X, Y
 
 
+def fitDataViaOlsGetBetaAndLine(X: NDArray, Y: NDArray) -> NDArray:
+    """ Fit synthetic OLS """
+    # Assuming X is a vector and needs to be a matrix with an intercept term
+    X_matrix = np.vstack((np.ones(len(X)), X)).T  # Add a column of ones for the intercept
+    # Calculate beta_hat using the OLS formula (X'X)^-1X'Y
+    beta_hat = np.dot(np.linalg.inv(np.dot(X_matrix.T, X_matrix)), np.dot(X_matrix.T, Y))
+    # Calculate predicted Y values
+    Y_hat = np.dot(X_matrix, beta_hat)
+    return Y_hat
+
+
 if __name__ == "__main__":
     starts = Starts()
     # Simulate Initial Data
     X, Y = simulateOLS()
+    Yhat = fitDataViaOlsGetBetaAndLine(X,Y) # Get Model fit
     
-    starts.plot_all_fit_measures(X, Y)
+    # Calculate the end date as today
+    today = datetime.now().date()
+
+    # Generate an array of N consecutive dates ending today
+    dates = np.array([pd.Timestamp.toordinal(today - timedelta(days=x)) for x in range(len(Y), 0, -1)])
+
+    starts.plot_all_fit_measures(Y, Yhat, dates)
+    plt.show()
+
