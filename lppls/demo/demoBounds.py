@@ -52,7 +52,7 @@ def main():
     all_actual_prices = [row[1] for row in rows]
 
     _, drawdowns, _ = Peaks(all_dates, all_actual_prices, ticker).plot_peaks()
-    first_eligible_date = all_dates.index(drawdowns[-1].date_index)
+    first_eligible_date = all_dates.index(drawdowns[-1].date_ordinal)
     selected_dates = all_dates[first_eligible_date:]
     selected_actual_prices = all_actual_prices[first_eligible_date:]
     selected_log_prices = np.log(selected_actual_prices)

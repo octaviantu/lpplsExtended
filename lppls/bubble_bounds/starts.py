@@ -127,7 +127,7 @@ class Starts:
         # Dissection of Bitcoin’s Multiscale Bubble History from January 2012 to February 2018
         last_extremity_index = 0
         if len(extremities) > 0:
-            last_extremity_index = dates.index(extremities[-1].date_index)
+            last_extremity_index = dates.index(extremities[-1].date_ordinal)
         ssrn_lgrn, _ = self.getLagrangeScore(actual_prices[last_extremity_index:], expected_prices[last_extremity_index:])
 
         min_index = last_extremity_index + ssrn_lgrn.index(min(ssrn_lgrn))

@@ -97,18 +97,20 @@ class Peaks:
         # Plot the drawups
         ax1.plot(formated_dates, self.prices, label="Price", color="black", linewidth=0.75)
         for drawup in drawups:
-            formatted_drawup_date = pd.Timestamp.fromordinal(drawup.date_index)
+            formatted_drawup_date = pd.Timestamp.fromordinal(drawup.date_ordinal)
             ax1.axvline(x=formatted_drawup_date, color='red', linewidth=0.5)
-            ax1.text(formatted_drawup_date, drawup.score, f'{formatted_drawup_date}({drawup.score:.2f})', color='red', rotation=90, verticalalignment='bottom')
+            ax1.text(formatted_drawup_date, drawup.score, f'{formatted_drawup_date.strftime("%Y-%m-%d")}({drawup.score:.2f})', 
+                    color='red', rotation=90, verticalalignment='bottom', horizontalalignment='right')
 
         ax1.set_title('Drawups')
 
         # Plot the drawdowns
         ax2.plot(formated_dates, self.prices, label="Price", color="black", linewidth=0.75)
-        for drawup in drawups:
-            formatted_drawdown_date = pd.Timestamp.fromordinal(drawup.date_index)
-            ax2.axvline(x=formatted_drawdown_date, color='blue', linewidth=0.5)
-            ax2.text(formatted_drawdown_date, drawup.score, f'{formatted_drawdown_date}({drawup.score:.2f})', color='blue', rotation=90, verticalalignment='top')
+        for drawdown in drawdowns:
+            formatted_drawdown_date = pd.Timestamp.fromordinal(drawdown.date_ordinal)
+            ax1.axvline(x=formatted_drawdown_date, color='red', linewidth=0.5)
+            ax1.text(formatted_drawdown_date, drawdown.score, f'{formatted_drawdown_date.strftime("%Y-%m-%d")}({drawdown.score:.2f})', 
+                    color='red', rotation=90, verticalalignment='bottom', horizontalalignment='right')
 
         ax2.set_title('Drawdowns')
 

@@ -48,12 +48,12 @@ class BubbleType(Enum):
 
 @dataclass
 class BubbleStart:
-    date_index: int
+    date_ordinal: int
     type: BubbleType
 
 @dataclass
 class Peak:
     type: BubbleType
-    date_index: int
+    date_ordinal: int
     score: float
 

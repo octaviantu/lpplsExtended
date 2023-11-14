@@ -81,12 +81,12 @@ class BubbleScores:
 
 
     def draw_bubble_start(self, axis, bubble_start: BubbleStart, known_price_span) -> None:
-        bubble_start_date = pd.Timestamp.fromordinal(bubble_start.date_index)
+        bubble_start_date = pd.Timestamp.fromordinal(bubble_start.date_ordinal)
         bubble_start_label = f'Start Date ({bubble_start_date.strftime("%Y-%m-%d")})'  # Format the date
 
         # Draw the vertical line if it's later than the earliest fit
         # This is a complicated way to do it - TODO(octaviant) simplify
-        if int(known_price_span[0]['t1']) <= bubble_start.date_index: 
+        if int(known_price_span[0]['t1']) <= bubble_start.date_ordinal: 
             axis.axvline(x=bubble_start_date, color='blue', linestyle='--', linewidth=2)
         axis.text(bubble_start_date, axis.get_ylim()[1], bubble_start_label, color='blue', ha='left', va='bottom')
 

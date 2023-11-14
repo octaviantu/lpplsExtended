@@ -174,11 +174,13 @@ def main():
                 CSV_COLUMN_NAMES[4]: f'{max_conf:.2f}'
             })
 
-            # Define the directory path based on the bubble state
             today_date = datetime.today().strftime('%Y-%m-%d')
 
             drawups, drawdowns, peak_image_name = Peaks(dates, prices, ticker).plot_peaks()
-            peak_file_name = f"{peak_image_name}.png"
+            peak_file_name = f"{peak_image_name.replace(' ', '_').replace('on', '')}.png"
+
+            if not os.path.exists(PEAKS_DIR):
+                os.makedirs(PEAKS_DIR)
             peak_file_path = os.path.join(PEAKS_DIR, peak_file_name)
             plt.savefig(peak_file_path, dpi=300, bbox_inches='tight')
 
@@ -195,7 +197,7 @@ def main():
             fits = get_fits(sornette, default_fitting_params, RECENT_VISIBLE_WINDOWS)
             sornette.plot_bubble_scores(fits, ticker, start_time)
 
-            # Create the directory if it doesn't exist
+
             if not os.path.exists(dir_path):
                 os.makedirs(dir_path)
 
@@ -217,7 +219,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        sys.exit(1)  # Exit with a non-zero code to indicate failure
 
 
 # To show only a specific set of tickers:
