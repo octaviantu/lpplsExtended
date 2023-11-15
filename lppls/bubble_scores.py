@@ -2,14 +2,15 @@ from matplotlib import pyplot as plt
 import pandas as pd
 from count_metrics import CountMetrics
 from lppls_defaults import BubbleType, BubbleStart
-from datetime import datetime
+from pop_dates import Cluster
+from matplotlib.lines import Line2D
 
 class BubbleScores:
     def __init__(self, observations, filter):
         self.observations = observations
         self.filter = filter
 
-    def plot_bubble_scores(self, known_price_span, ticker: str, bubble_start: BubbleType) -> None:
+    def plot_bubble_scores(self, known_price_span, ticker: str, bubble_start: BubbleType, best_end_cluster: Cluster) -> None:
         """
         Args:
             known_price_span (list): result from mp_compute_indicator
@@ -53,9 +54,9 @@ class BubbleScores:
 
         # Highlight start_time with a vertical line
         if bubble_start.type == BubbleType.POSITIVE:
-            self.draw_bubble_start(ax1, bubble_start, known_price_span)
+            self.draw_bubble_bounds(ax1, bubble_start, known_price_span, best_end_cluster)
         elif bubble_start.type == BubbleType.NEGATIVE:
-            self.draw_bubble_start(ax2, bubble_start, known_price_span)
+            self.draw_bubble_bounds(ax2, bubble_start, known_price_span, best_end_cluster)
         else:
             raise ValueError("Bubble type not recognized")
 
@@ -70,17 +71,11 @@ class BubbleScores:
         ax1_0.set_ylabel("bubble indicator (pos)")
         ax2_0.set_ylabel("bubble indicator (neg)")
 
-        legend1 = ax1_0.legend(loc=2, facecolor='white')
-        legend1.get_frame().set_alpha(1)
-
-        legend2 = ax2_0.legend(loc=2, facecolor='white')
-        legend2.get_frame().set_alpha(1)
-
         CountMetrics.print_metrics()
         plt.xticks(rotation=45)
 
 
-    def draw_bubble_start(self, axis, bubble_start: BubbleStart, known_price_span) -> None:
+    def draw_bubble_bounds(self, axis, bubble_start: BubbleStart, known_price_span, best_end_cluster: Cluster) -> None:
         bubble_start_date = pd.Timestamp.fromordinal(bubble_start.date_ordinal)
         bubble_start_label = f'Start Date ({bubble_start_date.strftime("%Y-%m-%d")})'  # Format the date
 
@@ -89,6 +84,15 @@ class BubbleScores:
         if int(known_price_span[0]['t1']) <= bubble_start.date_ordinal: 
             axis.axvline(x=bubble_start_date, color='blue', linestyle='--', linewidth=2)
         axis.text(bubble_start_date, axis.get_ylim()[1], bubble_start_label, color='blue', ha='left', va='bottom')
+
+
+        dates_str = [pd.Timestamp.fromordinal(date_ordinal).strftime("%Y-%m-%d") for date_ordinal in best_end_cluster.mean_pop_dates]
+        cluster_info = f"Clustered in {dates_str} with silhouette: {best_end_cluster.silhouette:.2f} (1 is optimal)"
+       # Create a custom legend entry for cluster_info
+        cluster_legend = [Line2D([0], [0], color='none', marker='none', markerfacecolor='none', label=cluster_info)]
+
+        # Add the custom legend entry to the existing legend
+        axis.legend(handles=axis.get_legend_handles_labels()[0] + cluster_legend, loc=2, facecolor='white')
 
 
     def compute_bubble_scores(self, known_price_span):

@@ -28,7 +28,8 @@ from datetime import datetime
 from lppls_defaults import BubbleType
 from peaks import Peaks
 import warnings
-
+from pop_dates import PopDates
+import bisect
 
 # Convert warnings to exceptions
 warnings.filterwarnings('error', category=RuntimeWarning)
@@ -40,7 +41,7 @@ RECENT_RELEVANT_WINDOWS = 5
 LIMIT_OF_MOST_TRADED_COMPANIES = 200
 PLOTS_DIR = 'plots'
 PEAKS_DIR = PLOTS_DIR + '/peaks'
-CSV_COLUMN_NAMES = ["Ticker", "Name", "Asset Type", "Bubble Type", "Max Confidence"]
+CSV_COLUMN_NAMES = ["Ticker", "Name", "Asset Type", "Bubble Type", "Max Confidence", "End times count", "End times", "Silhoutte"]
 
 def get_fits(sornette: Sornette, default_fitting_params, recent_windows):
     return sornette.parallel_compute_t2_recent_fits(
@@ -167,14 +168,6 @@ def main():
             print(f"{ticker} meets criteria")
             cursor.execute(f"SELECT name, type FROM pricing_history WHERE ticker='{ticker}' LIMIT 1;")
             name, asset_type = cursor.fetchone()
-            bubble_assets.append({
-                CSV_COLUMN_NAMES[0]: ticker,
-                CSV_COLUMN_NAMES[1]: name,
-                CSV_COLUMN_NAMES[2]: asset_type,
-                CSV_COLUMN_NAMES[3]: bubble_type.value,
-                CSV_COLUMN_NAMES[4]: f'{max_conf:.2f}'
-            })
-
 
             drawups, drawdowns, peak_image_name = Peaks(dates, prices, ticker).plot_peaks()
             peak_file_name = f"{peak_image_name.replace(' ', '_').replace('on', '')}.png"
@@ -194,8 +187,14 @@ def main():
                 dir_path = os.path.join(PLOTS_DIR, today_date, 'negative')
 
             start_time = sornette.compute_start_time(dates, prices, bubble_type, drawups if bubble_type == BubbleType.POSITIVE else drawdowns)
-            fits = get_fits(sornette, default_fitting_params, RECENT_VISIBLE_WINDOWS)
-            sornette.plot_bubble_scores(fits, ticker, start_time)
+
+            today_date_ordinal = pd.Timestamp.toordinal(datetime.today().date())
+            days_from_start = bisect.bisect_left(dates, today_date_ordinal) - bisect.bisect_left(dates, start_time.date_ordinal)
+            plotted_time = max(RECENT_VISIBLE_WINDOWS, days_from_start)
+            fits = get_fits(sornette, default_fitting_params, plotted_time)
+
+            best_end_cluster = PopDates().compute_bubble_end_time(start_time, fits)
+            sornette.plot_bubble_scores(fits, ticker, start_time, best_end_cluster)
 
 
             if not os.path.exists(dir_path):
@@ -205,6 +204,19 @@ def main():
             bubble_score_file_name = f"{ticker}.png"
             bubble_score_file_path = os.path.join(dir_path, bubble_score_file_name)
             plt.savefig(bubble_score_file_path, dpi=300, bbox_inches='tight')
+
+
+            bubble_assets.append({
+                CSV_COLUMN_NAMES[0]: ticker,
+                CSV_COLUMN_NAMES[1]: name,
+                CSV_COLUMN_NAMES[2]: asset_type,
+                CSV_COLUMN_NAMES[3]: bubble_type.value,
+                CSV_COLUMN_NAMES[4]: f'{max_conf:.2f}',
+                CSV_COLUMN_NAMES[5]: len(best_end_cluster.mean_pop_dates),
+                CSV_COLUMN_NAMES[6]: best_end_cluster.format_mean_pop_dates(),
+                CSV_COLUMN_NAMES[7]: best_end_cluster.silhouette,
+            })
+
 
 
     csv_file_path = os.path.join(PLOTS_DIR, today_date, 'bubble_assets.csv')

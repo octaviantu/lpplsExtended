@@ -41,6 +41,12 @@ W_RANGE_END = 60
 W_STEP = 5
 
 
+# Constraints from appendix E from:
+# Dissection of Bitcoin’s Multiscale Bubble History from January 2012 to February 2018
+MIN_NR_CLUSTERS = 2
+MAX_NR_CLUSTERS = 10
+
+
 class BubbleType(Enum):
     POSITIVE = "positive"
     NEGATIVE = "negative"
@@ -56,4 +62,3 @@ class Peak:
     type: BubbleType
     date_ordinal: int
     score: float
-
