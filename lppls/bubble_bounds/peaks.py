@@ -92,26 +92,28 @@ class Peaks:
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(14, 10))
         fig.canvas.manager.set_window_title(image_name)
 
-        formated_dates = [pd.Timestamp.fromordinal(d) for d in self.dates]
+        formtted_dates = [pd.Timestamp.fromordinal(d) for d in self.dates]
 
-        # Plot the drawups
-        ax1.plot(formated_dates, self.prices, label="Price", color="black", linewidth=0.75)
+        # Get the maximum price to determine the top of the graph
+        max_price = max(self.prices)
+
+        ax1.plot(formtted_dates, self.prices, label="Price", color="black", linewidth=0.75)
         for drawup in drawups:
             formatted_drawup_date = pd.Timestamp.fromordinal(drawup.date_ordinal)
             ax1.axvline(x=formatted_drawup_date, color='red', linewidth=0.5)
-            ax1.text(formatted_drawup_date, drawup.score, f'{formatted_drawup_date.strftime("%Y-%m-%d")}({drawup.score:.2f})', 
-                    color='red', rotation=90, verticalalignment='bottom', horizontalalignment='right')
+            ax1.text(formatted_drawup_date, max_price, f'{formatted_drawup_date.strftime("%Y-%m-%d")}({drawup.score:.2f})', 
+                    color='red', rotation=90, verticalalignment='top', horizontalalignment='right')
 
         ax1.set_title('Drawups')
 
-        # Plot the drawdowns
-        ax2.plot(formated_dates, self.prices, label="Price", color="black", linewidth=0.75)
+        ax2.plot(formtted_dates, self.prices, label="Price", color="black", linewidth=0.75)
         for drawdown in drawdowns:
             formatted_drawdown_date = pd.Timestamp.fromordinal(drawdown.date_ordinal)
-            ax1.axvline(x=formatted_drawdown_date, color='red', linewidth=0.5)
-            ax1.text(formatted_drawdown_date, drawdown.score, f'{formatted_drawdown_date.strftime("%Y-%m-%d")}({drawdown.score:.2f})', 
-                    color='red', rotation=90, verticalalignment='bottom', horizontalalignment='right')
+            ax2.axvline(x=formatted_drawdown_date, color='green', linewidth=0.5)
+            ax2.text(formatted_drawdown_date, max_price, f'{formatted_drawdown_date.strftime("%Y-%m-%d")}({drawdown.score:.2f})', 
+                    color='green', rotation=90, verticalalignment='top', horizontalalignment='right')
 
         ax2.set_title('Drawdowns')
+
 
         return drawups, drawdowns, image_name

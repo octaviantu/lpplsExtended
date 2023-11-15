@@ -148,6 +148,7 @@ def main():
     tickers = cursor.fetchall()
     positive_bubbles, negative_bubbles = [], []
     bubble_assets = []
+    today_date = datetime.today().strftime('%Y-%m-%d')
 
     print(f"Will go through {len(tickers)} tickers.")
     for index, (ticker,) in enumerate(tickers):
@@ -174,7 +175,6 @@ def main():
                 CSV_COLUMN_NAMES[4]: f'{max_conf:.2f}'
             })
 
-            today_date = datetime.today().strftime('%Y-%m-%d')
 
             drawups, drawdowns, peak_image_name = Peaks(dates, prices, ticker).plot_peaks()
             peak_file_name = f"{peak_image_name.replace(' ', '_').replace('on', '')}.png"
