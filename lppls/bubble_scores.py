@@ -51,8 +51,6 @@ class BubbleScores:
             self.draw_bubble_bounds(ax1, bubble_start, bubble_scores, best_end_cluster)
         elif bubble_start.type == BubbleType.NEGATIVE:
             self.draw_bubble_bounds(ax2, bubble_start, bubble_scores, best_end_cluster)
-        else:
-            raise ValueError("Bubble type not recognized")
 
         # set grids
         ax1.grid(which="major", axis="both", linestyle="--")
@@ -67,6 +65,7 @@ class BubbleScores:
 
         CountMetrics.print_metrics()
         plt.xticks(rotation=45)
+
 
     def draw_bubble_bounds(
         self, axis, bubble_start: BubbleStart, bubble_scores, best_end_cluster: Cluster
@@ -105,6 +104,7 @@ class BubbleScores:
         axis.legend(
             handles=axis.get_legend_handles_labels()[0] + cluster_legend, loc=2, facecolor="white"
         )
+
 
     def compute_bubble_scores(self, fits):
         pos_conf_lst = []
