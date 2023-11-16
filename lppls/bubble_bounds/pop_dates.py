@@ -7,28 +7,63 @@ from lppls_defaults import MIN_NR_CLUSTERS, MAX_NR_CLUSTERS
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 import pandas as pd
-from dataclasses import dataclass
 import numpy as np
+from datetime import datetime
 
-@dataclass
+
 class Cluster:
-    mean_pop_dates: List[int]
-    silhouette: float
+    def __init__(self, mean_pop_dates: List[int] = None, silhouette: float = None):
+        if mean_pop_dates is None or silhouette is None:
+            self.is_valid = False
+            self.mean_pop_dates = []
+            self.silhouette = 0.0
+        else:
+            self.is_valid = True
+            self.mean_pop_dates = mean_pop_dates
+            self.silhouette = silhouette
 
-    def format_mean_pop_dates(self) -> List[str]:
-        return [pd.Timestamp.fromordinal(d).strftime('%Y-%m-%d') for d in self.mean_pop_dates] 
+    def silhouette_score(self) -> str:
+        if not self.is_valid:
+            return 'Invalid cluster'
+        return str(self.silhouette)
 
+    def pop_dates_count(self) -> str:
+        if not self.is_valid:
+            return 'Invalid cluster'
+        return str(len(self.mean_pop_dates))
+
+    def displayCluster(self):
+        if not self.is_valid:
+            return 'Invalid cluster'
+        format_pop_dates = [pd.Timestamp.fromordinal(d).strftime('%Y-%m-%d') for d in self.mean_pop_dates]
+        return f'Clustered in {format_pop_dates} with silhouette: {self.silhouette:.2f} (1 is optimal)'
+
+
+MIN_POINTS_CLUSTER_RATIO = 3
+
+# Only extract windows from these last days 
+LAST_DAYS_WITH_DATA = 8
 
 class PopDates:
 
-    def compute_bubble_end_time(self, start_time: int, fits) -> List[Cluster]:
+    def compute_bubble_end_cluster(self, start_time: int, bubble_scores) -> List[Cluster]:
         tcs = []
-        for fit in fits:
-            if fit['t1'] >= start_time.date_ordinal:
-                # TODO(octaviant) - maybe take into account only qualified windows
-                for window in fit['windows']:
+
+        # Get today's date in ordinal form
+        today_ordinal = pd.Timestamp(datetime.today()).toordinal()
+        # Get the ordinal dates for the last LAST_DAYS_WITH_DATA days
+        last_days_ordinals = [today_ordinal - i for i in range(LAST_DAYS_WITH_DATA)]
+        
+        for fit in bubble_scores['_fits']:
+            for window in fit:
+                # TODO(octaviant) - store window['t2'] as int and don't convert here
+                if window['is_qualified'] and window['t1'] >= start_time.date_ordinal and int(window['t2']) in last_days_ordinals:
                     tcs.append([window['tc']]) # need 2D array
 
+
+        print('Number of tcs considered in clustering: ', len(tcs))
+        if len(tcs) < MIN_POINTS_CLUSTER_RATIO * MAX_NR_CLUSTERS:
+            return Cluster()
 
         clusters = []
         for k in range(MIN_NR_CLUSTERS, MAX_NR_CLUSTERS + 1):
@@ -44,5 +79,4 @@ class PopDates:
             print(f'For n_clusters = {k}, the average silhouette_score is : {silhouette_avg}')
 
         best_cluster = min(clusters, key=lambda c: 1 - c.silhouette)
-
         return best_cluster

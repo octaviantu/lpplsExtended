@@ -39,11 +39,12 @@ class Sornette:
     def parallel_compute_t2_fits(self, **kwargs):
         return self.data_fit.parallel_compute_t2_fits(**kwargs)
 
-    def parallel_compute_t2_recent_fits(self, **kwargs):
-        return self.data_fit.parallel_compute_t2_recent_fits(**kwargs)
+    def compute_bubble_scores(self, **kwargs):
+        fits = self.data_fit.parallel_compute_t2_recent_fits(**kwargs)
+        return self.bubble_scores.compute_bubble_scores(fits)
 
-    def plot_bubble_scores(self, res_filtered, ticker, bubble_start, best_end_cluster):
-        self.bubble_scores.plot_bubble_scores(res_filtered, ticker, bubble_start, best_end_cluster)
+    def plot_bubble_scores(self, bubble_scores, ticker, bubble_start, best_end_cluster):
+        self.bubble_scores.plot_bubble_scores(bubble_scores, ticker, bubble_start, best_end_cluster)
 
     def plot_filimonov(self):
         self.filimonov_plot.plot_optimum(self.data_fit.observations)

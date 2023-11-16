@@ -25,7 +25,7 @@ from lppls_defaults import (
 )
 
 def get_fits(sornette: Sornette, default_fitting_params, recent_windows):
-    return sornette.parallel_compute_t2_recent_fits(
+    return sornette.compute_bubble_scores(
         workers=8,
         recent_windows=recent_windows,
         window_size=default_fitting_params["largest_window_size"],

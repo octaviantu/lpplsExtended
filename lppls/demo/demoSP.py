@@ -43,8 +43,8 @@ PLOTS_DIR = 'plots'
 PEAKS_DIR = PLOTS_DIR + '/peaks'
 CSV_COLUMN_NAMES = ["Ticker", "Name", "Asset Type", "Bubble Type", "Max Confidence", "End times count", "End times", "Silhoutte"]
 
-def get_fits(sornette: Sornette, default_fitting_params, recent_windows):
-    return sornette.parallel_compute_t2_recent_fits(
+def get_bubble_scores(sornette: Sornette, default_fitting_params, recent_windows):
+    return sornette.compute_bubble_scores(
         workers=8,
         recent_windows=recent_windows,
         window_size=default_fitting_params["largest_window_size"],
@@ -59,8 +59,7 @@ def is_in_bubble_state(times, prices, filter_type, filter_file, default_fitting_
     log_prices = np.log(prices)
     sornette = Sornette(np.array([times, log_prices]), filter_type, filter_file)
 
-    fits = get_fits(sornette, default_fitting_params, RECENT_RELEVANT_WINDOWS)
-    bubble_scores = sornette.bubble_scores.compute_bubble_scores(fits)
+    bubble_scores = get_bubble_scores(sornette, default_fitting_params, RECENT_RELEVANT_WINDOWS)
     max_pos_conf = bubble_scores["pos_conf"].max()
     max_neg_conf = bubble_scores["neg_conf"].max()
 
@@ -93,8 +92,8 @@ def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) ->
         drawups, drawdowns, _ = Peaks(dates, prices, ticker).plot_peaks()
 
         start_time = sornette.compute_start_time(dates, prices, bubble_type, drawups if bubble_type == BubbleType.POSITIVE else drawdowns)
-        fits = get_fits(sornette, default_fitting_params, RECENT_VISIBLE_WINDOWS)
-        sornette.plot_bubble_scores(fits, ticker, start_time)
+        bubble_scores = get_bubble_scores(sornette, default_fitting_params, RECENT_VISIBLE_WINDOWS)
+        sornette.plot_bubble_scores(bubble_scores, ticker, start_time)
         plt.show()
 
 
@@ -188,13 +187,14 @@ def main():
 
             start_time = sornette.compute_start_time(dates, prices, bubble_type, drawups if bubble_type == BubbleType.POSITIVE else drawdowns)
 
-            today_date_ordinal = pd.Timestamp.toordinal(datetime.today().date())
-            days_from_start = bisect.bisect_left(dates, today_date_ordinal) - bisect.bisect_left(dates, start_time.date_ordinal)
-            plotted_time = max(RECENT_VISIBLE_WINDOWS, days_from_start)
-            fits = get_fits(sornette, default_fitting_params, plotted_time)
+            today_date_ordinal = pd.Timestamp.toordinal(datetime.today().date())            
+            days_from_start = find_index_or_below(dates, today_date_ordinal) - find_index_or_below(dates, start_time.date_ordinal)
 
-            best_end_cluster = PopDates().compute_bubble_end_time(start_time, fits)
-            sornette.plot_bubble_scores(fits, ticker, start_time, best_end_cluster)
+            plotted_time = max(RECENT_VISIBLE_WINDOWS, days_from_start)
+            bubble_scores = get_bubble_scores(sornette, default_fitting_params, plotted_time)
+
+            best_end_cluster = PopDates().compute_bubble_end_cluster(start_time, bubble_scores)
+            sornette.plot_bubble_scores(bubble_scores, ticker, start_time, best_end_cluster)
 
 
             if not os.path.exists(dir_path):
@@ -212,8 +212,8 @@ def main():
                 CSV_COLUMN_NAMES[2]: asset_type,
                 CSV_COLUMN_NAMES[3]: bubble_type.value,
                 CSV_COLUMN_NAMES[4]: f'{max_conf:.2f}',
-                CSV_COLUMN_NAMES[5]: len(best_end_cluster.mean_pop_dates),
-                CSV_COLUMN_NAMES[6]: best_end_cluster.format_mean_pop_dates(),
+                CSV_COLUMN_NAMES[5]: best_end_cluster.pop_dates_count(),
+                CSV_COLUMN_NAMES[6]: best_end_cluster.displayCluster(),
                 CSV_COLUMN_NAMES[7]: best_end_cluster.silhouette,
             })
 
@@ -228,6 +228,14 @@ def main():
 
     print("Positive bubbles: ", positive_bubbles)
     print("Negative bubbles: ", negative_bubbles)
+
+
+def find_index_or_below(lst, value):
+    index = bisect.bisect_left(lst, value)
+    if index == len(lst) or lst[index] != value:
+        return index - 1
+    else:
+        return index
 
 
 if __name__ == "__main__":
