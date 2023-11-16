@@ -119,9 +119,10 @@ class LPPLSMath:
 
         return [price_prediction, actual_prices]
 
+    # TODO(octaviant) - stop using ndarray and use List[Tuple[int, float]] instead
     @staticmethod
     def stop_observation_at_tc(observations: List[List[float]], tc: float) -> List[List[float]]:
-        first_larger_index = np.searchsorted(observations[0], tc, side="left") - 1
+        first_larger_index = int(np.searchsorted(observations[0], tc, side="left") - 1)
         return [observations[0][:first_larger_index], observations[1][:first_larger_index]]
 
     @staticmethod

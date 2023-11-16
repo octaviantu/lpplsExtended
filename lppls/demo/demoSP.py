@@ -30,6 +30,7 @@ from peaks import Peaks
 import warnings
 from pop_dates import PopDates
 import bisect
+from pop_dates import Cluster
 
 # Convert warnings to exceptions
 warnings.filterwarnings("error", category=RuntimeWarning)
@@ -81,10 +82,7 @@ def is_in_bubble_state(times, prices, filter_type, filter_file, default_fitting_
     return None, 0, sornette
 
 
-# SPECIFIC_TICKERS = ["BIV", "ET", "AAPL"]
 SPECIFIC_TICKERS = ["BIV"]
-
-
 def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) -> None:
     conn = psycopg2.connect(
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
@@ -107,7 +105,7 @@ def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) ->
             dates, prices, bubble_type, drawups if bubble_type == BubbleType.POSITIVE else drawdowns
         )
         bubble_scores = get_bubble_scores(sornette, default_fitting_params, RECENT_VISIBLE_WINDOWS)
-        sornette.plot_bubble_scores(bubble_scores, ticker, start_time)
+        sornette.plot_bubble_scores(bubble_scores, ticker, start_time, Cluster())
         plt.show()
 
 
