@@ -4,6 +4,7 @@
 # Copied but heavily refactored from https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3007070
 
 import sys
+
 sys.path.append(
     "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/bubble_bounds"
 )
@@ -30,13 +31,13 @@ def simulateOLS() -> tuple[NDArray, NDArray]:
     # Ensure all elements of Y are larger than 0
     min_Y = Y.min()
     if min_Y < 0:
-        Y += (-min_Y + 1)  # Add 1 to make the smallest value strictly greater than 0
+        Y += -min_Y + 1  # Add 1 to make the smallest value strictly greater than 0
 
     return X, Y
 
 
 def fitDataViaOlsGetBetaAndLine(X: NDArray, Y: NDArray) -> NDArray:
-    """ Fit synthetic OLS """
+    """Fit synthetic OLS"""
     # Assuming X is a vector and needs to be a matrix with an intercept term
     X_matrix = np.vstack((np.ones(len(X)), X)).T  # Add a column of ones for the intercept
     # Calculate beta_hat using the OLS formula (X'X)^-1X'Y
@@ -50,14 +51,15 @@ if __name__ == "__main__":
     starts = Starts()
     # Simulate Initial Data
     X, Y = simulateOLS()
-    Yhat = fitDataViaOlsGetBetaAndLine(X,Y) # Get Model fit
-    
+    Yhat = fitDataViaOlsGetBetaAndLine(X, Y)  # Get Model fit
+
     # Calculate the end date as today
     today = datetime.now().date()
 
     # Generate an array of N consecutive dates ending today
-    dates = np.array([pd.Timestamp.toordinal(today - timedelta(days=x)) for x in range(len(Y), 0, -1)])
+    dates = np.array(
+        [pd.Timestamp.toordinal(today - timedelta(days=x)) for x in range(len(Y), 0, -1)]
+    )
 
     starts.plot_all_fit_measures(Y, Yhat, dates)
     plt.show()
-

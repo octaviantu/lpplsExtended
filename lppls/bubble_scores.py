@@ -5,12 +5,15 @@ from lppls_defaults import BubbleType, BubbleStart
 from pop_dates import Cluster
 from matplotlib.lines import Line2D
 
+
 class BubbleScores:
     def __init__(self, observations, filter):
         self.observations = observations
         self.filter = filter
 
-    def plot_bubble_scores(self, bubble_scores, ticker: str, bubble_start: BubbleType, best_end_cluster: Cluster) -> None:
+    def plot_bubble_scores(
+        self, bubble_scores, ticker: str, bubble_start: BubbleStart, best_end_cluster: Cluster
+    ) -> None:
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(18, 10))
         fig.canvas.manager.set_window_title(ticker)
         # if burst_time:
@@ -65,23 +68,43 @@ class BubbleScores:
         CountMetrics.print_metrics()
         plt.xticks(rotation=45)
 
-
-    def draw_bubble_bounds(self, axis, bubble_start: BubbleStart, bubble_scores, best_end_cluster: Cluster) -> None:
+    def draw_bubble_bounds(
+        self, axis, bubble_start: BubbleStart, bubble_scores, best_end_cluster: Cluster
+    ) -> None:
         bubble_start_date = pd.Timestamp.fromordinal(bubble_start.date_ordinal)
-        bubble_start_label = f'Start Date ({bubble_start_date.strftime("%Y-%m-%d")})'  # Format the date
+        bubble_start_label = (
+            f'Start Date ({bubble_start_date.strftime("%Y-%m-%d")})'  # Format the date
+        )
 
         # Draw the vertical line if it's later than the earliest fit
         # Use the 't2' timestamp because these are draws on the bubble score plot
-        if int(bubble_scores._fits[0][0]['t2']) <= bubble_start.date_ordinal: 
-            axis.axvline(x=bubble_start_date, color='blue', linestyle='--', linewidth=2)
-        axis.text(bubble_start_date, axis.get_ylim()[1], bubble_start_label, color='blue', ha='left', va='bottom')
+        if int(bubble_scores._fits[0][0]["t2"]) <= bubble_start.date_ordinal:
+            axis.axvline(x=bubble_start_date, color="blue", linestyle="--", linewidth=2)
+        axis.text(
+            bubble_start_date,
+            axis.get_ylim()[1],
+            bubble_start_label,
+            color="blue",
+            ha="left",
+            va="bottom",
+        )
 
-       # Create a custom legend entry for cluster_info
-        cluster_legend = [Line2D([0], [0], color='none', marker='none', markerfacecolor='none', label=best_end_cluster.displayCluster())]
+        # Create a custom legend entry for cluster_info
+        cluster_legend = [
+            Line2D(
+                [0],
+                [0],
+                color="none",
+                marker="none",
+                markerfacecolor="none",
+                label=best_end_cluster.displayCluster(),
+            )
+        ]
 
         # Add the custom legend entry to the existing legend
-        axis.legend(handles=axis.get_legend_handles_labels()[0] + cluster_legend, loc=2, facecolor='white')
-
+        axis.legend(
+            handles=axis.get_legend_handles_labels()[0] + cluster_legend, loc=2, facecolor="white"
+        )
 
     def compute_bubble_scores(self, fits):
         pos_conf_lst = []

@@ -2,7 +2,7 @@
 # TODO(octaviant) - figure out what this does
 
 import cma as cm
-from lppls.bubble_scores import LPPLS
+from bubble_scores import LPPLS
 
 # import multiprocessing as mp
 import numpy as np

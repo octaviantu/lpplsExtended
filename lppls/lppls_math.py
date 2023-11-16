@@ -98,7 +98,6 @@ class LPPLSMath:
 
         return np.sum(np.power(delta, 2)) / len(delta)
 
-
     @staticmethod
     def get_c(c1: float, c2: float) -> float:
         if c1 and c2:

@@ -19,7 +19,7 @@ from lppls_defaults import (
     T1_STEP_STRICT,
     SMALLEST_WINDOW_SIZE_STRICT,
     LARGEST_WINDOW_SIZE_STRICT,
-    RECENT_VISIBLE_WINDOWS
+    RECENT_VISIBLE_WINDOWS,
 )
 import argparse
 from matplotlib import pyplot as plt
@@ -32,16 +32,26 @@ from pop_dates import PopDates
 import bisect
 
 # Convert warnings to exceptions
-warnings.filterwarnings('error', category=RuntimeWarning)
+warnings.filterwarnings("error", category=RuntimeWarning)
 
 
 BUBBLE_THRESHOLD = 0.25
 # windows that are close to the end of the data, to see if there is a recent bubble
 RECENT_RELEVANT_WINDOWS = 5
 LIMIT_OF_MOST_TRADED_COMPANIES = 200
-PLOTS_DIR = 'plots'
-PEAKS_DIR = PLOTS_DIR + '/peaks'
-CSV_COLUMN_NAMES = ["Ticker", "Name", "Asset Type", "Bubble Type", "Max Confidence", "End times count", "End times", "Silhoutte"]
+PLOTS_DIR = "plots"
+PEAKS_DIR = PLOTS_DIR + "/peaks"
+CSV_COLUMN_NAMES = [
+    "Ticker",
+    "Name",
+    "Asset Type",
+    "Bubble Type",
+    "Max Confidence",
+    "End times count",
+    "End times",
+    "Silhoutte",
+]
+
 
 def get_bubble_scores(sornette: Sornette, default_fitting_params, recent_windows):
     return sornette.compute_bubble_scores(
@@ -73,6 +83,8 @@ def is_in_bubble_state(times, prices, filter_type, filter_file, default_fitting_
 
 # SPECIFIC_TICKERS = ["BIV", "ET", "AAPL"]
 SPECIFIC_TICKERS = ["BIV"]
+
+
 def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) -> None:
     conn = psycopg2.connect(
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
@@ -91,11 +103,12 @@ def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) ->
 
         drawups, drawdowns, _ = Peaks(dates, prices, ticker).plot_peaks()
 
-        start_time = sornette.compute_start_time(dates, prices, bubble_type, drawups if bubble_type == BubbleType.POSITIVE else drawdowns)
+        start_time = sornette.compute_start_time(
+            dates, prices, bubble_type, drawups if bubble_type == BubbleType.POSITIVE else drawdowns
+        )
         bubble_scores = get_bubble_scores(sornette, default_fitting_params, RECENT_VISIBLE_WINDOWS)
         sornette.plot_bubble_scores(bubble_scores, ticker, start_time)
         plt.show()
-
 
 
 def main():
@@ -148,7 +161,7 @@ def main():
     tickers = cursor.fetchall()
     positive_bubbles, negative_bubbles = [], []
     bubble_assets = []
-    today_date = datetime.today().strftime('%Y-%m-%d')
+    today_date = datetime.today().strftime("%Y-%m-%d")
 
     print(f"Will go through {len(tickers)} tickers.")
     for index, (ticker,) in enumerate(tickers):
@@ -165,7 +178,9 @@ def main():
 
         if bubble_type:
             print(f"{ticker} meets criteria")
-            cursor.execute(f"SELECT name, type FROM pricing_history WHERE ticker='{ticker}' LIMIT 1;")
+            cursor.execute(
+                f"SELECT name, type FROM pricing_history WHERE ticker='{ticker}' LIMIT 1;"
+            )
             name, asset_type = cursor.fetchone()
 
             drawups, drawdowns, peak_image_name = Peaks(dates, prices, ticker).plot_peaks()
@@ -174,21 +189,27 @@ def main():
             if not os.path.exists(PEAKS_DIR):
                 os.makedirs(PEAKS_DIR)
             peak_file_path = os.path.join(PEAKS_DIR, peak_file_name)
-            plt.savefig(peak_file_path, dpi=300, bbox_inches='tight')
-
+            plt.savefig(peak_file_path, dpi=300, bbox_inches="tight")
 
             if bubble_type == BubbleType.POSITIVE:
                 positive_bubbles.append(ticker)
-                dir_path = os.path.join(PLOTS_DIR, today_date, 'positive')
+                dir_path = os.path.join(PLOTS_DIR, today_date, "positive")
 
             elif bubble_type == BubbleType.NEGATIVE:
                 negative_bubbles.append(ticker)
-                dir_path = os.path.join(PLOTS_DIR, today_date, 'negative')
+                dir_path = os.path.join(PLOTS_DIR, today_date, "negative")
 
-            start_time = sornette.compute_start_time(dates, prices, bubble_type, drawups if bubble_type == BubbleType.POSITIVE else drawdowns)
+            start_time = sornette.compute_start_time(
+                dates,
+                prices,
+                bubble_type,
+                drawups if bubble_type == BubbleType.POSITIVE else drawdowns,
+            )
 
-            today_date_ordinal = pd.Timestamp.toordinal(datetime.today().date())            
-            days_from_start = find_index_or_below(dates, today_date_ordinal) - find_index_or_below(dates, start_time.date_ordinal)
+            today_date_ordinal = pd.Timestamp.toordinal(datetime.today().date())
+            days_from_start = find_index_or_below(dates, today_date_ordinal) - find_index_or_below(
+                dates, start_time.date_ordinal
+            )
 
             plotted_time = max(RECENT_VISIBLE_WINDOWS, days_from_start)
             bubble_scores = get_bubble_scores(sornette, default_fitting_params, plotted_time)
@@ -196,31 +217,29 @@ def main():
             best_end_cluster = PopDates().compute_bubble_end_cluster(start_time, bubble_scores)
             sornette.plot_bubble_scores(bubble_scores, ticker, start_time, best_end_cluster)
 
-
             if not os.path.exists(dir_path):
                 os.makedirs(dir_path)
 
             # Save the figure
             bubble_score_file_name = f"{ticker}.png"
             bubble_score_file_path = os.path.join(dir_path, bubble_score_file_name)
-            plt.savefig(bubble_score_file_path, dpi=300, bbox_inches='tight')
+            plt.savefig(bubble_score_file_path, dpi=300, bbox_inches="tight")
 
+            bubble_assets.append(
+                {
+                    CSV_COLUMN_NAMES[0]: ticker,
+                    CSV_COLUMN_NAMES[1]: name,
+                    CSV_COLUMN_NAMES[2]: asset_type,
+                    CSV_COLUMN_NAMES[3]: bubble_type.value,
+                    CSV_COLUMN_NAMES[4]: f"{max_conf:.2f}",
+                    CSV_COLUMN_NAMES[5]: best_end_cluster.pop_dates_count(),
+                    CSV_COLUMN_NAMES[6]: best_end_cluster.displayCluster(),
+                    CSV_COLUMN_NAMES[7]: best_end_cluster.silhouette,
+                }
+            )
 
-            bubble_assets.append({
-                CSV_COLUMN_NAMES[0]: ticker,
-                CSV_COLUMN_NAMES[1]: name,
-                CSV_COLUMN_NAMES[2]: asset_type,
-                CSV_COLUMN_NAMES[3]: bubble_type.value,
-                CSV_COLUMN_NAMES[4]: f'{max_conf:.2f}',
-                CSV_COLUMN_NAMES[5]: best_end_cluster.pop_dates_count(),
-                CSV_COLUMN_NAMES[6]: best_end_cluster.displayCluster(),
-                CSV_COLUMN_NAMES[7]: best_end_cluster.silhouette,
-            })
-
-
-
-    csv_file_path = os.path.join(PLOTS_DIR, today_date, 'bubble_assets.csv')
-    with open(csv_file_path, mode='w', newline='') as file:
+    csv_file_path = os.path.join(PLOTS_DIR, today_date, "bubble_assets.csv")
+    with open(csv_file_path, mode="w", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=CSV_COLUMN_NAMES)
         writer.writeheader()
         for asset in bubble_assets:

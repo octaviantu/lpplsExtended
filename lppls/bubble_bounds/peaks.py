@@ -1,27 +1,36 @@
 import numpy as np
 import pandas as pd
-from typing import List, Set
+from typing import List, Dict, Tuple
 from collections import defaultdict
 from lppls_defaults import PEAK_THRESHOLD
 from lppls_defaults import BubbleType, Peak
-from lppls_defaults import EPSILON_RANGE_START, EPSILON_RANGE_END, EPSILON_STEP, W_RANGE_END, W_RANGE_START, W_STEP
+from lppls_defaults import (
+    EPSILON_RANGE_START,
+    EPSILON_RANGE_END,
+    EPSILON_STEP,
+    W_RANGE_END,
+    W_RANGE_START,
+    W_STEP,
+)
 import matplotlib.pyplot as plt
 from datetime import datetime
+
 
 class Peaks:
     def __init__(self, dates: List[int], prices: List[float], ticker: str):
         self.D = PEAK_THRESHOLD
-        self.epsilon_range = np.arange(EPSILON_RANGE_START, EPSILON_RANGE_END + EPSILON_STEP, EPSILON_STEP)
+        self.epsilon_range = np.arange(
+            EPSILON_RANGE_START, EPSILON_RANGE_END + EPSILON_STEP, EPSILON_STEP
+        )
         self.w_range = np.arange(W_RANGE_START, W_RANGE_END + W_STEP, W_STEP)
         self.N_epsilon = len(self.epsilon_range) * len(self.w_range)
         self.dates = dates
         self.prices = prices
         self.ticker = ticker
 
-
     def find_extremities(self, bubble_type: BubbleType) -> List[Peak]:
         # We add a dummy first element to maintain the same index.
-        log_returns = [0]
+        log_returns: List[float] = [0.0]
         for i in range(1, len(self.prices)):
             log_returns.append(np.log(self.prices[i]) - np.log(self.prices[i - 1]))
 
@@ -35,11 +44,12 @@ class Peaks:
 
         return selected_peaks
 
-
-    def count_extremities(self, log_returns: List[float], bubble_type: BubbleType) -> Set[pd.Timestamp]:
-        peak_times_counter = defaultdict(float)
-        peak_cum_return = 0
-        cum_return = 0
+    def count_extremities(
+        self, log_returns: List[float], bubble_type: BubbleType
+    ) -> Dict[int, int]:
+        peak_times_counter: Dict[int, int] = defaultdict(int)
+        peak_cum_return = 0.0
+        cum_return = 0.0
         current_peak = 0
 
         for epsilon_0 in self.epsilon_range:
@@ -52,7 +62,7 @@ class Peaks:
                 for i, current_log_return in enumerate(log_returns):
                     # Optimised to reduce complexity and avoid computing vol for each iteration
                     if i > w:
-                        vol = np.std(log_returns[i-w:i])
+                        vol = np.std(log_returns[i - w : i])
 
                     epsilon = epsilon_0 * vol
 
@@ -68,7 +78,6 @@ class Peaks:
                             current_peak = i
                         deviation = cum_return - peak_cum_return
 
-
                     if deviation > epsilon:
                         # End of drawup phase, register the peak time
                         peak_time_index = current_peak
@@ -80,15 +89,14 @@ class Peaks:
 
         return peak_times_counter
 
-
-    def plot_peaks(self) -> None:
+    def plot_peaks(self) -> Tuple[List[Peak], List[Peak], str]:
         # Find drawups and drawdowns
         drawups = self.find_extremities(BubbleType.POSITIVE)
         drawdowns = self.find_extremities(BubbleType.NEGATIVE)
 
         # Create subplots for drawups and drawdowns
-        today_date = datetime.today().strftime('%Y-%m-%d')
-        image_name = f'{self.ticker} on {today_date}'
+        today_date = datetime.today().strftime("%Y-%m-%d")
+        image_name = f"{self.ticker} on {today_date}"
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(14, 10))
         fig.canvas.manager.set_window_title(image_name)
 
@@ -100,20 +108,33 @@ class Peaks:
         ax1.plot(formtted_dates, self.prices, label="Price", color="black", linewidth=0.75)
         for drawup in drawups:
             formatted_drawup_date = pd.Timestamp.fromordinal(drawup.date_ordinal)
-            ax1.axvline(x=formatted_drawup_date, color='red', linewidth=0.5)
-            ax1.text(formatted_drawup_date, max_price, f'{formatted_drawup_date.strftime("%Y-%m-%d")}({drawup.score:.2f})', 
-                    color='red', rotation=90, verticalalignment='top', horizontalalignment='right')
+            ax1.axvline(x=formatted_drawup_date, color="red", linewidth=0.5)
+            ax1.text(
+                formatted_drawup_date,
+                max_price,
+                f'{formatted_drawup_date.strftime("%Y-%m-%d")}({drawup.score:.2f})',
+                color="red",
+                rotation=90,
+                verticalalignment="top",
+                horizontalalignment="right",
+            )
 
-        ax1.set_title('Drawups')
+        ax1.set_title("Drawups")
 
         ax2.plot(formtted_dates, self.prices, label="Price", color="black", linewidth=0.75)
         for drawdown in drawdowns:
             formatted_drawdown_date = pd.Timestamp.fromordinal(drawdown.date_ordinal)
-            ax2.axvline(x=formatted_drawdown_date, color='green', linewidth=0.5)
-            ax2.text(formatted_drawdown_date, max_price, f'{formatted_drawdown_date.strftime("%Y-%m-%d")}({drawdown.score:.2f})', 
-                    color='green', rotation=90, verticalalignment='top', horizontalalignment='right')
+            ax2.axvline(x=formatted_drawdown_date, color="green", linewidth=0.5)
+            ax2.text(
+                formatted_drawdown_date,
+                max_price,
+                f'{formatted_drawdown_date.strftime("%Y-%m-%d")}({drawdown.score:.2f})',
+                color="green",
+                rotation=90,
+                verticalalignment="top",
+                horizontalalignment="right",
+            )
 
-        ax2.set_title('Drawdowns')
-
+        ax2.set_title("Drawdowns")
 
         return drawups, drawdowns, image_name

@@ -57,6 +57,7 @@ class BubbleStart:
     date_ordinal: int
     type: BubbleType
 
+
 @dataclass
 class Peak:
     type: BubbleType

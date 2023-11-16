@@ -1,11 +1,12 @@
 import setuptools
 from setuptools import Command
 import subprocess
+from typing import List
 
 
 class FormatCode(Command):
     description = "Formats the code using Black"
-    user_options = []
+    user_options: List[str] = []
 
     def initialize_options(self):
         pass
@@ -15,6 +16,20 @@ class FormatCode(Command):
 
     def run(self):
         subprocess.run(["black", ".", "--line-length", "100"])
+
+
+class TypeCheck(Command):
+    description = "Run mypy type checking"
+    user_options: List[str] = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        subprocess.run(["mypy", "."])
 
 
 with open("README.md", "r") as fh:
@@ -41,11 +56,14 @@ setuptools.setup(
         "numba",
         "black",
         "statsmodels",
+        "mypy",
+        "typeguard",
     ],
     zip_safe=False,
     include_package_data=True,
     package_data={"": ["data/*.csv"]},
     cmdclass={
         "format": FormatCode,
+        "typecheck": TypeCheck,
     },
 )

@@ -13,8 +13,11 @@ LARGEST_BY_VOLUME = "https://etfdb.com/compare/volume/"
 BANNED_KEYWORDS = ["Bear ", "Bull ", "Leveraged ", "3X ", "2X ", "1.5X "]
 
 BANNED_TICKERS = [
-    "SGOV", "USFR", "BIL", "SHV", # MMF - fluctuations irrelevant
-    "SHY" # Short term treasury - fluctuations noisy
+    "SGOV",
+    "USFR",
+    "BIL",
+    "SHV",  # MMF - fluctuations irrelevant
+    "SHY",  # Short term treasury - fluctuations noisy
 ]
 
 

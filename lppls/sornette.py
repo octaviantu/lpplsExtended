@@ -1,5 +1,8 @@
 import sys
-sys.path.append("/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/bubble_bounds")
+
+sys.path.append(
+    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/bubble_bounds"
+)
 
 import numpy as np
 from count_metrics import CountMetrics
@@ -12,6 +15,7 @@ from filimonov_plot import FilimonovPlot
 from lppls_math import LPPLSMath
 from lppls_defaults import MAX_SEARCHES
 from starts import Starts
+
 
 class Sornette:
     def __init__(self, observations, filter_type, filter_file):
@@ -31,7 +35,9 @@ class Sornette:
         self.starts = Starts()
 
     def estimate_prices(self):
-        return LPPLSMath.get_log_price_predictions(self.data_fit.observations, **self.lppls_equation_terms())[0]
+        return LPPLSMath.get_log_price_predictions(
+            self.data_fit.observations, **self.lppls_equation_terms()
+        )[0]
 
     def plot_fit(self):
         self.data_fit.plot_fit(**self.lppls_equation_terms())
@@ -54,10 +60,10 @@ class Sornette:
             [times, actual_prices], **self.lppls_equation_terms()
         )
         expected_prices = [np.exp(p) for p in expected_log_prices]
-        return self.starts.compute_start_time(times, actual_prices, expected_prices, bubble_type, extremities)
+        return self.starts.compute_start_time(
+            times, actual_prices, expected_prices, bubble_type, extremities
+        )
 
     def lppls_equation_terms(self):
         [_, lppls_coef] = self.data_fit.fit(MAX_SEARCHES, self.data_fit.observations)
-        return {
-            k: lppls_coef[k] for k in ["tc", "m", "w", "a", "b", "c1", "c2"]
-        }
+        return {k: lppls_coef[k] for k in ["tc", "m", "w", "a", "b", "c1", "c2"]}

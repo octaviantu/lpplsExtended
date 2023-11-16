@@ -24,6 +24,7 @@ from lppls_defaults import (
     RECENT_VISIBLE_WINDOWS,
 )
 
+
 def get_fits(sornette: Sornette, default_fitting_params, recent_windows):
     return sornette.compute_bubble_scores(
         workers=8,
@@ -43,10 +44,12 @@ def main():
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
     )
     cursor = conn.cursor()
-    query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' ORDER BY date ASC;"
+    query = (
+        f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' ORDER BY date ASC;"
+    )
     cursor.execute(query)
     rows = cursor.fetchall()
-    
+
     # Separate the dates and prices into two lists
     all_dates = [pd.Timestamp.toordinal(row[0]) for row in rows]
     all_actual_prices = [row[1] for row in rows]
@@ -57,7 +60,11 @@ def main():
     selected_actual_prices = all_actual_prices[first_eligible_date:]
     selected_log_prices = np.log(selected_actual_prices)
 
-    sornette_on_interval = Sornette(np.array([selected_dates, selected_log_prices]), "BitcoinB", "./lppls/conf/demos2015_filter.json")
+    sornette_on_interval = Sornette(
+        np.array([selected_dates, selected_log_prices]),
+        "BitcoinB",
+        "./lppls/conf/demos2015_filter.json",
+    )
     sornette_on_interval.plot_fit()
 
     expected_prices = [np.exp(p) for p in sornette_on_interval.estimate_prices()]
@@ -70,13 +77,20 @@ def main():
 
     starts = Starts()
     starts.plot_all_fit_measures(selected_actual_prices, expected_prices, selected_dates)
-    optimal_start = starts.compute_start_time(selected_dates[:len(selected_dates) - SMALLEST_WINDOW_SIZE], selected_actual_prices, expected_prices, BubbleType.NEGATIVE, drawdowns)
-
+    optimal_start = starts.compute_start_time(
+        selected_dates[: len(selected_dates) - SMALLEST_WINDOW_SIZE],
+        selected_actual_prices,
+        expected_prices,
+        BubbleType.NEGATIVE,
+        drawdowns,
+    )
 
     # I want to see the start date on the entire interval, so I make another Sornettee object
     # TODO(octaviant) - creating a new Sornette object is complicated; simplify
     all_log_prices = np.log(all_actual_prices)
-    sornette_on_interval = Sornette(np.array([all_dates, all_log_prices]), "BitcoinB", "./lppls/conf/demos2015_filter.json")
+    sornette_on_interval = Sornette(
+        np.array([all_dates, all_log_prices]), "BitcoinB", "./lppls/conf/demos2015_filter.json"
+    )
     fits = get_fits(sornette_on_interval, default_fitting_params, RECENT_VISIBLE_WINDOWS)
     sornette_on_interval.plot_bubble_scores(fits, ticker, optimal_start)
 
