@@ -14,6 +14,12 @@
       "justMyCode": true
     },
     {
+      "name": "Temporary test trade suggestions",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/lppls/prices_db_management/test_trade_suggestions.py"
+    },
+    {
       "name": "Starts Paper code debug",
       "type": "python",
       "request": "launch",

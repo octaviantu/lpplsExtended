@@ -8,7 +8,7 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 from lppls_defaults import BubbleStart
 
 
@@ -20,7 +20,7 @@ class Cluster:
             self.silhouette = 0.0
         else:
             self.is_valid = True
-            self.mean_pop_dates = mean_pop_dates
+            self.mean_pop_dates = sorted(mean_pop_dates)
             self.silhouette = silhouette
 
     def silhouette_score(self) -> str:
@@ -42,6 +42,20 @@ class Cluster:
         return (
             f"Clustered in {format_pop_dates} with silhouette: {self.silhouette:.2f} (1 is optimal)"
         )
+
+
+    def give_one_pop_date(self) -> int | None:
+        if not self.is_valid or not self.mean_pop_dates:
+            return None
+
+        # Convert ordinals to datetime objects
+        datetime_pop_dates = [datetime.fromordinal(d) for d in self.mean_pop_dates]
+
+        if datetime_pop_dates[-1] - datetime_pop_dates[0] <= timedelta(days=6*30):  # Approximating 1 month as 30 days
+            return self.mean_pop_dates[0]
+        else:
+            return None
+
 
 
 MIN_POINTS_CLUSTER_RATIO = 3

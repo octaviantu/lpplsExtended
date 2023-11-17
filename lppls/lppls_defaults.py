@@ -23,11 +23,6 @@ MAX_SEARCHES = 25
 # Authors: Min Shu, Wei Zhu
 SIGNIFICANCE_LEVEL = 0.05
 
-
-# windows that are close to the end of the data, to see if there is a recent bubble
-# RECENT_RELEVANT_WINDOWS = 20
-
-
 # From 'Dissection of Bitcoin’s Multiscale Bubble History from January 2012 to February 2018' - Demos, Sornette
 # The ratio of windows over which a value is min/max for us to consider it a peak
 PEAK_THRESHOLD = 0.95
@@ -45,6 +40,12 @@ W_STEP = 5
 # Dissection of Bitcoin’s Multiscale Bubble History from January 2012 to February 2018
 MIN_NR_CLUSTERS = 2
 MAX_NR_CLUSTERS = 10
+
+# For simulating the results, this will be default sum invested.
+DEFAULT_POSITION_SIZE = 10000
+# In practice the confidence that an asset is in a bubble rarely goes over 0.4
+# But of course, the maximum is 1.
+TOP_BUBBLE_CONFIDENCE_IN_PRACTICE = 0.4
 
 
 class BubbleType(Enum):

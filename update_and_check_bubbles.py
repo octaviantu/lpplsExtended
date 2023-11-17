@@ -18,6 +18,10 @@ scripts_to_run = [
         "cmd": ("python", "lppls/demo/demoSP.py"),
         "log": "Running fits on all available stocks and etfs",
     },
+        {
+        "cmd": ("python", "lppls/prices_db_management/backup_db.py"),
+        "log": "Backup existing db state",
+    },
 ]
 
 total_start_time = time.time()

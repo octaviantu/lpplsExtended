@@ -5,6 +5,12 @@ sys.path.append("/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_py
 sys.path.append(
     "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/metrics"
 )
+sys.path.append(
+    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/prices_db_management"
+)
+sys.path.append(
+    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/common"
+)
 
 import numpy as np
 import pandas as pd
@@ -31,6 +37,8 @@ import warnings
 from pop_dates import PopDates
 import bisect
 from pop_dates import Cluster
+from trade_suggestions import TradeSuggestions
+from lppls_dataclasses import Suggestion
 
 # Convert warnings to exceptions
 warnings.filterwarnings("error", category=RuntimeWarning)
@@ -75,14 +83,14 @@ def is_in_bubble_state(times, prices, filter_type, filter_file, default_fitting_
     max_neg_conf = bubble_scores["neg_conf"].max()
 
     if max_pos_conf > BUBBLE_THRESHOLD:
-        return BubbleType.POSITIVE, max_pos_conf, sornette
+        return BubbleType.POSITIVE, list(bubble_scores["pos_conf"]), sornette
     elif max_neg_conf > BUBBLE_THRESHOLD:
-        return BubbleType.NEGATIVE, max_neg_conf, sornette
+        return BubbleType.NEGATIVE, list(bubble_scores["neg_conf"]), sornette
 
     return None, 0, sornette
 
 
-SPECIFIC_TICKERS = ["MSFT"]
+SPECIFIC_TICKERS = ["PANW"]
 def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) -> None:
     conn = psycopg2.connect(
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
@@ -160,6 +168,7 @@ def main():
     positive_bubbles, negative_bubbles = [], []
     bubble_assets = []
     today_date = datetime.today().strftime("%Y-%m-%d")
+    trade_suggestions = TradeSuggestions()
 
     print(f"Will go through {len(tickers)} tickers.")
     for index, (ticker,) in enumerate(tickers):
@@ -170,7 +179,7 @@ def main():
         dates = [pd.Timestamp.toordinal(row[0]) for row in rows]
         prices = [row[1] for row in rows]
 
-        bubble_type, max_conf, sornette = is_in_bubble_state(
+        bubble_type, bubble_confidences, sornette = is_in_bubble_state(
             dates, prices, "BitcoinB", "./lppls/conf/demos2015_filter.json", default_fitting_params
         )
 
@@ -204,8 +213,7 @@ def main():
                 drawups if bubble_type == BubbleType.POSITIVE else drawdowns,
             )
 
-            today_date_ordinal = pd.Timestamp.toordinal(datetime.today().date())
-            days_from_start = find_index_or_below(dates, today_date_ordinal) - find_index_or_below(
+            days_from_start = find_index_or_below(dates, dates[-1]) - find_index_or_below(
                 dates, start_time.date_ordinal
             )
 
@@ -229,12 +237,25 @@ def main():
                     CSV_COLUMN_NAMES[1]: name,
                     CSV_COLUMN_NAMES[2]: asset_type,
                     CSV_COLUMN_NAMES[3]: bubble_type.value,
-                    CSV_COLUMN_NAMES[4]: f"{max_conf:.2f}",
+                    CSV_COLUMN_NAMES[4]: f"{max(bubble_confidences):.2f}",
                     CSV_COLUMN_NAMES[5]: best_end_cluster.pop_dates_count(),
                     CSV_COLUMN_NAMES[6]: best_end_cluster.displayCluster(),
                     CSV_COLUMN_NAMES[7]: best_end_cluster.silhouette,
                 }
             )
+
+            # Make trading suggestions to the databse used for backtesting.
+            close_date = best_end_cluster.give_one_pop_date()
+            if close_date:
+                trade_suggestions.make_suggestions(Suggestion(
+                    bubble_type=bubble_type,
+                    ticker=ticker,
+                    confidence=bubble_confidences[-1], # the confidence for the last date
+                    price=prices[-1],
+                    open_date=dates[-1],
+                    close_date=close_date,
+                ))
+
 
     csv_file_path = os.path.join(PLOTS_DIR, today_date, "bubble_assets.csv")
     with open(csv_file_path, mode="w", newline="") as file:
@@ -242,9 +263,6 @@ def main():
         writer.writeheader()
         for asset in bubble_assets:
             writer.writerow(asset)
-
-    print("Positive bubbles: ", positive_bubbles)
-    print("Negative bubbles: ", negative_bubbles)
 
 
 def find_index_or_below(lst, value):
