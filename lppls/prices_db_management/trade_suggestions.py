@@ -76,6 +76,7 @@ class TradeSuggestions:
                 """
                 INSERT INTO suggestions (strategy_t, order_t, open_date, open_price, ticker, confidence, position_size)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (open_date, ticker, strategy_t) DO NOTHING
             """, (
                 STRATEGY_TYPE,
                 'SELL' if suggestion.bubble_type.POSITIVE else 'BUY',
