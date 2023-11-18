@@ -24,15 +24,19 @@ backup_file_path = os.path.join(BACKUP_DIR, filename)
 if os.path.exists(backup_file_path):
     print(f"A backup for today ({today_str}) already exists. No new backup created.")
 else:
+    pg_dump_path = "/opt/homebrew/bin/pg_dump" # Path to pg_dump
     # Command to run pg_dump
-    command = f"zsh -c 'pg_dump -h {DB_HOST} -p {DB_PORT} -U {DB_USER} -d {DB_NAME} -F c > {backup_file_path}'"
+    command = [
+        "zsh", "-c",
+        f"{pg_dump_path} -h {DB_HOST} -p {DB_PORT} -U {DB_USER} -d {DB_NAME} -F c > {backup_file_path}"
+    ]
 
     # Set the environment variable for the password
     os.environ["PGPASSWORD"] = DB_PASSWORD
 
     try:
         # Run the pg_dump command
-        subprocess.run(command, shell=True, check=True)
+        subprocess.run(command, check=True)
         print(f"Backup completed: {backup_file_path}")
     except subprocess.CalledProcessError as e:
         print(f"An error occurred during backup: {e}")

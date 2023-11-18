@@ -9,51 +9,41 @@ STRATEGY_TYPE = "SORNETTE"
 
 class TradeSuggestions:
 
-    def create_if_not_exists(self, conn, cursor) -> None:
-        # Check if the 'suggestions' table exists
+    def create_if_not_exists(self, cursor) -> None:
+        # Check and create ENUM types if they don't exist
         cursor.execute("""
-            SELECT EXISTS (
-                SELECT FROM 
-                    pg_tables
-                WHERE 
-                    schemaname = 'public' AND 
-                    tablename  = 'suggestions'
-            );
-        """)
-        table_exists = cursor.fetchone()[0]
-        if table_exists:
-            print('did NOT create table suggestions')
-            return
-        
-        # If the table does not exist, create types and the table
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'strategy_type') THEN
+                    CREATE TYPE strategy_type AS ENUM ('SORNETTE', 'TAO', 'ELECTION_ARB');
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_type') THEN
+                    CREATE TYPE order_type AS ENUM ('BUY', 'SELL');
+                END IF;
+            END
+            $$;
+            """)
 
-        # Create types
+        # Create 'suggestions' table if it doesn't exist
         cursor.execute("""
-            CREATE TYPE strategy_type AS ENUM ('SORNETTE', 'TAO', 'ELECTION_ARB');
-            CREATE TYPE order_type AS ENUM ('BUY', 'SELL');
+        CREATE TABLE IF NOT EXISTS suggestions (
+            strategy_t strategy_type,
+            order_t order_type,
+            open_date DATE,
+            open_price FLOAT,
+            is_position_open BOOLEAN DEFAULT TRUE,
+            close_date DATE,
+            close_price FLOAT,
+            ticker VARCHAR(10),
+            confidence FLOAT CHECK (confidence >= 0 AND confidence <= 1),
+            position_size FLOAT,
+            PRIMARY KEY (open_date, ticker, strategy_t),
+            CHECK (
+                (is_position_open AND close_price IS NULL) OR
+                (NOT is_position_open AND close_price IS NOT NULL)
+            )
+        );
         """)
-
-        # Create 'suggestions' table
-        cursor.execute("""
-            CREATE TABLE suggestions (
-                strategy_t strategy_type,
-                order_t order_type,
-                open_date DATE,
-                open_price FLOAT,
-                is_position_open BOOLEAN DEFAULT TRUE,
-                close_date DATE,
-                close_price FLOAT,
-                ticker VARCHAR(10),
-                confidence FLOAT CHECK (confidence >= 0 AND confidence <= 1),
-                position_size FLOAT,
-                PRIMARY KEY (open_date, ticker, strategy_t),
-                CHECK (
-                    (is_position_open AND close_price IS NULL) OR
-                    (NOT is_position_open AND close_price IS NOT NULL)
-                )
-            );
-        """)
-        conn.commit()
         print('created table suggestions')
 
 
@@ -74,7 +64,7 @@ class TradeSuggestions:
             host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASSWORD, port=DB_PORT
         )
         cursor = conn.cursor()
-        self.create_if_not_exists(conn, cursor)
+        self.create_if_not_exists(cursor)
 
         for suggestion in suggestions:
             if self.is_position_open(cursor, suggestion.ticker, STRATEGY_TYPE):

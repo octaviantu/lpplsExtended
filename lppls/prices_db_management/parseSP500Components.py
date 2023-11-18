@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import argparse
 
 
-slickcharts_to_yahoo_ticker_mapping = {"BRK.B": "BRK-B"}
+slickcharts_to_yahoo_ticker_mapping = {"BRK.B": "BRK-B", "BF.B": "BF-B"}
 
 
 def fetch_tickers():

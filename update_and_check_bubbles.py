@@ -7,7 +7,7 @@ scripts_to_run = [
         "log": "Fetching latest ETF pricing",
     },
     {
-        "cmd": ("python", "lppls/prices_db_management/parseMostTradedStocksUS.py"),
+        "cmd": ("python", "lppls/prices_db_management/parseMostTradedStocksUS.py", "--fetch-tickers"),
         "log": "Fetching most traded 100 stocks and their pricing",
     },
     {

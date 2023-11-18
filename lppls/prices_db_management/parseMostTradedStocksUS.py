@@ -8,9 +8,10 @@ import argparse
 
 slickcharts_to_yahoo_ticker_mapping = {"BRK.B": "BRK-B"}
 
+MOST_ACTIVE_FETCH_COUNT = 200
 
 def fetch_most_traded_tickers():
-    url = "https://finance.yahoo.com/most-active/?offset=0&count=100"
+    url = f"https://finance.yahoo.com/most-active/?offset=0&count={MOST_ACTIVE_FETCH_COUNT}"
     headers = {"User-Agent": "Mozilla/5.0"}
     response = requests.get(url, headers=headers)
     soup = BeautifulSoup(response.text, "html.parser")

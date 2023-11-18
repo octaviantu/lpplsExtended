@@ -31,8 +31,10 @@ PEAK_THRESHOLD = 0.95
 EPSILON_RANGE_START = 0.2
 EPSILON_RANGE_END = 10
 EPSILON_STEP = 0.2
+# In the paper w is within [10, 60] but I made the range bigger to avoid peaks
+# that come on a downtrend(see SMR 2021-2023).
 W_RANGE_START = 10
-W_RANGE_END = 60
+W_RANGE_END = 90
 W_STEP = 5
 
 

@@ -47,7 +47,7 @@ warnings.filterwarnings("error", category=RuntimeWarning)
 BUBBLE_THRESHOLD = 0.25
 # windows that are close to the end of the data, to see if there is a recent bubble
 RECENT_RELEVANT_WINDOWS = 5
-LIMIT_OF_MOST_TRADED_COMPANIES = 200
+LIMIT_OF_MOST_TRADED_COMPANIES = 250
 PLOTS_DIR = "plots"
 PEAKS_DIR = PLOTS_DIR + "/peaks"
 CSV_COLUMN_NAMES = [
@@ -90,7 +90,7 @@ def is_in_bubble_state(times, prices, filter_type, filter_file, default_fitting_
     return None, 0, sornette
 
 
-SPECIFIC_TICKERS = ["PANW"]
+SPECIFIC_TICKERS = ["SMR"]
 def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) -> None:
     conn = psycopg2.connect(
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
@@ -168,7 +168,7 @@ def main():
     positive_bubbles, negative_bubbles = [], []
     bubble_assets = []
     today_date = datetime.today().strftime("%Y-%m-%d")
-    trade_suggestions = TradeSuggestions()
+    suggestions = []
 
     print(f"Will go through {len(tickers)} tickers.")
     for index, (ticker,) in enumerate(tickers):
@@ -247,7 +247,7 @@ def main():
             # Make trading suggestions to the databse used for backtesting.
             close_date = best_end_cluster.give_one_pop_date()
             if close_date:
-                trade_suggestions.make_suggestions(Suggestion(
+                suggestions.append(Suggestion(
                     bubble_type=bubble_type,
                     ticker=ticker,
                     confidence=bubble_confidences[-1], # the confidence for the last date
@@ -256,6 +256,7 @@ def main():
                     close_date=close_date,
                 ))
 
+    TradeSuggestions().write_suggestions(suggestions)
 
     csv_file_path = os.path.join(PLOTS_DIR, today_date, "bubble_assets.csv")
     with open(csv_file_path, mode="w", newline="") as file:
