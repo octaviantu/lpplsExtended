@@ -1,8 +1,4 @@
 import sys
-sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/common"
-)
-
 import subprocess
 from datetime import datetime
 import os
@@ -15,31 +11,34 @@ if not os.path.exists(BACKUP_DIR):
 
 # Formatted date for the filename
 today_str = datetime.now().strftime("%Y%m%d")
-filename = f"asset_prices_backup_{today_str}.sql"
 
-# Full path for the backup file
+# Initialize the counter and backup file path
+counter = 0
+filename = f"asset_prices_backup_{today_str}.sql"
 backup_file_path = os.path.join(BACKUP_DIR, filename)
 
-# Check if a backup for today already exists
-if os.path.exists(backup_file_path):
-    print(f"A backup for today ({today_str}) already exists. No new backup created.")
-else:
-    pg_dump_path = "/opt/homebrew/bin/pg_dump" # Path to pg_dump
-    # Command to run pg_dump
-    command = [
-        "zsh", "-c",
-        f"{pg_dump_path} -h {DB_HOST} -p {DB_PORT} -U {DB_USER} -d {DB_NAME} -F c > {backup_file_path}"
-    ]
+# Increment the counter if the backup file for today already exists
+while os.path.exists(backup_file_path):
+    counter += 1
+    filename = f"asset_prices_backup_{today_str}_{counter}.sql"
+    backup_file_path = os.path.join(BACKUP_DIR, filename)
 
-    # Set the environment variable for the password
-    os.environ["PGPASSWORD"] = DB_PASSWORD
+pg_dump_path = "/opt/homebrew/bin/pg_dump" # Path to pg_dump
+# Command to run pg_dump
+command = [
+    "zsh", "-c",
+    f"{pg_dump_path} -h {DB_HOST} -p {DB_PORT} -U {DB_USER} -d {DB_NAME} -F c > {backup_file_path}"
+]
 
-    try:
-        # Run the pg_dump command
-        subprocess.run(command, check=True)
-        print(f"Backup completed: {backup_file_path}")
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred during backup: {e}")
+# Set the environment variable for the password
+os.environ["PGPASSWORD"] = DB_PASSWORD
 
-    # Unset the PGPASSWORD environment variable
-    del os.environ["PGPASSWORD"]
+try:
+    # Run the pg_dump command
+    subprocess.run(command, check=True)
+    print(f"Backup completed: {backup_file_path}")
+except subprocess.CalledProcessError as e:
+    print(f"An error occurred during backup: {e}")
+
+# Unset the PGPASSWORD environment variable
+del os.environ["PGPASSWORD"]
