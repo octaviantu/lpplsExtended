@@ -41,6 +41,9 @@ class TradeSuggestions:
             CHECK (
                 (is_position_open AND close_price IS NULL) OR
                 (NOT is_position_open AND close_price IS NOT NULL)
+            ),
+            CHECK (
+                (strategy_t != 'SORNETTE' OR (strategy_t = 'SORNETTE' AND close_date IS NOT NULL))
             )
         );
         """)
@@ -74,8 +77,8 @@ class TradeSuggestions:
             formatted_open_date = datetime.fromordinal(suggestion.open_date).strftime("%Y-%m-%d")
             cursor.execute(
                 """
-                INSERT INTO suggestions (strategy_t, order_t, open_date, open_price, ticker, confidence, position_size)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO suggestions (strategy_t, order_t, open_date, open_price, ticker, confidence, close_date, position_size)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (open_date, ticker, strategy_t) DO NOTHING
             """, (
                 STRATEGY_TYPE,
@@ -86,7 +89,8 @@ class TradeSuggestions:
 
                 suggestion.ticker,
                 suggestion.confidence,
-                position_size
+                suggestion.close_date,
+                position_size,
             ))
 
         conn.commit()
