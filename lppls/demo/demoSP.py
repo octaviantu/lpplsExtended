@@ -1,17 +1,15 @@
 import sys
-import csv
 
 sys.path.append("/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls")
 sys.path.append(
     "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/metrics"
 )
 sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/prices_db_management"
-)
-sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/common"
+    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/prices_db_management"
 )
 
+
+import csv
 import numpy as np
 import pandas as pd
 import psycopg2
@@ -37,8 +35,8 @@ import warnings
 from pop_dates import PopDates
 import bisect
 from pop_dates import Cluster
-from trade_suggestions import TradeSuggestions
-from lppls_dataclasses import Suggestion
+from sornette_suggestions import SornetteSuggestions
+from db_dataclasses import Suggestion, OrderType
 
 # Convert warnings to exceptions
 warnings.filterwarnings("error", category=RuntimeWarning)
@@ -246,9 +244,11 @@ def main():
 
             # Make trading suggestions to the databse used for backtesting.
             pop_dates_range = best_end_cluster.give_pop_dates_range()
+            order_type = OrderType.SELL if bubble_type == BubbleType.POSITIVE else OrderType.BUY
+
             if pop_dates_range:
                 suggestions.append(Suggestion(
-                    bubble_type=bubble_type,
+                    order_type=order_type,
                     ticker=ticker,
                     confidence=bubble_confidences[-1], # the confidence for the last date
                     price=prices[-1],
@@ -256,7 +256,7 @@ def main():
                     pop_dates_range=pop_dates_range,
                 ))
 
-    TradeSuggestions().write_suggestions(suggestions)
+    SornetteSuggestions().write_suggestions(suggestions)
 
     csv_file_path = os.path.join(PLOTS_DIR, today_date, "bubble_assets.csv")
     with open(csv_file_path, mode="w", newline="") as file:

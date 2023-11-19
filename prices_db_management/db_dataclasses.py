@@ -1,11 +1,16 @@
+from enum import Enum
 from typing import Tuple
 from dataclasses import dataclass
-from lppls_defaults import BubbleType
+
+
+class OrderType(Enum):
+    BUY = "BUY"
+    SELL = "SELL"
 
 
 @dataclass
 class Suggestion:
-    bubble_type: BubbleType
+    order_type: OrderType
     ticker: str
     confidence: float
     price: float

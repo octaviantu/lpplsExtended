@@ -58,6 +58,7 @@ setuptools.setup(
         "statsmodels",
         "mypy",
         "typeguard",
+        "ta",
     ],
     zip_safe=False,
     include_package_data=True,

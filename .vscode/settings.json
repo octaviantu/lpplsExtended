@@ -2,7 +2,7 @@
     "python.analysis.extraPaths": [
         "./lppls/metrics",
         "./lppls/bubble_bounds",
-        "./lppls/common",
-        "./lppls/prices_db_management",
+        "./prices_db_management",
+        "./tao"
     ]
 }

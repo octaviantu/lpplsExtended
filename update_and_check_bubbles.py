@@ -3,15 +3,15 @@ import time
 
 scripts_to_run = [
     {
-        "cmd": ("python", "lppls/prices_db_management/parseLargestETFs.py"),
+        "cmd": ("python", "prices_db_management/parseLargestETFs.py"),
         "log": "Fetching latest ETF pricing",
     },
     {
-        "cmd": ("python", "lppls/prices_db_management/parseMostTradedStocksUS.py", "--fetch-tickers"),
+        "cmd": ("python", "prices_db_management/parseMostTradedStocksUS.py", "--fetch-tickers"),
         "log": "Fetching most traded 100 stocks and their pricing",
     },
     {
-        "cmd": ("python", "lppls/prices_db_management/parseSP500Components.py", "--fetch-tickers"),
+        "cmd": ("python", "prices_db_management/parseSP500Components.py", "--fetch-tickers"),
         "log": "Fetching latest S&P500 pricing",
     },
     {
@@ -19,10 +19,11 @@ scripts_to_run = [
         "log": "Running fits on all available stocks and etfs",
     },
         {
-        "cmd": ("python", "lppls/prices_db_management/backup_db.py"),
+        "cmd": ("python", "prices_db_management/backup_db.py"),
         "log": "Backup existing db state",
     },
 ]
+
 
 total_start_time = time.time()
 for script in scripts_to_run:

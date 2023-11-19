@@ -2,16 +2,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python: Module",
+      "name": "Tao debug",
       "type": "python",
       "request": "launch",
-      "module": "pytest",
-      "args": [
-        "-s",
-        "-v",
-        "${workspaceFolder}/lppls/tests/test_lppls.py"
-      ],
-      "justMyCode": true
+      "program": "${workspaceFolder}/tao/scan_tao.py"
     },
     {
       "name": "Starts Paper code debug",
