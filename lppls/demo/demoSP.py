@@ -245,15 +245,15 @@ def main():
             )
 
             # Make trading suggestions to the databse used for backtesting.
-            close_date = best_end_cluster.give_one_pop_date()
-            if close_date:
+            pop_dates_range = best_end_cluster.give_pop_dates_range()
+            if pop_dates_range:
                 suggestions.append(Suggestion(
                     bubble_type=bubble_type,
                     ticker=ticker,
                     confidence=bubble_confidences[-1], # the confidence for the last date
                     price=prices[-1],
                     open_date=dates[-1],
-                    close_date=close_date,
+                    pop_dates_range=pop_dates_range,
                 ))
 
     TradeSuggestions().write_suggestions(suggestions)

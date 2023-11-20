@@ -33,6 +33,8 @@ class TradeSuggestions:
             open_price FLOAT,
             is_position_open BOOLEAN DEFAULT TRUE,
             close_date DATE,
+            earliest_pop_date DATE NOT NULL,
+            latest_pop_date DATE NOT NULL,
             close_price FLOAT,
             ticker VARCHAR(10),
             confidence FLOAT CHECK (confidence >= 0 AND confidence <= 1),
@@ -43,7 +45,8 @@ class TradeSuggestions:
                 (NOT is_position_open AND close_price IS NOT NULL)
             ),
             CHECK (
-                (strategy_t != 'SORNETTE' OR (strategy_t = 'SORNETTE' AND close_date IS NOT NULL))
+                strategy_t != 'SORNETTE' OR 
+                (strategy_t = 'SORNETTE' AND earliest_pop_date IS NOT NULL AND latest_pop_date IS NOT NULL)
             )
         );
         """)
@@ -77,8 +80,8 @@ class TradeSuggestions:
             formatted_open_date = datetime.fromordinal(suggestion.open_date).strftime("%Y-%m-%d")
             cursor.execute(
                 """
-                INSERT INTO suggestions (strategy_t, order_t, open_date, open_price, ticker, confidence, close_date, position_size)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO suggestions (strategy_t, order_t, open_date, open_price, ticker, confidence, position_size, earliest_pop_date, latest_pop_date)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (open_date, ticker, strategy_t) DO NOTHING
             """, (
                 STRATEGY_TYPE,
@@ -89,8 +92,9 @@ class TradeSuggestions:
 
                 suggestion.ticker,
                 suggestion.confidence,
-                suggestion.close_date,
                 position_size,
+                suggestion.pop_dates_range[0],
+                suggestion.pop_dates_range[1]
             ))
 
         conn.commit()

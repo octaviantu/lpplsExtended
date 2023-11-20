@@ -2,7 +2,7 @@
 # Dissection of Bitcoin’s Multiscale Bubble History from January 2012 to February 2018
 # J.C. Gerlach† , G. Demos†, D. Sornette†♮
 
-from typing import List
+from typing import List, Tuple
 from lppls_defaults import MIN_NR_CLUSTERS, MAX_NR_CLUSTERS
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
@@ -10,6 +10,15 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from lppls_defaults import BubbleStart
+
+
+MIN_POINTS_CLUSTER_RATIO = 3
+# Only extract windows from these last days
+LAST_DAYS_WITH_DATA = 8
+
+# Approximating 1 month as 30 days
+MAX_POP_TIMES_DISPERSION = 6 * 30 # More than this, and the data is too imprecise
+MAX_LAG_FROM_TODAY = 2 * 30 # More than this, and I can not short/buy puts
 
 
 class Cluster:
@@ -44,24 +53,21 @@ class Cluster:
         )
 
 
-    def give_one_pop_date(self) -> int | None:
+    def give_pop_dates_range(self) -> Tuple[int, int] | None:
         if not self.is_valid or not self.mean_pop_dates:
             return None
 
         # Convert ordinals to datetime objects
         datetime_pop_dates = [datetime.fromordinal(d) for d in self.mean_pop_dates]
 
-        if datetime_pop_dates[-1] - datetime_pop_dates[0] <= timedelta(days=6*30):  # Approximating 1 month as 30 days
-            return self.mean_pop_dates[0]
-        else:
+        # If pop dates are too dispersed, they are not actionable.
+        if datetime_pop_dates[-1] - datetime_pop_dates[0] > timedelta(days=MAX_POP_TIMES_DISPERSION):
+            return None
+        if datetime_pop_dates[0] > datetime.now() + timedelta(days=MAX_LAG_FROM_TODAY):
             return None
 
+        return [self.mean_pop_dates[0], self.mean_pop_dates[-1]]
 
-
-MIN_POINTS_CLUSTER_RATIO = 3
-
-# Only extract windows from these last days
-LAST_DAYS_WITH_DATA = 8
 
 
 class PopDates:

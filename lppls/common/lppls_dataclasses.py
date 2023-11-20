@@ -1,4 +1,4 @@
-from enum import Enum
+from typing import Tuple
 from dataclasses import dataclass
 from lppls_defaults import BubbleType
 
@@ -10,4 +10,4 @@ class Suggestion:
     confidence: float
     price: float
     open_date: int
-    close_date: int
+    pop_dates_range: Tuple[int, int] = Tuple[None, None]
