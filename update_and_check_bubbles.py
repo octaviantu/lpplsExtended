@@ -16,9 +16,13 @@ scripts_to_run = [
     },
     {
         "cmd": ("python", "lppls/demo/demoSP.py"),
-        "log": "Running fits on all available stocks and etfs",
+        "log": "Running LPPLS fits on all available stocks and etfs",
     },
-        {
+    {
+        "cmd": ("python", "tao/scan_tao.py"),
+        "log": "Running TAO on all available stocks and etfs",
+    },
+    {
         "cmd": ("python", "prices_db_management/backup_db.py"),
         "log": "Backup existing db state",
     },

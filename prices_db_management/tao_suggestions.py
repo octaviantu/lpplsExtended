@@ -34,5 +34,5 @@ class TaoSuggestions(TradeSuggestions):
 
                 suggestion.ticker,
                 suggestion.confidence,
-                DEFAULT_POSITION_SIZE,
+                DEFAULT_POSITION_SIZE
             ))
