@@ -18,7 +18,7 @@ LAST_DAYS_WITH_DATA = 8
 
 # Approximating 1 month as 30 days
 MAX_POP_TIMES_DISPERSION = 6 * 30 # More than this, and the data is too imprecise
-MAX_LAG_FROM_TODAY = 2 * 30 # More than this, and I can not short/buy puts
+MAX_LAG_FROM_TODAY = 3 * 30 # More than this, and I can not short/buy puts
 
 
 class Cluster:
@@ -95,7 +95,7 @@ class PopDates:
 
         clusters = []
         for k in range(MIN_NR_CLUSTERS, MAX_NR_CLUSTERS + 1):
-            kmeans = KMeans(n_clusters=k)
+            kmeans = KMeans(n_clusters=k, n_init=10)
             kmeans.fit(tcs)
             labels = kmeans.labels_
             silhouette_avg = silhouette_score(tcs, labels)

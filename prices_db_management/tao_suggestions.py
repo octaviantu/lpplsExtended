@@ -27,7 +27,7 @@ class TaoSuggestions(TradeSuggestions):
                 ON CONFLICT (open_date, ticker, strategy_t) DO NOTHING
             """, (
                 STRATEGY_TYPE,
-                suggestion.order_type,
+                suggestion.order_type.value,
 
                 formatted_open_date,
                 suggestion.price,

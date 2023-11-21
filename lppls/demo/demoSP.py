@@ -35,7 +35,7 @@ import warnings
 from pop_dates import PopDates
 import bisect
 from pop_dates import Cluster
-from sornette_suggestions import SornetteSuggestions
+from lppls_suggestions import LpplsSuggestions
 from db_dataclasses import Suggestion, OrderType
 
 # Convert warnings to exceptions
@@ -46,7 +46,7 @@ BUBBLE_THRESHOLD = 0.25
 # windows that are close to the end of the data, to see if there is a recent bubble
 RECENT_RELEVANT_WINDOWS = 5
 LIMIT_OF_MOST_TRADED_COMPANIES = 250
-PLOTS_DIR = "plots"
+PLOTS_DIR = "plots/lppls"
 PEAKS_DIR = PLOTS_DIR + "/peaks"
 CSV_COLUMN_NAMES = [
     "Ticker",
@@ -256,7 +256,7 @@ def main():
                     pop_dates_range=pop_dates_range,
                 ))
 
-    SornetteSuggestions().write_suggestions(suggestions)
+    LpplsSuggestions().write_suggestions(suggestions)
 
     csv_file_path = os.path.join(PLOTS_DIR, today_date, "bubble_assets.csv")
     with open(csv_file_path, mode="w", newline="") as file:

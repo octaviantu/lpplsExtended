@@ -8,7 +8,7 @@ from trade_suggestions import TradeSuggestions
 STRATEGY_TYPE = "SORNETTE"
 
 
-class SornetteSuggestions(TradeSuggestions):
+class LpplsSuggestions(TradeSuggestions):
     def __init__(self):
         # Initialize the parent class
         super().__init__()
@@ -21,6 +21,7 @@ class SornetteSuggestions(TradeSuggestions):
 
             position_size = DEFAULT_POSITION_SIZE * suggestion.confidence / TOP_BUBBLE_CONFIDENCE_IN_PRACTICE
             formatted_open_date = datetime.fromordinal(suggestion.open_date).strftime("%Y-%m-%d")
+            formatted_date_range = [datetime.fromordinal(d).strftime("%Y-%m-%d") for d in suggestion.pop_dates_range]
             cursor.execute(
                 """
                 INSERT INTO suggestions (strategy_t, order_t, open_date, open_price, ticker, confidence, position_size, earliest_pop_date, latest_pop_date)
@@ -28,7 +29,7 @@ class SornetteSuggestions(TradeSuggestions):
                 ON CONFLICT (open_date, ticker, strategy_t) DO NOTHING
             """, (
                 STRATEGY_TYPE,
-                suggestion.order_type,
+                suggestion.order_type.value,
 
                 formatted_open_date,
                 suggestion.price,
@@ -36,6 +37,6 @@ class SornetteSuggestions(TradeSuggestions):
                 suggestion.ticker,
                 suggestion.confidence,
                 position_size,
-                suggestion.pop_dates_range[0],
-                suggestion.pop_dates_range[1]
+                formatted_date_range[0],
+                formatted_date_range[1]
             ))

@@ -110,11 +110,8 @@ def fetch_and_store_pricing_history():
             start_date = (datetime.now() - timedelta(days=4 * 365)).strftime("%Y-%m-%d")
             end_date = datetime.now().strftime("%Y-%m-%d")
         else:
-            # If the last day is today or the previous working day, do nothing
-            if (
-                last_date == datetime.now().date()
-                or last_date == (datetime.now() - timedelta(days=1)).date()
-            ):
+            # If the last day is today, do nothing
+            if last_date == datetime.now().date():
                 continue
             else:  # Fetch the data from the last day until now
                 start_date = last_date.strftime("%Y-%m-%d")
