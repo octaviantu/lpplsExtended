@@ -278,6 +278,7 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
+        # TODO(octaviant) - fix because this actually does not catch all exceptions
         sys.exit(1)  # Exit with a non-zero code to indicate failure
 
 

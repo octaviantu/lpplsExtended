@@ -3,9 +3,9 @@ from db_dataclasses import Suggestion
 from db_defaults import DEFAULT_POSITION_SIZE, TOP_BUBBLE_CONFIDENCE_IN_PRACTICE
 from datetime import datetime
 from trade_suggestions import TradeSuggestions
+from db_dataclasses import StrategyType
 
-
-STRATEGY_TYPE = "SORNETTE"
+STRATEGY_TYPE = StrategyType.SORNETTE
 
 
 class LpplsSuggestions(TradeSuggestions):
@@ -28,7 +28,7 @@ class LpplsSuggestions(TradeSuggestions):
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (open_date, ticker, strategy_t) DO NOTHING
             """, (
-                STRATEGY_TYPE,
+                STRATEGY_TYPE.value,
                 suggestion.order_type.value,
 
                 formatted_open_date,

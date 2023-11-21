@@ -26,6 +26,10 @@ scripts_to_run = [
         "cmd": ("python", "prices_db_management/backup_db.py"),
         "log": "Backup existing db state",
     },
+    {
+        "cmd": ("python", "previous_performance/score_previous_result.py"),
+        "log": "Score previus suggestions",
+    },
 ]
 
 

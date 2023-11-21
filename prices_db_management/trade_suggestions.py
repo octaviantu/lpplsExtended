@@ -3,7 +3,7 @@ from typing import List
 from db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
 from db_dataclasses import Suggestion
 from abc import abstractmethod
-
+from db_dataclasses import StrategyType
 
 class TradeSuggestions:
 
@@ -50,13 +50,13 @@ class TradeSuggestions:
         """)
 
 
-    def is_position_open(self, cursor, ticker, strategy_type) -> bool:
+    def is_position_open(self, cursor, ticker, strategy_type: StrategyType) -> bool:
         cursor.execute(
             """
             SELECT COUNT(*) FROM suggestions
             WHERE ticker = %s AND strategy_t = %s AND is_position_open = TRUE
             """,
-            (ticker, strategy_type)
+            (ticker, strategy_type.value)
         )
         result = cursor.fetchone()
         return result[0] > 0
@@ -78,4 +78,8 @@ class TradeSuggestions:
 
     @abstractmethod
     def maybe_insert_suggestions(self, suggestions: List[Suggestion], cursor) -> None:
+        pass
+
+    @abstractmethod
+    def score_previous_suggestions(self) -> None:
         pass

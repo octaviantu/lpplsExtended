@@ -2,6 +2,12 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Previous performance",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/previous_performance/score_previous_result.py"
+    },
+    {
       "name": "Tao debug",
       "type": "python",
       "request": "launch",

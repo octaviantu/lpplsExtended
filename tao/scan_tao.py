@@ -12,12 +12,13 @@ from ta.momentum import StochasticOscillator
 from ta.trend import ADXIndicator
 import pandas as pd
 from db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
-from tao_dataclasses import PriceData, FullTechnicalData, TipTechnicalData
-from db_dataclasses import Suggestion
+from tao_dataclasses import PriceData, FullTechnicalData, TipTechnicalData, ATR_RANGE
+from db_dataclasses import OrderType, Suggestion
 from tao_suggestions import TaoSuggestions
 import matplotlib.pyplot as plt
 import os
 from datetime import datetime
+from price_technicals import PriceTechnicals
 
 
 MAX_NEEDED_DATA_POINTS = 2 * 89
@@ -36,9 +37,9 @@ conn = psycopg2.connect(**conn_params)
 
 # Retrieve only the prices needed for the analysis
 query = f"""
-    SELECT date, ticker, close_price 
+    SELECT date, ticker, close_price, high_price, low_price
     FROM (
-        SELECT date, ticker, close_price, 
+        SELECT date, ticker, close_price, high_price, low_price,
             ROW_NUMBER() OVER (PARTITION BY ticker ORDER BY date DESC) as rn 
         FROM pricing_history
     ) sub
@@ -58,7 +59,7 @@ cursor.close()
 conn.close()
 
 # Convert the fetched data into a list of PriceData instances
-price_data_list = [PriceData(date=pd.Timestamp.toordinal(d[0]), ticker=d[1], close_price=d[2]) for d in data]
+price_data_list = [PriceData(date=pd.Timestamp.toordinal(d[0]), ticker=d[1], close_price=d[2], high_price=d[3], low_price= d[4]) for d in data]
 
 # Group the price data by ticker
 grouped_data = {}
@@ -131,6 +132,7 @@ sell_plots_dir = f"plots/tao/{current_date}/sell"
 os.makedirs(buy_plots_dir, exist_ok=True)
 os.makedirs(sell_plots_dir, exist_ok=True)
 
+price_technicals = PriceTechnicals()
 
 # Check each ticker and collect those that satisfy the conditions
 suggestions = []
@@ -138,14 +140,16 @@ for ticker, prices in grouped_data.items():
     fullTechnicalData, tipTechnicalData = compute_technical_data(prices)
     order_type = None
     if is_bull(tipTechnicalData):
-        order_type="BUY"
+        order_type=OrderType.BUY
     elif is_bear(tipTechnicalData):
-        order_type="SELL"
+        order_type=OrderType.SELL
 
     if order_type:
         suggestions.append(Suggestion(order_type=order_type, ticker=ticker, confidence=1.0,
                                       price=prices[-1].close_price, open_date= prices[-1].date))
         
+
+        plot_dir = buy_plots_dir if order_type == "BUY" else sell_plots_dir
 
         # Plotting
         dates = [pd.Timestamp.fromordinal(p.date) for p in prices]
@@ -156,7 +160,6 @@ for ticker, prices in grouped_data.items():
         plt.xlabel("Date")
         plt.ylabel("Price")
         plt.legend()
-        plot_dir = buy_plots_dir if order_type == "BUY" else sell_plots_dir
         plot_path = os.path.join(plot_dir, f"{ticker}.png")
         plt.savefig(plot_path)
         plt.close()
@@ -202,8 +205,39 @@ for ticker, prices in grouped_data.items():
         plt.legend()
 
         # Save the plot
-        plot_dir = buy_plots_dir if order_type == "BUY" else sell_plots_dir
         plot_path = os.path.join(plot_dir, f"{ticker}_technical.png")
+        plt.tight_layout()
+        plt.savefig(plot_path)
+        plt.close()
+
+
+        # Plot ATRs
+        atrs = price_technicals.calculate_atr(prices)
+        central_line = EMAIndicator(pd.Series(close_prices), window=ATR_RANGE).ema_indicator()[ATR_RANGE + 1:]
+
+        # Plotting logic
+        plt.figure(figsize=(15, 10))
+
+        # Plotting Close Prices
+        plt.plot(dates, close_prices, label='Close Price', color='blue')
+        plt.plot(dates[ATR_RANGE + 1:], central_line, label='Central EMA', color='gray', linestyle='--')
+
+        # Plot ATR lines at various multiples based on the central line
+        atr_colors = ['green', 'red', 'cyan', 'magenta', 'yellow', 'black']
+        for multiplier, color in zip([1, 2, 3], atr_colors):
+            upper_band = central_line + atrs * multiplier
+            lower_band = central_line - atrs * multiplier
+            plt.plot(dates[ATR_RANGE + 1:], upper_band, label=f'{multiplier} ATR Upper', color=color, linestyle='--')
+            plt.plot(dates[ATR_RANGE + 1:], lower_band, label=f'{multiplier} ATR Lower', color=color, linestyle='--')
+
+        plt.title(f"{ticker} Close Prices with ATR Lines")
+        plt.xlabel("Date")
+        plt.ylabel("Price")
+        plt.legend()
+
+
+        # Save the plot
+        plot_path = os.path.join(plot_dir, f"{ticker}_ATRs.png")
         plt.tight_layout()
         plt.savefig(plot_path)
         plt.close()
@@ -213,4 +247,4 @@ TaoSuggestions().write_suggestions(suggestions)
 
 # Output the tickers that satisfy the conditions
 for suggestion in suggestions:
-    print(f'{suggestion.order_type} {suggestion.ticker}')
+    print(f'{suggestion.order_type.value} {suggestion.ticker}')
