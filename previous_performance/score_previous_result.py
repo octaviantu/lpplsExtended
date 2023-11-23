@@ -33,13 +33,13 @@ def main() -> None:
     conn.close()
     
     # Prepare and write data for TaoSuggestions
-    write_strategy_results(tao_strategy_results)
+    write_strategy_results(tao_strategy_results, first_call=True)
 
     # Prepare and write data for LpplsSuggestions
-    write_strategy_results(lppls_strategy_results)
+    write_strategy_results(lppls_strategy_results, first_call=False)
 
 
-def write_strategy_results(strategy_results):
+def write_strategy_results(strategy_results, first_call=True):
     # Prepare the data to be written
     data_to_write = {
         'strategy_type': strategy_results.strategy_type.value,
@@ -55,9 +55,12 @@ def write_strategy_results(strategy_results):
     
     # Make sure the directory exists
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+    # Determine file mode - overwrite if first call, append otherwise
+    file_mode = 'w' if first_call else 'a'
     
     # Write or append the data to the CSV file
-    with open(file_path, mode='w', newline='') as file:
+    with open(file_path, mode=file_mode, newline='') as file:
         writer = csv.DictWriter(file, fieldnames=data_to_write.keys())
         writer.writeheader()
         writer.writerow(data_to_write)
