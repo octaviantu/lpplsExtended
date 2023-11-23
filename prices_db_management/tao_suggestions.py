@@ -1,19 +1,21 @@
 from typing import List
-from db_dataclasses import Suggestion, StrategyResults, StrategyType, OrderType
+from db_dataclasses import Suggestion, StrategyResults, StrategyType, OrderType, CloseReason
+from tao_dataclasses import ATR_RANGE
 from db_defaults import DEFAULT_POSITION_SIZE
 from datetime import datetime, timedelta
 from trade_suggestions import TradeSuggestions
-import numpy as np
 from price_technicals import PriceTechnicals
-from tao_dataclasses import MAX_DAYS_UNTIL_CLOSE_POSITION
+from tao_dataclasses import PriceData, MAX_DAYS_UNTIL_CLOSE_POSITION_TAO
+from psycopg2.extras import DictCursor
+
 
 STRATEGY_TYPE = StrategyType.TAO_RSI
-
 
 class TaoSuggestions(TradeSuggestions):
     def __init__(self):
         # Initialize the parent class
         super().__init__()
+        self.price_technicals = PriceTechnicals()
 
 
     def maybe_insert_suggestions(self, suggestions: List[Suggestion], cursor) -> None:
@@ -40,76 +42,28 @@ class TaoSuggestions(TradeSuggestions):
             ))
 
 
-    def score_previous_suggestions(self, conn) -> TradeSuggestions:
-        cursor = conn.cursor()
-        
-        # Query to get all TAO_RSI suggestions that are open
+    def is_eligible_to_close(self, order_type: OrderType, ticker: str, open_date: int, last_date: int, cursor) -> bool:
+
+        # Get pricing data for the ticker
         cursor.execute("""
-            SELECT * FROM suggestions 
-            WHERE strategy_t = 'TAO_RSI' AND is_position_open = TRUE;
-        """)
-        suggestions = cursor.fetchall()
-        
-        # Query to get the latest date from pricing_history
-        cursor.execute("""
-            SELECT MAX(date) FROM pricing_history;
-        """)
-        latest_date = cursor.fetchone()[0]
-        
-        investment_sum = 0
-        final_sum = 0
-        trade_count = 0
+            SELECT date, ticker, close_price, high_price, low_price FROM pricing_history
+            WHERE ticker = %s ORDER BY date DESC LIMIT %s;
+        """, (ticker, ATR_RANGE + 1))
+        rows = cursor.fetchall()
 
-        price_technicals = PriceTechnicals()
+        pricing_data = [PriceData(
+            date=row['date'], 
+            ticker=row['ticker'], 
+            close_price=row['close_price'],
+            high_price=row['high_price'],
+            low_price=row['low_price']
+        ) for row in rows]    
 
-        for suggestion in suggestions:
-            ticker = suggestion['ticker']
-            open_price = suggestion['open_price']
-            position_size = suggestion['position_size']
-            order_type = OrderType[suggestion['order_t']]
+        is_successful = self.price_technicals.is_outside_atr_band(pricing_data, order_type)
+        is_timeout = open_date + timedelta(days=MAX_DAYS_UNTIL_CLOSE_POSITION_TAO) < last_date
 
+        return CloseReason(is_timeout=is_timeout, is_successful=is_successful)
+    
 
-            trade_count += 1  # Increment the count of trades
-            investment_sum += open_price * position_size
-            final_sum += close_price * position_size
-
-            # Get pricing data for the ticker
-            cursor.execute("""
-                SELECT * FROM pricing_history
-                WHERE ticker = %s ORDER BY date DESC LIMIT 21;
-            """, (ticker,))
-            pricing_data = cursor.fetchall()
-            
-            # Calculate 21-day mean and 2ATR
-            mean_price = np.mean([data['close_price'] for data in pricing_data])
-            atr = price_technicals.calculate_atr(pricing_data)[-1]  # You should implement this method
-
-            # Check conditions to close the position
-            if (price_technicals.is_outside_atr_band(open_price, mean_price, atr, order_type) or 
-                suggestion['open_date'] + timedelta(days=MAX_DAYS_UNTIL_CLOSE_POSITION) < latest_date):
-
-                close_price = pricing_data[0]['close_price']
-                total_score += (close_price - open_price) * position_size
-                
-                # Update the suggestion
-                cursor.execute("""
-                    UPDATE suggestions SET 
-                    is_position_open = FALSE, 
-                    close_date = %s ,
-                    close_price = %s
-                    WHERE open_date = %s AND ticker = %s AND strategy_t = 'TAO_RSI';
-                """, (latest_date, close_price, suggestion['open_date'], ticker))
-                conn.commit()
-
-
-        strategy_results = StrategyResults(
-            strategy_type=STRATEGY_TYPE,
-            trade_count=trade_count,
-            investment_sum=investment_sum,
-            final_sum=final_sum
-        )
-                
-        # Close the cursor and the connection
-        cursor.close()
-        
-        return strategy_results
+    def getStrategyType(self) -> StrategyType:
+        return STRATEGY_TYPE

@@ -12,6 +12,17 @@ class StrategyType(Enum):
     SORNETTE = "SORNETTE"
     TAO_RSI = "TAO_RSI"
 
+
+@dataclass
+class CloseReason:
+    is_timeout: bool
+    is_successful: bool
+
+@dataclass
+class ClosingPrices:
+    close_price: float
+    date: int
+
 @dataclass
 class Suggestion:
     order_type: OrderType
@@ -24,10 +35,16 @@ class Suggestion:
 
 @dataclass
 class StrategyResults:
-    strategy_type: str
-    trade_count: int
-    investment_sum: float
-    final_sum: float
+    strategy_type: StrategyType
+    succesful_count: int
+    timeout_count: int
+    paid: float
+    received: float
 
-    def getProfit(self) -> float:
-        return (self.final_sum - self.investment_sum) / self.investment_sum
+    def compute_profit(self) -> float:
+        if self.paid == 0.0:
+            return 0.0
+        return (self.received - self.paid) / self.paid
+    
+    def compute_trade_count(self) -> int:
+        return self.succesful_count + self.timeout_count

@@ -4,7 +4,7 @@ from typing import List
 ATR_RANGE = 20
 ATR_BAND_NR_PROFIT = 2
 
-MAX_DAYS_UNTIL_CLOSE_POSITION = 3 * 30 # 3 months
+MAX_DAYS_UNTIL_CLOSE_POSITION_TAO = 3 * 30 # 3 months
 
 @dataclass
 class PriceData:
