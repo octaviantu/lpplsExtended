@@ -34,10 +34,6 @@ class CountMetrics:
         CountMetrics.bubble_rejected_per_t2 = defaultdict(int)
 
     @staticmethod
-    def add_bubble_accepted():
-        CountMetrics.bubble_accepted += 1
-
-    @staticmethod
     def add_bubble_rejected_because_can_not_fit():
         CountMetrics.rejected_because_can_not_fit += 1
         CountMetrics.bubble_rejected += 1

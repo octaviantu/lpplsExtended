@@ -14,6 +14,11 @@ class BubbleScores:
     def plot_bubble_scores(
         self, bubble_scores, ticker: str, bubble_start: BubbleStart, best_end_cluster: Cluster
     ) -> None:
+
+        if len(bubble_scores) == 0:
+            print("No bubble scores to plot")
+            return
+
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(18, 10))
         fig.canvas.manager.set_window_title(ticker)
         # if burst_time:
