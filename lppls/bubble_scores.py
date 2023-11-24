@@ -1,15 +1,18 @@
 from matplotlib import pyplot as plt
 import pandas as pd
+import numpy as np
 from count_metrics import CountMetrics
-from lppls_defaults import BubbleType, BubbleStart
+from lppls_dataclasses import BubbleType, BubbleStart, ObservationSeries
 from pop_dates import Cluster
 from matplotlib.lines import Line2D
+from filter_interface import FilterInterface
 
 
 class BubbleScores:
-    def __init__(self, observations, filter):
+    def __init__(self, observations: ObservationSeries, filter: FilterInterface):
         self.observations = observations
         self.filter = filter
+
 
     def plot_bubble_scores(
         self, bubble_scores, ticker: str, bubble_start: BubbleStart, best_end_cluster: Cluster
@@ -29,7 +32,7 @@ class BubbleScores:
 
         # plot pos bubbles
         ax1_0 = ax1.twinx()
-        ax1.plot(ts, bubble_scores["price"], color="black", linewidth=0.75)
+        ax1.plot(ts, bubble_scores["log_prices"], color="black", linewidth=0.75)
         # ax1_0.plot(compatible_date, pos_lst, label='pos bubbles', color='gray', alpha=0.5)
         ax1_0.plot(
             ts,
@@ -41,7 +44,7 @@ class BubbleScores:
 
         # plot neg bubbles
         ax2_0 = ax2.twinx()
-        ax2.plot(ts, bubble_scores["price"], color="black", linewidth=0.75)
+        ax2.plot(ts, bubble_scores["log_prices"], color="black", linewidth=0.75)
         # ax2_0.plot(compatible_date, neg_lst, label='neg bubbles', color='gray', alpha=0.5)
         ax2_0.plot(
             ts,
@@ -82,6 +85,7 @@ class BubbleScores:
 
         # Draw the vertical line if it's later than the earliest fit
         # Use the 't2' timestamp because these are draws on the bubble score plot
+        # TODO(octaviant) - don't access private method
         if int(bubble_scores._fits[0][0]["t2"]) <= bubble_start.date_ordinal:
             axis.axvline(x=bubble_start_date, color="blue", linestyle="--", linewidth=2)
         axis.text(
@@ -114,13 +118,13 @@ class BubbleScores:
     def compute_bubble_scores(self, fits):
         pos_conf_lst = []
         neg_conf_lst = []
-        price = []
+        log_prices = []
         ts = []
         _fits = []
 
         for kps in fits:
             ts.append(kps["t2"])
-            price.append(kps["p2"])
+            log_prices.append(np.log(kps["p2"]))
             pos_qual_count = 0
             neg_qual_count = 0
             pos_count = 0
@@ -154,7 +158,7 @@ class BubbleScores:
         bubble_scores = pd.DataFrame(
             {
                 "time": ts,
-                "price": price,
+                "log_prices": log_prices,
                 "pos_conf": pos_conf_lst,
                 "neg_conf": neg_conf_lst,
                 "_fits": _fits,

@@ -25,7 +25,7 @@ def lppls_model(observations):
 
 
 # @pytest.mark.skip(reason='Reconsider testing approach in v0.6.x')
-def test_lppls():
+def test_predict_log_price():
     # Test that the base lppls function is giving expected results.
 
     # Check integrity at period 0
@@ -39,7 +39,7 @@ def test_lppls():
         0.21878280136703082,
         -0.14789336333436504,
     )
-    assert 1762.3196588471408 == LPPLSMath.lppls(t, tc, m, w, a, b, c1, c2)
+    assert 1762.3196588471408 == LPPLSMath.predict_log_price(t, tc, m, w, a, b, c1, c2)
 
     # Check integrity at period 500
     t, tc, m, w, a, b, c1, c2 = (
@@ -52,7 +52,7 @@ def test_lppls():
         0.05189394517600043,
         -0.045820295077658835,
     )
-    assert 2086.3299554496016 == LPPLSMath.lppls(t, tc, m, w, a, b, c1, c2)
+    assert 2086.3299554496016 == LPPLSMath.predict_log_price(t, tc, m, w, a, b, c1, c2)
 
 
 @pytest.mark.skip(reason="Reconsider testing approach in v0.6.x")

@@ -6,7 +6,7 @@ import random
 from filter_interface import FilterInterface
 import data_loader
 from count_metrics import CountMetrics
-
+from lppls_dataclasses import ObservationSeries
 
 # This filter is descipted in paper:
 # Real-time prediction and post-mortem analysis of the Shanghai 2015 stock market bubble and crash (2015)
@@ -17,7 +17,7 @@ class FilterShanghai(FilterInterface):
         self.filter_criteria = data_loader.load_config(filter_file)
 
     def fit(
-        self, max_searches: int, obs: np.ndarray, minimizer: str = "Nelder-Mead"
+        self, max_searches: int, observations: ObservationSeries, minimizer: str = "Nelder-Mead"
     ) -> Tuple[bool, Dict[str, float]]:
         """
         Args:
@@ -32,8 +32,8 @@ class FilterShanghai(FilterInterface):
         search_count = 0
         # find bubble
         while search_count < max_searches:
-            t1 = obs[0, 0]
-            t2 = obs[0, -1]
+            t1 = observations[0].date_ordinal
+            t2 = observations[-1].date_ordinal
             t_delta = t2 - t1
             t_delta_lower = t_delta * self.filter_criteria.get("tc_delta_min")
             t_delta_upper = t_delta * self.filter_criteria.get("tc_delta_max")
@@ -63,7 +63,7 @@ class FilterShanghai(FilterInterface):
 
     def estimate_params(
         self,
-        observations: np.ndarray,
+        observations: ObservationSeries,
         seed: np.ndarray,
         minimizer: str,
         search_bounds: List[Tuple[float, float]],
@@ -90,9 +90,9 @@ class FilterShanghai(FilterInterface):
             tc = cofs.x[0]
             m = cofs.x[1]
             w = cofs.x[2]
-            obs_up_to_tc = LPPLSMath.stop_observation_at_tc(observations, tc)
+            observations = observations.filter_before_tc(tc)
 
-            rM = LPPLSMath.matrix_equation(obs_up_to_tc, tc, m, w)
+            rM = LPPLSMath.matrix_equation(observations, tc, m, w)
             a, b, c1, c2 = rM[:, 0].tolist()
 
             c = LPPLSMath.get_c(c1, c2)
@@ -103,15 +103,15 @@ class FilterShanghai(FilterInterface):
             return False, {}
 
     def check_bubble_fit(
-        self, fits: Dict[str, float], observations: List[List[float]], t1_index: int, t2_index: int
+        self, fits: Dict[str, float], observations: ObservationSeries, t1_index: int, t2_index: int
     ) -> Tuple[bool, bool]:
         t1, t2, tc, m, w, a, b, c, c1, c2 = (
             fits[key] for key in ["t1", "t2", "tc", "m", "w", "a", "b", "c", "c1", "c2"]
         )
 
-        obs_up_to_tc = LPPLSMath.stop_observation_at_tc(observations, tc)
+        observations = observations.filter_before_tc(tc)
         prices_in_range = super().is_price_in_range(
-            obs_up_to_tc,
+            observations,
             t1_index,
             t2_index,
             self.filter_criteria.get("relative_error_max"),

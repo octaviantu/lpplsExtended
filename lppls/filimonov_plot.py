@@ -7,13 +7,14 @@ import data_loader
 from lppls_defaults import MAX_SEARCHES, SMALLEST_WINDOW_SIZE
 from math import floor, ceil
 import matplotlib.pyplot as plt
+from lppls_dataclasses import ObservationSeries
 
 
 class FilimonovPlot:
     def __init__(self, filter_file="./lppls/conf/filimonov_filter.json"):
         self.filter_criteria = data_loader.load_config(filter_file)
 
-    def plot_optimum(self, obs: np.ndarray, minimizer: str = "Nelder-Mead") -> None:
+    def plot_optimum(self, obs: ObservationSeries, minimizer: str = "Nelder-Mead") -> None:
         t1, t2 = obs[0, 0], obs[0, -1]
         tc_lower = self.filter_criteria.get("tc_lower")
         tc_upper = self.filter_criteria.get("tc_upper")
@@ -21,7 +22,7 @@ class FilimonovPlot:
         dates, ms, ws, ssrs = [], [], [], []
         for t in range(floor(t1) + SMALLEST_WINDOW_SIZE, ceil(t2) - SMALLEST_WINDOW_SIZE):
             for tc in range(t + tc_lower, t + tc_upper):
-                obs_up_to_tc = LPPLSMath.stop_observation_at_tc(obs, tc)
+                observations = obs.filter_before_tc(tc)
 
                 search_count = 0
                 min_ssr = np.inf
@@ -47,13 +48,13 @@ class FilimonovPlot:
                     seed = np.array([m, w])
 
                     success, params_dict = self.estimate_params(
-                        obs_up_to_tc, seed, minimizer, search_bounds, tc
+                        observations, seed, minimizer, search_bounds, tc
                     )
 
                     if success:
                         m, w, a, b, _, c1, c2 = params_dict.values()
                         ssr = LPPLSMath.sum_of_squared_residuals(
-                            obs_up_to_tc, tc, m, w, a, b, c1, c2
+                            observations, tc, m, w, a, b, c1, c2
                         )
                         if ssr < min_ssr:
                             min_ssr = ssr
@@ -100,7 +101,7 @@ class FilimonovPlot:
 
     def estimate_params(
         self,
-        obs_up_to_tc: List[List[float]],
+        observations: ObservationSeries,
         seed: np.ndarray,
         minimizer: str,
         search_bounds: List[Tuple[float, float]],
@@ -108,7 +109,7 @@ class FilimonovPlot:
     ) -> Tuple[bool, Dict[str, float]]:
         """
         Args:
-            obs_up_to_tc (list):  the observed time-series data.
+            observations (list):  the observed time-series data.
             seed (list):  time-critical, omega, and m.
             minimizer (str):  See list of valid methods to pass to scipy.optimize.minimize:
                 https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize
@@ -117,7 +118,7 @@ class FilimonovPlot:
         """
 
         cofs = minimize(
-            args=(obs_up_to_tc, tc),
+            args=(observations, tc),
             fun=FilimonovPlot.minimize_squared_residuals_with_fixed_tc,
             x0=seed,
             method=minimizer,
@@ -128,7 +129,7 @@ class FilimonovPlot:
             m = cofs.x[0]
             w = cofs.x[1]
 
-            rM = LPPLSMath.matrix_equation(obs_up_to_tc, tc, m, w)
+            rM = LPPLSMath.matrix_equation(observations, tc, m, w)
             a, b, c1, c2 = rM[:, 0].tolist()
 
             c = LPPLSMath.get_c(c1, c2)
@@ -139,11 +140,11 @@ class FilimonovPlot:
             return False, {}
 
     @staticmethod
-    def minimize_squared_residuals_with_fixed_tc(x, obs_up_to_tc, tc):
+    def minimize_squared_residuals_with_fixed_tc(x, observations, tc):
         m = x[0]
         w = x[1]
 
-        rM = LPPLSMath.matrix_equation(obs_up_to_tc, tc, m, w)
+        rM = LPPLSMath.matrix_equation(observations, tc, m, w)
         a, b, c1, c2 = rM[:, 0].tolist()
 
-        return LPPLSMath.sum_of_squared_residuals(obs_up_to_tc, tc, m, w, a, b, c1, c2)
+        return LPPLSMath.sum_of_squared_residuals(observations, tc, m, w, a, b, c1, c2)

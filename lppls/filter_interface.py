@@ -1,25 +1,28 @@
 from abc import ABC, abstractmethod
 import numpy as np
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple
 from lppls_math import LPPLSMath
+from lppls_dataclasses import ObservationSeries
 
 
 class FilterInterface(ABC):
     @abstractmethod
     def fit(
-        self, max_searches: int, obs: np.ndarray, minimizer: str
+        self, max_searches: int, obsservations: ObservationSeries, minimizer: str
     ) -> Tuple[bool, Dict[str, float]]:
         pass
 
+
     @abstractmethod
     def check_bubble_fit(
-        self, fits: Dict[str, float], observations: List[List[float]], t1_index: int, t2_index: int
+        self, fits: Dict[str, float], observations: ObservationSeries, t1_index: int, t2_index: int
     ) -> Tuple[bool, bool]:
         pass
 
+
     def is_price_in_range(
         self,
-        observations: List[List[float]],
+        observations: ObservationSeries,
         t1_index: int,
         t2_index: int,
         relative_error_max: float,
@@ -31,9 +34,9 @@ class FilterInterface(ABC):
         c1: float,
         c2: float,
     ) -> bool:
-        for i in range(t1_index, min(len(observations[0]), t2_index)):
-            t, actual_price = observations[0][i], observations[1][i]
-            predicted_price = LPPLSMath.lppls(t, tc, m, w, a, b, c1, c2)
+        for i in range(t1_index, min(len(observations), t2_index)):
+            actual_log_price, date_ordinal = np.log(observations[i].price), observations[1].date_ordinal
+            predicted_log_price = LPPLSMath.predict_log_price(date_ordinal, tc, m, w, a, b, c1, c2)
 
             # In some papers such as the one underneath they are using the price, not its log.
             # However, in practice that will exclude all large enough windows because there is bound to be a
@@ -42,12 +45,13 @@ class FilterInterface(ABC):
             #
             # Real-time Prediction of Bitcoin Bubble Crashes
             # Authors: Min Shu, Wei Zhu1
-            prediction_error = abs(actual_price - predicted_price) / actual_price
+            prediction_error = abs(actual_log_price - predicted_log_price) / actual_log_price
 
             if prediction_error > relative_error_max:
                 return False
 
         return True
+
 
     @staticmethod
     def get_damping(m: float, w: float, b: float, c: float) -> float:

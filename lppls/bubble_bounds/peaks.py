@@ -2,12 +2,12 @@ import numpy as np
 import pandas as pd
 from typing import List, Dict, Tuple
 from collections import defaultdict
-from lppls_defaults import PEAK_THRESHOLD
-from lppls_defaults import BubbleType, Peak
+from lppls_dataclasses import BubbleType, Peak, ObservationSeries
 from lppls_defaults import (
     EPSILON_RANGE_START,
     EPSILON_RANGE_END,
     EPSILON_STEP,
+    PEAK_THRESHOLD,
     W_RANGE_END,
     W_RANGE_START,
     W_STEP,
@@ -17,22 +17,18 @@ from datetime import datetime
 
 
 class Peaks:
-    def __init__(self, dates: List[int], prices: List[float], ticker: str):
+    def __init__(self, observations: ObservationSeries, ticker: str):
         self.D = PEAK_THRESHOLD
         self.epsilon_range = np.arange(
             EPSILON_RANGE_START, EPSILON_RANGE_END + EPSILON_STEP, EPSILON_STEP
         )
         self.w_range = np.arange(W_RANGE_START, W_RANGE_END + W_STEP, W_STEP)
         self.N_epsilon = len(self.epsilon_range) * len(self.w_range)
-        self.dates = dates
-        self.prices = prices
+        self.observations = observations
         self.ticker = ticker
 
     def find_extremities(self, bubble_type: BubbleType) -> List[Peak]:
-        # We add a dummy first element to maintain the same index.
-        log_returns: List[float] = [0.0]
-        for i in range(1, len(self.prices)):
-            log_returns.append(np.log(self.prices[i]) - np.log(self.prices[i - 1]))
+        log_returns: List[float] = self.observations.get_log_returns()
 
         peak_times_counter = self.count_extremities(log_returns, bubble_type)
 
@@ -81,7 +77,7 @@ class Peaks:
                     if deviation > epsilon:
                         # End of drawup phase, register the peak time
                         peak_time_index = current_peak
-                        peak_date = self.dates[peak_time_index]
+                        peak_date = self.observations.get_date_at_ordinal(peak_time_index)
                         peak_times_counter[peak_date] += 1
                         peak_cum_return = 0  # Reset for the new drawup phase
                         cum_return = 0
@@ -100,12 +96,13 @@ class Peaks:
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(14, 10))
         fig.canvas.manager.set_window_title(image_name)
 
-        formtted_dates = [pd.Timestamp.fromordinal(d) for d in self.dates]
+        formtted_dates = self.observations.get_formatted_dates()
 
+        prices = self.observations.get_prices()
         # Get the maximum price to determine the top of the graph
-        max_price = max(self.prices)
+        max_price = max(prices)
 
-        ax1.plot(formtted_dates, self.prices, label="Price", color="black", linewidth=0.75)
+        ax1.plot(formtted_dates, prices, label="Price", color="black", linewidth=0.75)
         for drawup in drawups:
             formatted_drawup_date = pd.Timestamp.fromordinal(drawup.date_ordinal)
             ax1.axvline(x=formatted_drawup_date, color="red", linewidth=0.5)
@@ -121,7 +118,7 @@ class Peaks:
 
         ax1.set_title("Drawups")
 
-        ax2.plot(formtted_dates, self.prices, label="Price", color="black", linewidth=0.75)
+        ax2.plot(formtted_dates, prices, label="Price", color="black", linewidth=0.75)
         for drawdown in drawdowns:
             formatted_drawdown_date = pd.Timestamp.fromordinal(drawdown.date_ordinal)
             ax2.axvline(x=formatted_drawdown_date, color="green", linewidth=0.5)

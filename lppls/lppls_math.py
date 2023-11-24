@@ -3,11 +3,12 @@ from typing import List
 from datetime import datetime as date
 from pandas._libs.tslibs.np_datetime import OutOfBoundsDatetime
 import pandas as pd
+from lppls_dataclasses import ObservationSeries
 
 
 class LPPLSMath:
     @staticmethod
-    def lppls(
+    def predict_log_price(
         t: float, tc: float, m: float, w: float, a: float, b: float, c1: float, c2: float
     ) -> float:
         assert t < tc, "we can only predict up to time t smaller than tc"
@@ -15,17 +16,18 @@ class LPPLSMath:
             b + ((c1 * np.cos(w * np.log(tc - t))) + (c2 * np.sin(w * np.log(tc - t))))
         )
 
+
     @staticmethod
-    def matrix_equation(observations, tc, m, w):
+    def matrix_equation(observations: ObservationSeries, tc, m, w):
         """
         Derive linear parameters in LPPLs from nonlinear ones.
         """
-        assert observations[0][-1] < tc  # all observations should be before tc
-        T = observations[0]
-        P = observations[1]
-        N = len(T)
+        assert observations[-1].date_ordinal < tc  # all observations should be before tc
+        D = observations.get_date_ordinals()
+        logP = observations.get_log_prices()
+        N = len(observations)
 
-        dT = np.abs(tc - T)
+        dT = np.abs(tc - D)
         phase = np.log(dT)
 
         fi = np.power(dT, m)
@@ -40,7 +42,7 @@ class LPPLSMath:
         fihi = np.multiply(fi, hi)
         gihi = np.multiply(gi, hi)
 
-        yi = P
+        yi = logP
         yifi = np.multiply(yi, fi)
         yigi = np.multiply(yi, gi)
         yihi = np.multiply(yi, hi)
@@ -58,8 +60,9 @@ class LPPLSMath:
 
         return np.linalg.solve(matrix_1, matrix_2)
 
+
     @staticmethod
-    def minimize_squared_residuals(x, observations):
+    def minimize_squared_residuals(x, observations: ObservationSeries):
         """
         Finds the least square difference.
         See https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html
@@ -73,16 +76,15 @@ class LPPLSMath:
         tc = x[0]
         m = x[1]
         w = x[2]
-        obs_up_to_tc = LPPLSMath.stop_observation_at_tc(observations, tc)
 
-        rM = LPPLSMath.matrix_equation(obs_up_to_tc, tc, m, w)
+        rM = LPPLSMath.matrix_equation(observations, tc, m, w)
         a, b, c1, c2 = rM[:, 0].tolist()
 
-        return LPPLSMath.sum_of_squared_residuals(obs_up_to_tc, tc, m, w, a, b, c1, c2)
+        return LPPLSMath.sum_of_squared_residuals(observations, tc, m, w, a, b, c1, c2)
 
     @staticmethod
     def sum_of_squared_residuals(
-        obs_up_to_tc: List[List[float]],
+        observations: ObservationSeries,
         tc: float,
         m: float,
         w: float,
@@ -91,12 +93,13 @@ class LPPLSMath:
         c1: float,
         c2: float,
     ) -> float:
-        [price_prediction, actual_prices] = LPPLSMath.get_log_price_predictions(
-            obs_up_to_tc, tc, m, w, a, b, c1, c2
+        log_price_predictions = LPPLSMath.get_log_price_predictions(
+            observations, tc, m, w, a, b, c1, c2
         )
-        delta = np.subtract(price_prediction, actual_prices)
+        delta = np.subtract(log_price_predictions, observations.get_log_prices())
 
         return np.sum(np.power(delta, 2)) / len(delta)
+
 
     @staticmethod
     def get_c(c1: float, c2: float) -> float:
@@ -106,24 +109,19 @@ class LPPLSMath:
         else:
             return 0
 
-    @staticmethod
-    def get_log_price_predictions(observations, tc, m, w, a, b, c1, c2):
-        price_prediction = []
-        actual_prices = []
 
-        for t, actual_price in zip(observations[0], observations[1]):
+    @staticmethod
+    def get_log_price_predictions(observations: ObservationSeries, tc, m, w, a, b, c1, c2):
+        log_price_prediction = []
+        date_ordinals = observations.get_date_ordinals()
+
+        for t in date_ordinals:
             assert t < tc, "we can only predict up to time t smaller than tc"
-            predicted_price = LPPLSMath.lppls(t, tc, m, w, a, b, c1, c2)
-            price_prediction.append(predicted_price)
-            actual_prices.append(actual_price)
+            predicted_log_price = LPPLSMath.predict_log_price(t, tc, m, w, a, b, c1, c2)
+            log_price_prediction.append(predicted_log_price)
 
-        return [price_prediction, actual_prices]
+        return log_price_prediction
 
-    # TODO(octaviant) - stop using ndarray and use List[Tuple[int, float]] instead
-    @staticmethod
-    def stop_observation_at_tc(observations: List[List[float]], tc: float) -> List[List[float]]:
-        first_larger_index = int(np.searchsorted(observations[0], tc, side="left") - 1)
-        return [observations[0][:first_larger_index], observations[1][:first_larger_index]]
 
     @staticmethod
     def ordinal_to_date(ordinal: int) -> str:

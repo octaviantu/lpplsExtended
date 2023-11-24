@@ -6,10 +6,9 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from typing import List, Tuple
 from matplotlib import pyplot as plt
-from numpy.typing import NDArray
 import pandas as pd
 from lppls_defaults import SMALLEST_WINDOW_SIZE
-from lppls_defaults import BubbleStart
+from lppls_dataclasses import BubbleStart
 
 
 class Starts:

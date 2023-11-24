@@ -6,29 +6,32 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from multiprocessing import Pool
 from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP, MAX_SEARCHES
+from lppls_dataclasses import BubbleStart, ObservationSeries
 from filter_interface import FilterInterface
 import sys
 
 
 class DataFit:
-    def __init__(self, observations, filter: FilterInterface):
+    def __init__(self, observations: ObservationSeries, filter: FilterInterface):
         self.observations = observations
         self.filter = filter
 
     def plot_fit(
-        self, tc: float, m: float, w: float, a: float, b: float, c1: float, c2: float
+        self, bubble_start: BubbleStart, tc: float, m: float, w: float, a: float, b: float, c1: float, c2: float
     ) -> None:
-        obs_up_to_tc = LPPLSMath.stop_observation_at_tc(self.observations, tc)
-        time_ord = [pd.Timestamp.fromordinal(int(d)) for d in obs_up_to_tc[0]]
+        observations = self.observations.filter_before_tc(tc)
 
-        [price_prediction, actual_prices] = LPPLSMath.get_log_price_predictions(
-            obs_up_to_tc, tc, m, w, a, b, c1, c2
-        )
+        if bubble_start is None:
+            start_date = bubble_start.date_ordinal
+            observations = observations.filter_between_date_ordinals(start_date)
+
+        log_price_prediction = LPPLSMath.get_log_price_predictions(observations, tc, m, w, a, b, c1, c2)
+        time_ord = observations.get_date_ordinals()
 
         _, (ax1) = plt.subplots(nrows=1, ncols=1, sharex=True, figsize=(14, 8))
 
-        ax1.plot(time_ord, actual_prices, label="price", color="black", linewidth=0.75)
-        ax1.plot(time_ord, price_prediction, label="lppls fit", color="blue", alpha=0.5)
+        ax1.plot(time_ord, observations.get_log_prices(), label="price", color="black", linewidth=0.75)
+        ax1.plot(time_ord, log_price_prediction, label="lppls fit", color="blue", alpha=0.5)
 
         # set grids
         ax1.grid(which="major", axis="both", linestyle="--")
@@ -39,9 +42,9 @@ class DataFit:
         plt.xticks(rotation=45)
 
     def fit(
-        self, max_searches: int, obs: np.ndarray, minimizer: str = "Nelder-Mead"
+        self, max_searches: int, observations: ObservationSeries, minimizer: str = "Nelder-Mead"
     ) -> Tuple[bool, Dict[str, float]]:
-        return self.filter.fit(max_searches, obs, minimizer)
+        return self.filter.fit(max_searches, observations, minimizer)
 
     def parallel_compute_t2_fits(self, **kwargs):
         return self.parallel_compute_t2_recent_fits(np.inf, **kwargs)
@@ -56,16 +59,15 @@ class DataFit:
         t2_increment=T2_STEP,
         max_searches=MAX_SEARCHES,
     ):
-        stop_windows_beginnings = len(self.observations[0]) - window_size + 1
+        stop_windows_beginnings = len(self.observations) - window_size + 1
         start_windows_beginnings = max(
-            len(self.observations[0]) - window_size - recent_windows + 1, 0
+            len(self.observations) - window_size - recent_windows + 1, 0
         )
 
-        obs_copy = self.observations
         t2_fits_args = []
         for i in range(start_windows_beginnings, stop_windows_beginnings, t2_increment):
             args = (
-                obs_copy[:, i : window_size + i],
+                self.observations.get_between_indexes(i, window_size + i),
                 window_size,
                 i,
                 smallest_window_size,
@@ -95,25 +97,24 @@ class DataFit:
 
         windows = []
 
-        t1 = obs[0][0]
-        t2 = obs[0][-1]
-        p1 = obs[1][0]
-        p2 = obs[1][-1]
+        t1 = obs[0].date_ordinal
+        t2 = obs[-1].date_ordinal
+        p2 = obs[-1].price
 
         # have to store two indexes because trading days don't map to calendar days
-        t2_index = t1_index + len(obs[0]) - 1
+        t2_index = t1_index + len(obs) - 1
 
         # run n fits on the observation slice.
         for j in range(0, window_delta, t1_increment):
-            obs_shrinking_slice = obs[:, j:window_size]
+            obs_shrinking_slice = obs[j:window_size]
 
-            success, params_dict = self.fit(max_searches, obs=obs_shrinking_slice)
+            success, params_dict = self.fit(max_searches, obs_shrinking_slice)
 
             if not success:
                 continue
 
-            nested_t1 = obs_shrinking_slice[0][0]
-            nested_t2 = obs_shrinking_slice[0][-1]
+            nested_t1 = obs_shrinking_slice[0].date_ordinal
+            nested_t2 = obs_shrinking_slice[-1].date_ordinal
 
             # Update params_dict with new key-value pairs
             params_dict.update(
@@ -131,7 +132,6 @@ class DataFit:
         return {
             "t1": t1,
             "t2": t2,
-            "p1": p1,
             "p2": p2,
             "windows": windows,
             "t1_index": t1_index,

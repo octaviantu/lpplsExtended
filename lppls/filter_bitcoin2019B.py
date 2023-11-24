@@ -9,6 +9,7 @@ import data_loader
 from statsmodels.tsa.ar_model import AutoReg
 from lppls_defaults import SIGNIFICANCE_LEVEL
 from count_metrics import CountMetrics
+from lppls_dataclasses import ObservationSeries
 
 
 # This filter is descipted in paper 1:
@@ -24,7 +25,7 @@ class FilterBitcoin2019B(FilterInterface):
         self.filter_criteria = data_loader.load_config(filter_file)
 
     def fit(
-        self, max_searches: int, obs: np.ndarray, minimizer: str = "Nelder-Mead"
+        self, max_searches: int, observations: ObservationSeries, minimizer: str = "Nelder-Mead"
     ) -> Tuple[bool, Dict[str, float]]:
         """
         Args:
@@ -36,8 +37,8 @@ class FilterBitcoin2019B(FilterInterface):
             A tuple with a boolean indicating success, and a dictionary with the values of tc, m, w, a, b, c, c1, c2, O, D
         """
 
-        t1 = obs[0, 0]
-        t2 = obs[0, -1]
+        t1 = observations[0].date_ordinal
+        t2 = observations[-1].date_ordinal
         tc_bounds = (t2 + 1, t2 + (t2 - t1) * self.filter_criteria.get("tc_extra_space"))
         m_bounds = (self.filter_criteria.get("m_min"), self.filter_criteria.get("m_max"))
         w_bounds = (self.filter_criteria.get("w_min"), self.filter_criteria.get("w_max"))
@@ -52,7 +53,7 @@ class FilterBitcoin2019B(FilterInterface):
 
             seed = np.array([tc, m, w])
 
-            success, params_dict = self.estimate_params(obs, seed, minimizer, search_bounds)
+            success, params_dict = self.estimate_params(observations, seed, minimizer, search_bounds)
 
             if success:
                 tc, m, w, a, b, c, c1, c2 = params_dict.values()
@@ -66,20 +67,11 @@ class FilterBitcoin2019B(FilterInterface):
 
     def estimate_params(
         self,
-        observations: np.ndarray,
+        observations: ObservationSeries,
         seed: np.ndarray,
         minimizer: str,
         search_bounds: List[Tuple[float, float]],
     ) -> Tuple[bool, Dict[str, float]]:
-        """
-        Args:
-            observations (np.ndarray):  the observed time-series data.
-            seed (list):  time-critical, omega, and m.
-            minimizer (str):  See list of valid methods to pass to scipy.optimize.minimize:
-                https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize
-        Returns:
-            A tuple with a boolean indicating success, and a dictionary with the values of tc, m, w, a, b, c, c1, c2.
-        """
 
         cofs = minimize(
             args=observations,
@@ -93,9 +85,8 @@ class FilterBitcoin2019B(FilterInterface):
             tc = cofs.x[0]
             m = cofs.x[1]
             w = cofs.x[2]
-            obs_up_to_tc = LPPLSMath.stop_observation_at_tc(observations, tc)
 
-            rM = LPPLSMath.matrix_equation(obs_up_to_tc, tc, m, w)
+            rM = LPPLSMath.matrix_equation(observations, tc, m, w)
             a, b, c1, c2 = rM[:, 0].tolist()
 
             c = LPPLSMath.get_c(c1, c2)
@@ -106,15 +97,15 @@ class FilterBitcoin2019B(FilterInterface):
             return False, {}
 
     def check_bubble_fit(
-        self, fits: Dict[str, float], observations: List[List[float]], t1_index: int, t2_index: int
+        self, fits: Dict[str, float], observations: ObservationSeries, t1_index: int, t2_index: int
     ) -> Tuple[bool, bool]:
         t1, t2, tc, m, w, a, b, c, c1, c2 = (
             fits[key] for key in ["t1", "t2", "tc", "m", "w", "a", "b", "c", "c1", "c2"]
         )
 
-        obs_up_to_tc = LPPLSMath.stop_observation_at_tc(observations, tc)
+        observations = observations.filter_before_tc(tc)
         prices_in_range = super().is_price_in_range(
-            obs_up_to_tc,
+            observations,
             t1_index,
             t2_index,
             self.filter_criteria.get("relative_error_max"),
@@ -142,8 +133,8 @@ class FilterBitcoin2019B(FilterInterface):
         D = FilterInterface.get_damping(m, w, b, c)
         D_in_range = D >= self.filter_criteria.get("D_min")
 
-        passing_lomb_test = FilterBitcoin2019B.is_passing_lomb_test(obs_up_to_tc, tc, m, a, b)
-        passing_ar1_test = self.is_ar1_process(obs_up_to_tc, tc, m, a, b)
+        passing_lomb_test = FilterBitcoin2019B.is_passing_lomb_test(observations, tc, m, a, b)
+        passing_ar1_test = self.is_ar1_process(observations, tc, m, a, b)
 
         conditions = {
             "O": O_in_range,
@@ -166,15 +157,15 @@ class FilterBitcoin2019B(FilterInterface):
 
     @staticmethod
     def is_ar1_process(
-        obs_up_to_tc: List[List[float]], tc: float, m: float, a: float, b: float
+        observations: ObservationSeries, tc: float, m: float, a: float, b: float
     ) -> bool:
         # Compute the residuals between predicted and actual log prices
         residuals = []
-        for i in range(0, len(obs_up_to_tc[0])):
-            time, price = obs_up_to_tc[0][i], obs_up_to_tc[1][i]
+        for observation in observations:
+            time, log_price = observation.date_ordinal, np.log(observation.price)
             predicted_log_price = a + b * (tc - time) ** m
             # not taking the log of the price because the price is already in log
-            residuals.append(predicted_log_price - price)
+            residuals.append(predicted_log_price - log_price)
 
         # Fit an AR(1) model to the residuals
         ar1_model = AutoReg(residuals, lags=1).fit()
@@ -187,18 +178,18 @@ class FilterBitcoin2019B(FilterInterface):
 
     @staticmethod
     def is_passing_lomb_test(
-        obs_up_to_tc: List[List[float]], tc: float, m: float, a: float, b: float
+        observations: ObservationSeries, tc: float, m: float, a: float, b: float
     ) -> bool:
         # Compute the detrended residuals
         residuals = []
-        for i in range(0, len(obs_up_to_tc[0])):
-            time, price = obs_up_to_tc[0][i], obs_up_to_tc[1][i]
+        for observation in observations:
+            time, log_price = observation.date_ordinal, np.log(observation.price)
             # not taking the log of the price because the price is already in log
-            residuals.append((tc - time) ** (-m) * (price - a - b * (tc - time) ** m))
+            residuals.append((tc - time) ** (-m) * (log_price - a - b * (tc - time) ** m))
 
         # Compute the Lomb-Scargle periodogram
-        f = np.linspace(0.01, 1, len(obs_up_to_tc[0]))  # Frequency range, adjust as needed
-        pgram = lombscargle(obs_up_to_tc[0], residuals, f)
+        f = np.linspace(0.01, 1, len(observations))  # Frequency range, adjust as needed
+        pgram = lombscargle(observations.get_log_prices(), residuals, f)
 
         # Find the peak power
         peak_power = np.max(pgram)

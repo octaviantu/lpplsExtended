@@ -9,7 +9,7 @@ from sklearn.metrics import silhouette_score
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from lppls_defaults import BubbleStart
+from lppls_dataclasses import BubbleStart
 
 
 MIN_POINTS_CLUSTER_RATIO = 3

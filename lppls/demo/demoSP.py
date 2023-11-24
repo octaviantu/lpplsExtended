@@ -1,6 +1,7 @@
 import sys
 
 sys.path.append("/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls")
+sys.path.append("/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/bubble_bounds")
 sys.path.append(
     "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/metrics"
 )
@@ -10,8 +11,6 @@ sys.path.append(
 
 
 import csv
-import numpy as np
-import pandas as pd
 import psycopg2
 from sornette import Sornette
 from lppls_defaults import (
@@ -29,14 +28,13 @@ import argparse
 from matplotlib import pyplot as plt
 import os
 from datetime import datetime
-from lppls_defaults import BubbleType
+from lppls_dataclasses import BubbleType, Observation, ObservationSeries
 from peaks import Peaks
 import warnings
 from pop_dates import PopDates
-import bisect
-from pop_dates import Cluster
 from lppls_suggestions import LpplsSuggestions
 from db_dataclasses import Suggestion, OrderType
+from pop_dates import Cluster
 
 # Convert warnings to exceptions
 warnings.filterwarnings("error", category=RuntimeWarning)
@@ -72,9 +70,8 @@ def get_bubble_scores(sornette: Sornette, default_fitting_params, recent_windows
     )
 
 
-def is_in_bubble_state(times, prices, filter_type, filter_file, default_fitting_params):
-    log_prices = np.log(prices)
-    sornette = Sornette(np.array([times, log_prices]), filter_type, filter_file)
+def is_in_bubble_state(observations, filter_type, filter_file, default_fitting_params):
+    sornette = Sornette(observations, filter_type, filter_file)
 
     bubble_scores = get_bubble_scores(sornette, default_fitting_params, RECENT_RELEVANT_WINDOWS)
     max_pos_conf = bubble_scores["pos_conf"].max()
@@ -88,7 +85,7 @@ def is_in_bubble_state(times, prices, filter_type, filter_file, default_fitting_
     return None, 0, sornette
 
 
-SPECIFIC_TICKERS = ["ARM"]
+SPECIFIC_TICKERS = ["XRAY"]
 def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) -> None:
     conn = psycopg2.connect(
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
@@ -98,20 +95,20 @@ def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) ->
         query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' ORDER BY date ASC;"
         cursor.execute(query)
         rows = cursor.fetchall()
-        dates = [pd.Timestamp.toordinal(row[0]) for row in rows]
-        prices = [row[1] for row in rows]
+        observations = ObservationSeries([Observation(price=row[1], date_ordinal=row[0].toordinal()) for row in rows])
 
         bubble_type, _, sornette = is_in_bubble_state(
-            dates, prices, "BitcoinB", "./lppls/conf/demos2015_filter.json", default_fitting_params
+            observations, "BitcoinB", "./lppls/conf/demos2015_filter.json", default_fitting_params
         )
 
-        drawups, drawdowns, _ = Peaks(dates, prices, ticker).plot_peaks()
+        drawups, drawdowns, _ = Peaks(observations, ticker).plot_peaks()
 
-        start_time = sornette.compute_start_time(
-            dates, prices, bubble_type, drawups if bubble_type == BubbleType.POSITIVE else drawdowns
+        bubble_start = sornette.compute_start_time(
+            observations, bubble_type, drawups if bubble_type == BubbleType.POSITIVE else drawdowns
         )
-        bubble_scores = get_bubble_scores(sornette, default_fitting_params, RECENT_VISIBLE_WINDOWS)
-        sornette.plot_bubble_scores(bubble_scores, ticker, start_time, Cluster())
+        sornette.plot_fit(bubble_start)
+        bubble_scores = get_bubble_scores(sornette, default_fitting_params, 50)
+        sornette.plot_bubble_scores(bubble_scores, ticker, bubble_start, Cluster())
         plt.show()
 
 
@@ -174,11 +171,10 @@ def main():
         query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' ORDER BY date ASC;"
         cursor.execute(query)
         rows = cursor.fetchall()
-        dates = [pd.Timestamp.toordinal(row[0]) for row in rows]
-        prices = [row[1] for row in rows]
+        observations = ObservationSeries([Observation(price=row[1], date_ordinal=row[0].toordinal()) for row in rows])
 
         bubble_type, bubble_confidences, sornette = is_in_bubble_state(
-            dates, prices, "BitcoinB", "./lppls/conf/demos2015_filter.json", default_fitting_params
+            observations, "BitcoinB", "./lppls/conf/demos2015_filter.json", default_fitting_params
         )
 
         if bubble_type:
@@ -188,7 +184,7 @@ def main():
             )
             name, asset_type = cursor.fetchone()
 
-            drawups, drawdowns, peak_image_name = Peaks(dates, prices, ticker).plot_peaks()
+            drawups, drawdowns, peak_image_name = Peaks(observations, ticker).plot_peaks()
             peak_file_name = f"{peak_image_name.replace(' ', '_').replace('on', '')}.png"
 
             if not os.path.exists(PEAKS_DIR):
@@ -205,15 +201,12 @@ def main():
                 dir_path = os.path.join(PLOTS_DIR, today_date, "negative")
 
             start_time = sornette.compute_start_time(
-                dates,
-                prices,
+                observations,
                 bubble_type,
                 drawups if bubble_type == BubbleType.POSITIVE else drawdowns,
             )
 
-            days_from_start = find_index_or_below(dates, dates[-1]) - find_index_or_below(
-                dates, start_time.date_ordinal
-            )
+            days_from_start = len(observations.filter_between_date_ordinals(start_date=start_time.date_ordinal))
 
             plotted_time = max(RECENT_VISIBLE_WINDOWS, days_from_start)
             bubble_scores = get_bubble_scores(sornette, default_fitting_params, plotted_time)
@@ -251,8 +244,8 @@ def main():
                     order_type=order_type,
                     ticker=ticker,
                     confidence=bubble_confidences[-1], # the confidence for the last date
-                    price=prices[-1],
-                    open_date=dates[-1],
+                    price=observations[-1].price,
+                    open_date=observations[-1].date_ordinal,
                     pop_dates_range=pop_dates_range,
                 ))
 
@@ -264,14 +257,6 @@ def main():
         writer.writeheader()
         for asset in bubble_assets:
             writer.writerow(asset)
-
-
-def find_index_or_below(lst, value):
-    index = bisect.bisect_left(lst, value)
-    if index == len(lst) or lst[index] != value:
-        return index - 1
-    else:
-        return index
 
 
 if __name__ == "__main__":

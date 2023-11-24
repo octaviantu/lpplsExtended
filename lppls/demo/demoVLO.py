@@ -12,20 +12,12 @@ from datetime import date
 import matplotlib.pyplot as plt
 from sornette import Sornette
 from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP, MAX_SEARCHES
+from lppls_dataclasses import Observation, ObservationSeries
 
 
-def execute_lppls_logic(data_filtered, filter_type, filter_file):
-    # Convert time to ordinal
-    time_filtered = [pd.Timestamp.toordinal(dt) for dt in data_filtered["Date"]]
-
-    # Log price
-    price_filtered = np.log(data_filtered["Adj Close"].values)
-
-    # Observations
-    observations_filtered = np.array([time_filtered, price_filtered])
-
+def execute_lppls_logic(observations, filter_type, filter_file):
     # LPPLS Model for filtered data
-    sornette = Sornette(observations_filtered, filter_type, filter_file)
+    sornette = Sornette(observations, filter_type, filter_file)
     # sornette.plot_filimonov()
     sornette.plot_fit()
 
@@ -49,7 +41,7 @@ def main():
     query = "SELECT date, close_price FROM pricing_history WHERE ticker='VLO' ORDER BY date ASC;"
     cursor.execute(query)
     rows = cursor.fetchall()
-    data = pd.DataFrame(rows, columns=["Date", "Adj Close"])
+    obs = ObservationSeries([Observation(price=row[1], date_ordinal=row[0].toordinal()) for row in rows])
 
     # Filter data up to Jun 1, 2022
     latest_date = date(2022, 6, 1)
@@ -57,12 +49,12 @@ def main():
     earliest_date = date(2021, 1, 1)
 
     # we want dates BEFORE 1 June 2022, to check with the ETH FCO June 2022 report
-    data_filtered = data[(earliest_date <= data["Date"]) & (data["Date"] <= latest_date)]
+    obs_filtered = obs.filter_between_date_ordinals(earliest_date.toordinal(), latest_date.toordinal())
 
     # execute_lppls_logic(data_filtered, "Shanghai", "./lppls/conf/shanghai_filter_1relaxed.json")
     # execute_lppls_logic(data_filtered, "Shanghai", "./lppls/conf/shanghai_filter2.json")
     # execute_lppls_logic(data_filtered, 'BitcoinB', './lppls/conf/bitcoin_filter2019B.json')
-    execute_lppls_logic(data_filtered, "BitcoinB", "./lppls/conf/demos2015_filter.json")
+    execute_lppls_logic(obs_filtered, "BitcoinB", "./lppls/conf/demos2015_filter.json")
     # execute_lppls_logic(data_filtered, "Swiss", "./lppls/conf/swiss_filter.json")
 
     plt.show()

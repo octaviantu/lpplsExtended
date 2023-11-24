@@ -1,6 +1,3 @@
-from enum import Enum
-from dataclasses import dataclass
-
 LARGEST_WINDOW_SIZE = 150  # working days in 7 months
 SMALLEST_WINDOW_SIZE = 30
 
@@ -42,22 +39,3 @@ W_STEP = 5
 # Dissection of Bitcoin’s Multiscale Bubble History from January 2012 to February 2018
 MIN_NR_CLUSTERS = 2
 MAX_NR_CLUSTERS = 10
-
-
-
-class BubbleType(Enum):
-    POSITIVE = "positive"
-    NEGATIVE = "negative"
-
-
-@dataclass
-class BubbleStart:
-    date_ordinal: int
-    type: BubbleType
-
-
-@dataclass
-class Peak:
-    type: BubbleType
-    date_ordinal: int
-    score: float

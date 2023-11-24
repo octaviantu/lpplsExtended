@@ -1,9 +1,3 @@
-import sys
-
-sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/bubble_bounds"
-)
-
 import numpy as np
 from count_metrics import CountMetrics
 from bubble_scores import BubbleScores
@@ -15,10 +9,11 @@ from filimonov_plot import FilimonovPlot
 from lppls_math import LPPLSMath
 from lppls_defaults import MAX_SEARCHES
 from starts import Starts
+from lppls_dataclasses import BubbleStart, ObservationSeries
 
 
 class Sornette:
-    def __init__(self, observations, filter_type, filter_file):
+    def __init__(self, observations: ObservationSeries, filter_type, filter_file):
         if filter_type == "Shanghai":
             filter = FilterShanghai(filter_file)
         elif filter_type == "BitcoinB":
@@ -39,8 +34,8 @@ class Sornette:
             self.data_fit.observations, **self.lppls_equation_terms()
         )[0]
 
-    def plot_fit(self):
-        self.data_fit.plot_fit(**self.lppls_equation_terms())
+    def plot_fit(self, bubble_start: BubbleStart=None):
+        self.data_fit.plot_fit(bubble_start, **self.lppls_equation_terms())
 
     def parallel_compute_t2_fits(self, **kwargs):
         return self.data_fit.parallel_compute_t2_fits(**kwargs)
@@ -55,13 +50,12 @@ class Sornette:
     def plot_filimonov(self):
         self.filimonov_plot.plot_optimum(self.data_fit.observations)
 
-    def compute_start_time(self, times, actual_prices, bubble_type, extremities):
-        [expected_log_prices, _] = LPPLSMath.get_log_price_predictions(
-            [times, actual_prices], **self.lppls_equation_terms()
-        )
-        expected_prices = [np.exp(p) for p in expected_log_prices]
+    def compute_start_time(self, observations: ObservationSeries, bubble_type, extremities):
+        expected_prices = np.exp(LPPLSMath.get_log_price_predictions(
+            observations, **self.lppls_equation_terms()
+        ))
         return self.starts.compute_start_time(
-            times, actual_prices, expected_prices, bubble_type, extremities
+            observations.get_date_ordinals(), observations.get_prices(), expected_prices, bubble_type, extremities
         )
 
     def lppls_equation_terms(self):

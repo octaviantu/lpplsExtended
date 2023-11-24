@@ -34,7 +34,7 @@ class LPPLSCMAES(LPPLS):
             print(e)
 
         t = obs[0, :]
-        known_price_span = super().lppls(t, tc, m, w, a, b, c1, c2)
+        known_price_span = super().predict_log_price(t, tc, m, w, a, b, c1, c2)
 
         # make nan or inf to zero
         known_price_span[np.isnan(known_price_span)] = 0.0
