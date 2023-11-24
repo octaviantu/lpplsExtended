@@ -213,22 +213,23 @@ for ticker, prices in grouped_data.items():
 
         # Plot ATRs
         atrs = price_technicals.calculate_atr(prices)
-        central_line = EMAIndicator(pd.Series(close_prices), window=ATR_RANGE).ema_indicator()[ATR_RANGE + 1:]
+        central_line = EMAIndicator(pd.Series(close_prices), window=ATR_RANGE).ema_indicator()[ATR_RANGE:]
 
         # Plotting logic
         plt.figure(figsize=(15, 10))
 
         # Plotting Close Prices
         plt.plot(dates, close_prices, label='Close Price', color='blue')
-        plt.plot(dates[ATR_RANGE + 1:], central_line, label='Central EMA', color='gray', linestyle='--')
+        plt.plot(dates[ATR_RANGE:], central_line, label='Central EMA', color='gray', linestyle='--')
 
         # Plot ATR lines at various multiples based on the central line
         atr_colors = ['green', 'red', 'cyan', 'magenta', 'yellow', 'black']
         for multiplier, color in zip([1, 2, 3], atr_colors):
-            upper_band = central_line + atrs * multiplier
-            lower_band = central_line - atrs * multiplier
-            plt.plot(dates[ATR_RANGE + 1:], upper_band, label=f'{multiplier} ATR Upper', color=color, linestyle='--')
-            plt.plot(dates[ATR_RANGE + 1:], lower_band, label=f'{multiplier} ATR Lower', color=color, linestyle='--')
+            matr = [multiplier * atr for atr in atrs]
+            upper_band = central_line + matr
+            lower_band = central_line - matr
+            plt.plot(dates[ATR_RANGE:], upper_band, label=f'{multiplier} ATR Upper', color=color, linestyle='--')
+            plt.plot(dates[ATR_RANGE:], lower_band, label=f'{multiplier} ATR Lower', color=color, linestyle='--')
 
         plt.title(f"{ticker} Close Prices with ATR Lines")
         plt.xlabel("Date")
