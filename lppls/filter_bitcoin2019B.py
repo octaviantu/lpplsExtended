@@ -95,11 +95,11 @@ class FilterBitcoin2019B(FilterInterface):
 
 
     def check_bubble_fit(self, oi: OptimizedInterval, observations: ObservationSeries, t1_index: int, t2_index: int) -> Tuple[bool, bool]:
-        op = oi.optimizedParams
+        op = oi.optimized_params
         tc, m, w, a, b = op.tc, op.m, op.w, op.a, op.b
         t1, t2 = oi.t1, oi.t2
         c = LPPLSMath.get_c(op.c1, op.c2)
-    
+
         observations = observations.filter_before_tc(tc)
         prices_in_range = super().is_price_in_range(
             observations,

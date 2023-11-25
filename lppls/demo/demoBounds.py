@@ -7,6 +7,9 @@ sys.path.append(
 sys.path.append(
     "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/bubble_bounds"
 )
+sys.path.append(
+    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/common"
+)
 
 import pandas as pd
 import psycopg2
@@ -14,7 +17,6 @@ import matplotlib.pyplot as plt
 from peaks import Peaks
 from lppls_dataclasses import BubbleType
 from starts import Starts
-import numpy as np
 from sornette import Sornette
 from lppls_defaults import (
     LARGEST_WINDOW_SIZE,
@@ -24,8 +26,9 @@ from lppls_defaults import (
     RECENT_VISIBLE_WINDOWS,
 )
 from lppls_dataclasses import Observation, ObservationSeries
+from pop_dates import PopDates
 
-def get_fits(sornette: Sornette, default_fitting_params, recent_windows):
+def get_bubble_scores(sornette: Sornette, default_fitting_params, recent_windows):
     return sornette.compute_bubble_scores(
         workers=8,
         recent_windows=recent_windows,
@@ -53,8 +56,9 @@ def main():
     # Separate the dates and prices into two lists
     all_dates = [pd.Timestamp.toordinal(row[0]) for row in rows]
     all_actual_prices = [row[1] for row in rows]
+    all_observations = ObservationSeries([Observation(p, d) for d, p in zip(all_dates, all_actual_prices)])
 
-    _, drawdowns, _ = Peaks(all_dates, all_actual_prices, ticker).plot_peaks()
+    _, drawdowns, _ = Peaks(all_observations, ticker).plot_peaks()
     first_eligible_date = all_dates.index(drawdowns[-1].date_ordinal)
     selected_actual_prices = all_actual_prices[first_eligible_date:]
     selected_dates = all_dates[first_eligible_date:]
@@ -67,7 +71,7 @@ def main():
     )
     sornette_on_interval.plot_fit()
 
-    expected_prices = [np.exp(p) for p in sornette_on_interval.estimate_prices()]
+    expected_prices = sornette_on_interval.estimate_prices()
 
     default_fitting_params = {
         "t1_step": T1_STEP,
@@ -87,10 +91,11 @@ def main():
 
     # I want to see the start date on the entire interval, so I make another Sornettee object
     # TODO(octaviant) - creating a new Sornette object is complicated; simplify
-    all_observations = ObservationSeries([Observation(p, d) for d, p in zip(all_dates, all_actual_prices)])
     sornette_on_interval = Sornette(all_observations, "BitcoinB", "./lppls/conf/demos2015_filter.json")
-    fits = get_fits(sornette_on_interval, default_fitting_params, RECENT_VISIBLE_WINDOWS)
-    sornette_on_interval.plot_bubble_scores(fits, ticker, optimal_start)
+    bubble_scores = get_bubble_scores(sornette_on_interval, default_fitting_params, RECENT_VISIBLE_WINDOWS)
+
+    best_cluster = PopDates().compute_bubble_end_cluster(optimal_start, bubble_scores)
+    sornette_on_interval.plot_bubble_scores(bubble_scores, ticker, optimal_start, best_cluster)
 
     plt.show(block=True)
 

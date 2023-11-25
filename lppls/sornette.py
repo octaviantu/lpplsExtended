@@ -29,6 +29,9 @@ class Sornette:
         CountMetrics.reset()
         self.starts = Starts()
 
+    def estimate_prices(self):
+        op = self.data_fit.fit(MAX_SEARCHES, self.data_fit.observations)
+        return np.exp(LPPLSMath.get_log_price_predictions(self.data_fit.observations, op))
 
     def plot_fit(self, bubble_start: BubbleStart=None):
         op = self.data_fit.fit(MAX_SEARCHES, self.data_fit.observations)

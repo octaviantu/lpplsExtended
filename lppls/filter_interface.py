@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from typing import Dict, Tuple
 from lppls_math import LPPLSMath
-from lppls_dataclasses import ObservationSeries, OptimizedParams
+from lppls_dataclasses import ObservationSeries, OptimizedParams, OptimizedInterval
 
 
 class FilterInterface(ABC):
@@ -15,7 +15,7 @@ class FilterInterface(ABC):
 
     @abstractmethod
     def check_bubble_fit(
-        self, fits: Dict[str, float], observations: ObservationSeries, t1_index: int, t2_index: int
+        self, oi: OptimizedInterval, observations: ObservationSeries, t1_index: int, t2_index: int
     ) -> Tuple[bool, bool]:
         pass
 
@@ -26,11 +26,11 @@ class FilterInterface(ABC):
         t1_index: int,
         t2_index: int,
         relative_error_max: float,
-        optimizedParams: OptimizedParams
+        optimized_params: OptimizedParams
     ) -> bool:
-        for i in range(t1_index, min(len(observations), t2_index)):
-            actual_log_price, date_ordinal = np.log(observations[i].price), observations[1].date_ordinal
-            predicted_log_price = LPPLSMath.predict_log_price(date_ordinal, optimizedParams)
+        for observation in observations[t1_index:t2_index]:
+            actual_log_price, date_ordinal = np.log(observation.price), observation.date_ordinal
+            predicted_log_price = LPPLSMath.predict_log_price(date_ordinal, optimized_params)
 
             # In some papers such as the one underneath they are using the price, not its log.
             # However, in practice that will exclude all large enough windows because there is bound to be a
@@ -38,7 +38,7 @@ class FilterInterface(ABC):
             # in the minimizer
             #
             # Real-time Prediction of Bitcoin Bubble Crashes
-            # Authors: Min Shu, Wei Zhu1
+            # Authors: Min Shu, Wei Zhu
             prediction_error = abs(actual_log_price - predicted_log_price) / actual_log_price
 
             if prediction_error > relative_error_max:

@@ -2,7 +2,7 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import List
 import numpy as np
-import pandas as pd
+from date_utils import ordinal_to_date
 
 class BubbleType(Enum):
     POSITIVE = "positive"
@@ -77,7 +77,7 @@ class ObservationSeries:
         return ObservationSeries(self.observations[start_index:end_index])
     
     def get_formatted_dates(self):
-        return [pd.Timestamp.fromordinal(o.date_ordinal) for o in self.observations]
+        return [ordinal_to_date(o.date_ordinal) for o in self.observations]
     
     def get_between_indexes(self, start_index: int, end_index: int):
         return ObservationSeries(self.observations[start_index:end_index])
@@ -99,14 +99,14 @@ class OptimizedParams:
 class OptimizedInterval:
     t1: int
     t2: int
-    optimizedParams: OptimizedParams
+    optimized_params: OptimizedParams
     is_qualified: bool = False
 
 
 # TODO(octaviant) - check if we really need t1_index, t2_index
 @dataclass
 class IntervalFits:
-    optimizedIntervals: List[OptimizedInterval]
+    optimized_intervals: List[OptimizedInterval]
     t1: int
     t2: int
     p2: float
@@ -120,4 +120,4 @@ class BubbleScore:
     log_price: float
     pos_conf: float
     neg_conf: float
-    intervalFits: IntervalFits
+    optimized_intervals: List[OptimizedInterval]

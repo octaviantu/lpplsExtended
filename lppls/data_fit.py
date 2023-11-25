@@ -9,6 +9,7 @@ from lppls_dataclasses import BubbleStart, ObservationSeries, OptimizedInterval,
 from filter_interface import FilterInterface
 import sys
 from date_utils import ordinal_to_date
+import matplotlib.dates as mdates
 
 
 class DataFit:
@@ -19,23 +20,24 @@ class DataFit:
     def plot_fit(self, bubble_start: BubbleStart, op: OptimizedParams) -> None:
         observations = self.observations.filter_before_tc(op.tc)
 
-        if bubble_start is None:
+        if bubble_start:
             start_date = bubble_start.date_ordinal
             observations = observations.filter_between_date_ordinals(start_date)
 
         log_price_prediction = LPPLSMath.get_log_price_predictions(observations, op)
         dates = [ordinal_to_date(date_ordinal) for date_ordinal in observations.get_date_ordinals()]
 
-        _, (ax1) = plt.subplots(nrows=1, ncols=1, sharex=True, figsize=(14, 8))
+        _, (ax) = plt.subplots(nrows=1, ncols=1, sharex=True, figsize=(14, 8))
+        ax.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
 
-        ax1.plot(dates, observations.get_log_prices(), label="price", color="black", linewidth=0.75)
-        ax1.plot(dates, log_price_prediction, label="lppls fit", color="blue", alpha=0.5)
+        ax.plot(dates, observations.get_log_prices(), label="price", color="black", linewidth=0.75)
+        ax.plot(dates, log_price_prediction, label="lppls fit", color="blue", alpha=0.5)
 
         # set grids
-        ax1.grid(which="major", axis="both", linestyle="--")
+        ax.grid(which="major", axis="both", linestyle="--")
         # set labels
-        ax1.set_ylabel("ln(p)")
-        ax1.legend(loc=2)
+        ax.set_ylabel("ln(p)")
+        ax.legend(loc=2)
 
         plt.xticks(rotation=45)
 
@@ -75,7 +77,7 @@ class DataFit:
             t2_fits_args.append(args)
 
         with Pool(processes=workers) as pool:
-            interval_fits = list(
+            optimized_intervals = list(
                 tqdm(
                     pool.imap(self.compute_t1_fits, t2_fits_args),
                     total=len(t2_fits_args),
@@ -85,7 +87,7 @@ class DataFit:
                 )
             )
 
-        return interval_fits
+        return optimized_intervals
 
 
     def compute_t1_fits(self, args) -> IntervalFits:
@@ -93,7 +95,7 @@ class DataFit:
 
         window_delta = window_size - smallest_window_size
 
-        optimizedIntervals = []
+        optimized_intervals = []
 
         t1 = obs[0].date_ordinal
         t2 = obs[-1].date_ordinal
@@ -117,7 +119,7 @@ class DataFit:
             optimizedInterval = OptimizedInterval(nested_t1, nested_t2, fit)
 
             # Append updated params_dict to windows
-            optimizedIntervals.append(optimizedInterval)
+            optimized_intervals.append(optimizedInterval)
 
-        return IntervalFits(t1=t1, t2=t2, p2=p2, optimizedIntervals=optimizedIntervals,
+        return IntervalFits(t1=t1, t2=t2, p2=p2, optimized_intervals=optimized_intervals,
                             t1_index=t1_index, t2_index=t2_index)

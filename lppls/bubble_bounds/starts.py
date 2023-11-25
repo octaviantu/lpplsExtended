@@ -6,10 +6,10 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from typing import List, Tuple
 from matplotlib import pyplot as plt
-import pandas as pd
 from lppls_defaults import SMALLEST_WINDOW_SIZE
 from lppls_dataclasses import BubbleStart
-
+from date_utils import ordinal_to_date
+from matplotlib import dates as mdates
 
 class Starts:
     def getSSE(self, Y, Yhat, p=1, normed=False):
@@ -79,7 +79,7 @@ class Starts:
     def plot_all_fit_measures(self, actualP, predictedP, dates):
         bounded_sse, bounded_ssen, _ = self.getSSE_and_SSEN_as_a_func_of_dt(actualP, predictedP)
         ssen_reg, lambda_coeff = self.getLagrangeScore(actualP, predictedP)
-        formated_dates = [pd.Timestamp.fromordinal(d) for d in dates]
+        formated_dates = [ordinal_to_date(d) for d in dates]
 
         plt.figure(figsize=(10, 6))
 
@@ -99,6 +99,8 @@ class Starts:
         plt.xlabel("Time")
         plt.ylabel("Values")
         plt.title("Fit Measures Over Time")
+        ax = plt.gca()
+        ax.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
         plt.legend()
 
         # Display lambda coefficient value
@@ -122,6 +124,8 @@ class Starts:
         plt.xlabel("Time")
         plt.ylabel("Price")
         plt.title("Price Over Time")
+        ax = plt.gca()
+        ax.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
         plt.legend()
 
         plt.tight_layout()

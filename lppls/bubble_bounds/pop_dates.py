@@ -9,7 +9,8 @@ from sklearn.metrics import silhouette_score
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from lppls_dataclasses import BubbleStart
+from lppls_dataclasses import BubbleStart, BubbleScore
+from date_utils import ordinal_to_date
 
 
 MIN_POINTS_CLUSTER_RATIO = 3
@@ -45,9 +46,7 @@ class Cluster:
     def displayCluster(self):
         if not self.is_valid:
             return "Invalid cluster"
-        format_pop_dates = [
-            pd.Timestamp.fromordinal(d).strftime("%Y-%m-%d") for d in self.mean_pop_dates
-        ]
+        format_pop_dates = [ordinal_to_date(d) for d in self.mean_pop_dates]
         return (
             f"Clustered in {format_pop_dates} with silhouette: {self.silhouette:.2f} (1 is optimal)"
         )
@@ -71,26 +70,24 @@ class Cluster:
 
 
 class PopDates:
-    def compute_bubble_end_cluster(self, start_time: BubbleStart, bubble_scores) -> Cluster:
+    def compute_bubble_end_cluster(self, start_time: BubbleStart, bubble_scores: List[BubbleScore]) -> Cluster:
         tcs = []
 
         # Get today's date in ordinal form
         today_ordinal = pd.Timestamp(datetime.today()).toordinal()
         # Get the ordinal dates for the last LAST_DAYS_WITH_DATA days
-        last_days_ordinals = [today_ordinal - i for i in range(LAST_DAYS_WITH_DATA)]
+        last_days_ordinals = [today_ordinal - i for i in range(LAST_DAYS_WITH_DATA, -1, -1)]
 
-        for fit in bubble_scores["_fits"]:
-            for window in fit:
-                # TODO(octaviant) - store window['t2'] as int and don't convert here
-                if (
-                    window["is_qualified"]
-                    and window["t1"] >= start_time.date_ordinal
-                    and int(window["t2"]) in last_days_ordinals
-                ):
-                    tcs.append([window["tc"]])  # need 2D array
+        for bubble_score in bubble_scores:
+            if bubble_score.t2 < last_days_ordinals[0]:
+                continue
+            for oi in bubble_score.optimized_intervals:
+                if oi.is_qualified and oi.t1 >= start_time.date_ordinal:
+                    tcs.append([oi.optimized_params.tc])  # need 2D array
+
 
         print("Number of tcs considered in clustering: ", len(tcs))
-        if len(tcs) < MIN_POINTS_CLUSTER_RATIO * MAX_NR_CLUSTERS:
+        if len(tcs) < MIN_POINTS_CLUSTER_RATIO * MIN_NR_CLUSTERS:
             return Cluster()
 
         clusters = []

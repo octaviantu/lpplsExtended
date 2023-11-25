@@ -110,8 +110,10 @@ def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) ->
             observations, bubble_type, drawups if bubble_type == BubbleType.POSITIVE else drawdowns
         )
         sornette.plot_fit(bubble_start)
-        bubble_scores = get_bubble_scores(sornette, default_fitting_params, 50)
-        sornette.plot_bubble_scores(bubble_scores, ticker, bubble_start, Cluster())
+        bubble_scores = get_bubble_scores(sornette, default_fitting_params, 100)
+        best_end_cluster = PopDates().compute_bubble_end_cluster(bubble_start, bubble_scores)
+
+        sornette.plot_bubble_scores(bubble_scores, ticker, bubble_start, best_end_cluster)
         plt.show()
 
 

@@ -9,7 +9,7 @@ from filter_interface import FilterInterface
 from typing import List
 from date_utils import ordinal_to_date
 import matplotlib.dates as mdates
-
+from matplotlib.dates import num2date, date2num
 
 class BubbleScores:
     def __init__(self, observations: ObservationSeries, filter: FilterInterface):
@@ -60,9 +60,9 @@ class BubbleScores:
         earliest_end_date = bubble_scores[0].t2
         # Highlight start_time with a vertical line
         if bubble_start.type == BubbleType.POSITIVE:
-            self.draw_bubble_bounds(ax1, bubble_start, earliest_end_date, best_end_cluster)
+            self.draw_bubble_bounds(ax1, bubble_start, earliest_end_date, best_end_cluster, dates)
         elif bubble_start.type == BubbleType.NEGATIVE:
-            self.draw_bubble_bounds(ax2, bubble_start, earliest_end_date, best_end_cluster)
+            self.draw_bubble_bounds(ax2, bubble_start, earliest_end_date, best_end_cluster, dates)
 
         # set grids
         ax1.grid(which="major", axis="both", linestyle="--")
@@ -80,18 +80,19 @@ class BubbleScores:
 
 
     def draw_bubble_bounds(
-        self, axis, bubble_start: BubbleStart, earliest_end_date: int, best_end_cluster: Cluster
+        self, axis, bubble_start: BubbleStart, earliest_end_date: int, best_end_cluster: Cluster, dates: List[str]
     ) -> None:
-        bubble_start_date = pd.Timestamp.fromordinal(bubble_start.date_ordinal)
+        bubble_start_date = ordinal_to_date(bubble_start.date_ordinal)
         bubble_start_label = (
-            f'Start Date ({bubble_start_date.strftime("%Y-%m-%d")})'  # Format the date
+            f'Start Date ({bubble_start_date})'  # Format the date
         )
+        closest_date = dates[np.searchsorted(dates, bubble_start_date)]
 
         # Draw the vertical line if it's later than the earliest fit
         if earliest_end_date <= bubble_start.date_ordinal:
-            axis.axvline(x=bubble_start_date, color="blue", linestyle="--", linewidth=2)
+            axis.axvline(x=closest_date, color="blue", linestyle="--", linewidth=2)
         axis.text(
-            bubble_start_date,
+            closest_date,
             axis.get_ylim()[1],
             bubble_start_label,
             color="blue",
@@ -120,15 +121,15 @@ class BubbleScores:
     def compute_bubble_scores(self, all_fits: List[IntervalFits]) -> List[BubbleScore]:
         bubble_scores = []
 
-        for interval_fits in all_fits:
+        for fit in all_fits:
             pos_qual_count = 0
             neg_qual_count = 0
             pos_count = 0
             neg_count = 0
-            t1_index = interval_fits.t1_index
-            t2_index = interval_fits.t2_index
+            t1_index = fit.t1_index
+            t2_index = fit.t2_index
 
-            for idx, optimizedInterval in enumerate(interval_fits.optimizedIntervals):
+            for idx, optimizedInterval in enumerate(fit.optimized_intervals):
                 is_qualified, is_positive_bubble = self.filter.check_bubble_fit(
                     optimizedInterval, self.observations, t1_index, t2_index
                 )
@@ -142,15 +143,15 @@ class BubbleScores:
                     if is_qualified:
                         neg_qual_count += 1
 
-                interval_fits.optimizedIntervals[idx].is_qualified = is_qualified
+                fit.optimized_intervals[idx].is_qualified = is_qualified
 
             bubble_scores.append(
                 BubbleScore(
-                    interval_fits.t2,
-                    np.log(interval_fits.p2),
+                    fit.t2,
+                    np.log(fit.p2),
                     pos_qual_count / pos_count if pos_count > 0 else 0,
                     neg_qual_count / neg_count if neg_count > 0 else 0,
-                    interval_fits.optimizedIntervals
+                    fit.optimized_intervals
                 )
             )
 

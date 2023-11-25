@@ -14,6 +14,8 @@ from lppls_defaults import (
 )
 import matplotlib.pyplot as plt
 from datetime import datetime
+from date_utils import ordinal_to_date
+import matplotlib.dates as mdates
 
 
 class Peaks:
@@ -104,12 +106,13 @@ class Peaks:
 
         ax1.plot(formtted_dates, prices, label="Price", color="black", linewidth=0.75)
         for drawup in drawups:
-            formatted_drawup_date = pd.Timestamp.fromordinal(drawup.date_ordinal)
+            formatted_drawup_date = ordinal_to_date(drawup.date_ordinal)
+            ax1.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
             ax1.axvline(x=formatted_drawup_date, color="red", linewidth=0.5)
             ax1.text(
                 formatted_drawup_date,
                 max_price,
-                f'{formatted_drawup_date.strftime("%Y-%m-%d")}({drawup.score:.2f})',
+                f'{formatted_drawup_date}({drawup.score:.2f})',
                 color="red",
                 rotation=90,
                 verticalalignment="top",
@@ -120,12 +123,13 @@ class Peaks:
 
         ax2.plot(formtted_dates, prices, label="Price", color="black", linewidth=0.75)
         for drawdown in drawdowns:
-            formatted_drawdown_date = pd.Timestamp.fromordinal(drawdown.date_ordinal)
+            formatted_drawdown_date = ordinal_to_date(drawdown.date_ordinal)
+            ax2.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
             ax2.axvline(x=formatted_drawdown_date, color="green", linewidth=0.5)
             ax2.text(
                 formatted_drawdown_date,
                 max_price,
-                f'{formatted_drawdown_date.strftime("%Y-%m-%d")}({drawdown.score:.2f})',
+                f'{formatted_drawdown_date}({drawdown.score:.2f})',
                 color="green",
                 rotation=90,
                 verticalalignment="top",
