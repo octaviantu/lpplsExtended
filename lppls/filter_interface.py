@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from typing import Dict, Tuple
 from lppls_math import LPPLSMath
-from lppls_dataclasses import ObservationSeries
+from lppls_dataclasses import ObservationSeries, OptimizedParams
 
 
 class FilterInterface(ABC):
@@ -26,17 +26,11 @@ class FilterInterface(ABC):
         t1_index: int,
         t2_index: int,
         relative_error_max: float,
-        tc: float,
-        m: float,
-        w: float,
-        a: float,
-        b: float,
-        c1: float,
-        c2: float,
+        optimizedParams: OptimizedParams
     ) -> bool:
         for i in range(t1_index, min(len(observations), t2_index)):
             actual_log_price, date_ordinal = np.log(observations[i].price), observations[1].date_ordinal
-            predicted_log_price = LPPLSMath.predict_log_price(date_ordinal, tc, m, w, a, b, c1, c2)
+            predicted_log_price = LPPLSMath.predict_log_price(date_ordinal, optimizedParams)
 
             # In some papers such as the one underneath they are using the price, not its log.
             # However, in practice that will exclude all large enough windows because there is bound to be a

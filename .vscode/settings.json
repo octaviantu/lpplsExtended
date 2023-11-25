@@ -1,6 +1,7 @@
 {
     "python.analysis.extraPaths": [
         "./lppls",
+        "./lppls/date_utils",
         "./lppls/metrics",
         "./lppls/bubble_bounds",
         "./prices_db_management",

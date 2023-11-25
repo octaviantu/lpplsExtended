@@ -81,3 +81,43 @@ class ObservationSeries:
     
     def get_between_indexes(self, start_index: int, end_index: int):
         return ObservationSeries(self.observations[start_index:end_index])
+
+
+
+@dataclass
+class OptimizedParams:
+    tc: float
+    m: float
+    w: float
+    a: float
+    b: float
+    c1: float
+    c2: float
+
+
+@dataclass
+class OptimizedInterval:
+    t1: int
+    t2: int
+    optimizedParams: OptimizedParams
+    is_qualified: bool = False
+
+
+# TODO(octaviant) - check if we really need t1_index, t2_index
+@dataclass
+class IntervalFits:
+    optimizedIntervals: List[OptimizedInterval]
+    t1: int
+    t2: int
+    p2: float
+    t1_index: int
+    t2_index: int
+
+
+@dataclass
+class BubbleScore:
+    t2: int
+    log_price: float
+    pos_conf: float
+    neg_conf: float
+    intervalFits: IntervalFits

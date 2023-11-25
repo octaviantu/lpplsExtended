@@ -9,7 +9,7 @@ import data_loader
 from statsmodels.tsa.ar_model import AutoReg
 from lppls_defaults import SIGNIFICANCE_LEVEL
 from count_metrics import CountMetrics
-from lppls_dataclasses import ObservationSeries
+from lppls_dataclasses import ObservationSeries, OptimizedParams, OptimizedInterval
 
 
 # This filter is descipted in paper 1:
@@ -26,7 +26,7 @@ class FilterBitcoin2019B(FilterInterface):
 
     def fit(
         self, max_searches: int, observations: ObservationSeries, minimizer: str = "Nelder-Mead"
-    ) -> Tuple[bool, Dict[str, float]]:
+    ) -> OptimizedParams:
         """
         Args:
             max_searches (int): The maximum number of searches to perform before giving up. The literature suggests 25.
@@ -53,17 +53,16 @@ class FilterBitcoin2019B(FilterInterface):
 
             seed = np.array([tc, m, w])
 
-            success, params_dict = self.estimate_params(observations, seed, minimizer, search_bounds)
+            fit = self.estimate_params(observations, seed, minimizer, search_bounds)
 
-            if success:
-                tc, m, w, a, b, c, c1, c2 = params_dict.values()
-                final_dict = {"tc": tc, "m": m, "w": w, "a": a, "b": b, "c": c, "c1": c1, "c2": c2}
-                return True, final_dict
-            else:
-                search_count += 1
+            if fit:
+                return fit
+
+            search_count += 1
 
         CountMetrics.add_bubble_rejected_because_can_not_fit()
-        return False, {}
+        return None
+
 
     def estimate_params(
         self,
@@ -71,7 +70,7 @@ class FilterBitcoin2019B(FilterInterface):
         seed: np.ndarray,
         minimizer: str,
         search_bounds: List[Tuple[float, float]],
-    ) -> Tuple[bool, Dict[str, float]]:
+    ) -> OptimizedParams:
 
         cofs = minimize(
             args=observations,
@@ -89,33 +88,25 @@ class FilterBitcoin2019B(FilterInterface):
             rM = LPPLSMath.matrix_equation(observations, tc, m, w)
             a, b, c1, c2 = rM[:, 0].tolist()
 
-            c = LPPLSMath.get_c(c1, c2)
 
-            params_dict = {"tc": tc, "m": m, "w": w, "a": a, "b": b, "c": c, "c1": c1, "c2": c2}
-            return True, params_dict
+            return OptimizedParams(tc, m, w, a, b, c1, c2)
         else:
-            return False, {}
+            return None
 
-    def check_bubble_fit(
-        self, fits: Dict[str, float], observations: ObservationSeries, t1_index: int, t2_index: int
-    ) -> Tuple[bool, bool]:
-        t1, t2, tc, m, w, a, b, c, c1, c2 = (
-            fits[key] for key in ["t1", "t2", "tc", "m", "w", "a", "b", "c", "c1", "c2"]
-        )
 
+    def check_bubble_fit(self, oi: OptimizedInterval, observations: ObservationSeries, t1_index: int, t2_index: int) -> Tuple[bool, bool]:
+        op = oi.optimizedParams
+        tc, m, w, a, b = op.tc, op.m, op.w, op.a, op.b
+        t1, t2 = oi.t1, oi.t2
+        c = LPPLSMath.get_c(op.c1, op.c2)
+    
         observations = observations.filter_before_tc(tc)
         prices_in_range = super().is_price_in_range(
             observations,
             t1_index,
             t2_index,
             self.filter_criteria.get("relative_error_max"),
-            tc,
-            m,
-            w,
-            a,
-            b,
-            c1,
-            c2,
+            op
         )
 
         tc_extra_space = self.filter_criteria.get("tc_extra_space")
@@ -167,7 +158,7 @@ class FilterBitcoin2019B(FilterInterface):
             # not taking the log of the price because the price is already in log
             residuals.append(predicted_log_price - log_price)
 
-        # Fit an AR(1) model to the residuals
+        # OptimizedParams an AR(1) model to the residuals
         ar1_model = AutoReg(residuals, lags=1).fit()
 
         # Get the p-value for the AR(1) coefficient

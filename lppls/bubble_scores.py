@@ -2,10 +2,13 @@ from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
 from count_metrics import CountMetrics
-from lppls_dataclasses import BubbleType, BubbleStart, ObservationSeries
+from lppls_dataclasses import BubbleType, BubbleStart, ObservationSeries, IntervalFits, BubbleScore
 from pop_dates import Cluster
 from matplotlib.lines import Line2D
 from filter_interface import FilterInterface
+from typing import List
+from date_utils import ordinal_to_date
+import matplotlib.dates as mdates
 
 
 class BubbleScores:
@@ -15,7 +18,7 @@ class BubbleScores:
 
 
     def plot_bubble_scores(
-        self, bubble_scores, ticker: str, bubble_start: BubbleStart, best_end_cluster: Cluster
+        self, bubble_scores: List[BubbleScore], ticker: str, bubble_start: BubbleStart, best_end_cluster: Cluster
     ) -> None:
 
         if len(bubble_scores) == 0:
@@ -24,19 +27,19 @@ class BubbleScores:
 
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(18, 10))
         fig.canvas.manager.set_window_title(ticker)
-        # if burst_time:
-        #     fig.canvas.manager.set_window_subtitle('Burst time: ' + burst_time)
 
-        ord = bubble_scores["time"].astype("int32")
-        ts = [pd.Timestamp.fromordinal(d) for d in ord]
+        dates = [ordinal_to_date(bs.t2) for bs in bubble_scores]
+        log_prices = [bs.log_price for bs in bubble_scores]
+        pos_conf = [bs.pos_conf for bs in bubble_scores]
+        neg_conf = [bs.neg_conf for bs in bubble_scores]
 
         # plot pos bubbles
         ax1_0 = ax1.twinx()
-        ax1.plot(ts, bubble_scores["log_prices"], color="black", linewidth=0.75)
-        # ax1_0.plot(compatible_date, pos_lst, label='pos bubbles', color='gray', alpha=0.5)
+        ax1.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
+        ax1.plot(dates, log_prices, color="black", linewidth=0.75)
         ax1_0.plot(
-            ts,
-            bubble_scores["pos_conf"],
+            dates,
+            pos_conf,
             label="bubble indicator (pos)",
             color="red",
             alpha=0.5,
@@ -44,21 +47,22 @@ class BubbleScores:
 
         # plot neg bubbles
         ax2_0 = ax2.twinx()
-        ax2.plot(ts, bubble_scores["log_prices"], color="black", linewidth=0.75)
-        # ax2_0.plot(compatible_date, neg_lst, label='neg bubbles', color='gray', alpha=0.5)
+        ax1.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
+        ax2.plot(dates, log_prices, color="black", linewidth=0.75)
         ax2_0.plot(
-            ts,
-            bubble_scores["neg_conf"],
+            dates,
+            neg_conf,
             label="bubble indicator (neg)",
             color="green",
             alpha=0.5,
         )
 
+        earliest_end_date = bubble_scores[0].t2
         # Highlight start_time with a vertical line
         if bubble_start.type == BubbleType.POSITIVE:
-            self.draw_bubble_bounds(ax1, bubble_start, bubble_scores, best_end_cluster)
+            self.draw_bubble_bounds(ax1, bubble_start, earliest_end_date, best_end_cluster)
         elif bubble_start.type == BubbleType.NEGATIVE:
-            self.draw_bubble_bounds(ax2, bubble_start, bubble_scores, best_end_cluster)
+            self.draw_bubble_bounds(ax2, bubble_start, earliest_end_date, best_end_cluster)
 
         # set grids
         ax1.grid(which="major", axis="both", linestyle="--")
@@ -76,7 +80,7 @@ class BubbleScores:
 
 
     def draw_bubble_bounds(
-        self, axis, bubble_start: BubbleStart, bubble_scores, best_end_cluster: Cluster
+        self, axis, bubble_start: BubbleStart, earliest_end_date: int, best_end_cluster: Cluster
     ) -> None:
         bubble_start_date = pd.Timestamp.fromordinal(bubble_start.date_ordinal)
         bubble_start_label = (
@@ -84,9 +88,7 @@ class BubbleScores:
         )
 
         # Draw the vertical line if it's later than the earliest fit
-        # Use the 't2' timestamp because these are draws on the bubble score plot
-        # TODO(octaviant) - don't access private method
-        if int(bubble_scores._fits[0][0]["t2"]) <= bubble_start.date_ordinal:
+        if earliest_end_date <= bubble_start.date_ordinal:
             axis.axvline(x=bubble_start_date, color="blue", linestyle="--", linewidth=2)
         axis.text(
             bubble_start_date,
@@ -115,26 +117,20 @@ class BubbleScores:
         )
 
 
-    def compute_bubble_scores(self, fits):
-        pos_conf_lst = []
-        neg_conf_lst = []
-        log_prices = []
-        ts = []
-        _fits = []
+    def compute_bubble_scores(self, all_fits: List[IntervalFits]) -> List[BubbleScore]:
+        bubble_scores = []
 
-        for kps in fits:
-            ts.append(kps["t2"])
-            log_prices.append(np.log(kps["p2"]))
+        for interval_fits in all_fits:
             pos_qual_count = 0
             neg_qual_count = 0
             pos_count = 0
             neg_count = 0
-            t1_index = kps["t1_index"]
-            t2_index = kps["t2_index"]
+            t1_index = interval_fits.t1_index
+            t2_index = interval_fits.t2_index
 
-            for idx, fits in enumerate(kps["windows"]):
+            for idx, optimizedInterval in enumerate(interval_fits.optimizedIntervals):
                 is_qualified, is_positive_bubble = self.filter.check_bubble_fit(
-                    fits, self.observations, t1_index, t2_index
+                    optimizedInterval, self.observations, t1_index, t2_index
                 )
 
                 if is_positive_bubble:
@@ -146,22 +142,16 @@ class BubbleScores:
                     if is_qualified:
                         neg_qual_count += 1
 
-                kps["windows"][idx]["is_qualified"] = is_qualified
+                interval_fits.optimizedIntervals[idx].is_qualified = is_qualified
 
-            _fits.append(kps["windows"])
+            bubble_scores.append(
+                BubbleScore(
+                    interval_fits.t2,
+                    np.log(interval_fits.p2),
+                    pos_qual_count / pos_count if pos_count > 0 else 0,
+                    neg_qual_count / neg_count if neg_count > 0 else 0,
+                    interval_fits.optimizedIntervals
+                )
+            )
 
-            pos_conf = pos_qual_count / pos_count if pos_count > 0 else 0
-            neg_conf = neg_qual_count / neg_count if neg_count > 0 else 0
-            pos_conf_lst.append(pos_conf)
-            neg_conf_lst.append(neg_conf)
-
-        bubble_scores = pd.DataFrame(
-            {
-                "time": ts,
-                "log_prices": log_prices,
-                "pos_conf": pos_conf_lst,
-                "neg_conf": neg_conf_lst,
-                "_fits": _fits,
-            }
-        )
         return bubble_scores

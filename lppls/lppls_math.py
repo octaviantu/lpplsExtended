@@ -1,16 +1,12 @@
 import numpy as np
-from typing import List
-from datetime import datetime as date
-from pandas._libs.tslibs.np_datetime import OutOfBoundsDatetime
-import pandas as pd
-from lppls_dataclasses import ObservationSeries
-
+from lppls_dataclasses import ObservationSeries, OptimizedParams
 
 class LPPLSMath:
+
     @staticmethod
-    def predict_log_price(
-        t: float, tc: float, m: float, w: float, a: float, b: float, c1: float, c2: float
-    ) -> float:
+    def predict_log_price(t: float, op: OptimizedParams) -> float:
+        tc, m, w, a, b, c1, c2 = op.tc, op.m, op.w, op.a, op.b, op.c1, op.c2
+
         assert t < tc, "we can only predict up to time t smaller than tc"
         return a + np.power(tc - t, m) * (
             b + ((c1 * np.cos(w * np.log(tc - t))) + (c2 * np.sin(w * np.log(tc - t))))
@@ -79,22 +75,14 @@ class LPPLSMath:
 
         rM = LPPLSMath.matrix_equation(observations, tc, m, w)
         a, b, c1, c2 = rM[:, 0].tolist()
+        op = OptimizedParams(tc, m, w, a, b, c1, c2)
 
-        return LPPLSMath.sum_of_squared_residuals(observations, tc, m, w, a, b, c1, c2)
+        return LPPLSMath.sum_of_squared_residuals(observations, op)
 
     @staticmethod
-    def sum_of_squared_residuals(
-        observations: ObservationSeries,
-        tc: float,
-        m: float,
-        w: float,
-        a: float,
-        b: float,
-        c1: float,
-        c2: float,
-    ) -> float:
+    def sum_of_squared_residuals(observations: ObservationSeries, op: OptimizedParams) -> float:
         log_price_predictions = LPPLSMath.get_log_price_predictions(
-            observations, tc, m, w, a, b, c1, c2
+            observations, op
         )
         delta = np.subtract(log_price_predictions, observations.get_log_prices())
 
@@ -111,24 +99,13 @@ class LPPLSMath:
 
 
     @staticmethod
-    def get_log_price_predictions(observations: ObservationSeries, tc, m, w, a, b, c1, c2):
+    def get_log_price_predictions(observations: ObservationSeries, op: OptimizedParams) -> float:
         log_price_prediction = []
         date_ordinals = observations.get_date_ordinals()
 
         for t in date_ordinals:
-            assert t < tc, "we can only predict up to time t smaller than tc"
-            predicted_log_price = LPPLSMath.predict_log_price(t, tc, m, w, a, b, c1, c2)
+            assert t < op.tc, "we can only predict up to time t smaller than tc"
+            predicted_log_price = LPPLSMath.predict_log_price(t, op)
             log_price_prediction.append(predicted_log_price)
 
         return log_price_prediction
-
-
-    @staticmethod
-    def ordinal_to_date(ordinal: int) -> str:
-        # Since pandas represents timestamps in nanosecond resolution,
-        # the time span that can be represented using a 64-bit integer
-        # is limited to approximately 584 years
-        try:
-            return date.fromordinal(int(ordinal)).strftime("%Y-%m-%d")
-        except (ValueError, OutOfBoundsDatetime):
-            return str(pd.NaT)

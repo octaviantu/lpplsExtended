@@ -8,7 +8,7 @@ from lppls_defaults import MAX_SEARCHES, SMALLEST_WINDOW_SIZE
 from math import floor, ceil
 import matplotlib.pyplot as plt
 from lppls_dataclasses import ObservationSeries
-
+from date_utils import ordinal_to_date
 
 class FilimonovPlot:
     def __init__(self, filter_file="./lppls/conf/filimonov_filter.json"):
@@ -65,7 +65,7 @@ class FilimonovPlot:
                     else:
                         search_count += 1
 
-                dates.append(LPPLSMath.ordinal_to_date(t))
+                dates.append(ordinal_to_date(t))
                 ms.append(best_m)
                 ws.append(best_w)
                 ssrs.append(min_ssr)

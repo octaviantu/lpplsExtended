@@ -29,20 +29,17 @@ class Sornette:
         CountMetrics.reset()
         self.starts = Starts()
 
-    def estimate_prices(self):
-        return LPPLSMath.get_log_price_predictions(
-            self.data_fit.observations, **self.lppls_equation_terms()
-        )[0]
 
     def plot_fit(self, bubble_start: BubbleStart=None):
-        self.data_fit.plot_fit(bubble_start, **self.lppls_equation_terms())
+        op = self.data_fit.fit(MAX_SEARCHES, self.data_fit.observations)
+        self.data_fit.plot_fit(bubble_start, op)
 
     def parallel_compute_t2_fits(self, **kwargs):
         return self.data_fit.parallel_compute_t2_fits(**kwargs)
 
     def compute_bubble_scores(self, **kwargs):
-        fits = self.data_fit.parallel_compute_t2_recent_fits(**kwargs)
-        return self.bubble_scores.compute_bubble_scores(fits)
+        all_fits = self.data_fit.parallel_compute_t2_recent_fits(**kwargs)
+        return self.bubble_scores.compute_bubble_scores(all_fits)
 
     def plot_bubble_scores(self, bubble_scores, ticker, bubble_start, best_end_cluster):
         self.bubble_scores.plot_bubble_scores(bubble_scores, ticker, bubble_start, best_end_cluster)
@@ -51,13 +48,8 @@ class Sornette:
         self.filimonov_plot.plot_optimum(self.data_fit.observations)
 
     def compute_start_time(self, observations: ObservationSeries, bubble_type, extremities):
-        expected_prices = np.exp(LPPLSMath.get_log_price_predictions(
-            observations, **self.lppls_equation_terms()
-        ))
+        op = self.data_fit.fit(MAX_SEARCHES, self.data_fit.observations)
+        expected_prices = np.exp(LPPLSMath.get_log_price_predictions(observations, op))
         return self.starts.compute_start_time(
             observations.get_date_ordinals(), observations.get_prices(), expected_prices, bubble_type, extremities
         )
-
-    def lppls_equation_terms(self):
-        [_, lppls_coef] = self.data_fit.fit(MAX_SEARCHES, self.data_fit.observations)
-        return {k: lppls_coef[k] for k in ["tc", "m", "w", "a", "b", "c1", "c2"]}

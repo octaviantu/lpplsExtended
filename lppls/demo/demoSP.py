@@ -3,6 +3,9 @@ import sys
 sys.path.append("/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls")
 sys.path.append("/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/bubble_bounds")
 sys.path.append(
+    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/common"
+)
+sys.path.append(
     "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/metrics"
 )
 sys.path.append(
@@ -74,13 +77,13 @@ def is_in_bubble_state(observations, filter_type, filter_file, default_fitting_p
     sornette = Sornette(observations, filter_type, filter_file)
 
     bubble_scores = get_bubble_scores(sornette, default_fitting_params, RECENT_RELEVANT_WINDOWS)
-    max_pos_conf = bubble_scores["pos_conf"].max()
-    max_neg_conf = bubble_scores["neg_conf"].max()
+    pos_conf = [bs.pos_conf for bs in bubble_scores]
+    neg_conf = [bs.neg_conf for bs in bubble_scores]
 
-    if max_pos_conf > BUBBLE_THRESHOLD:
-        return BubbleType.POSITIVE, list(bubble_scores["pos_conf"]), sornette
-    elif max_neg_conf > BUBBLE_THRESHOLD:
-        return BubbleType.NEGATIVE, list(bubble_scores["neg_conf"]), sornette
+    if max(pos_conf) > BUBBLE_THRESHOLD:
+        return BubbleType.POSITIVE, pos_conf, sornette
+    elif max(neg_conf) > BUBBLE_THRESHOLD:
+        return BubbleType.NEGATIVE, neg_conf, sornette
 
     return None, 0, sornette
 
@@ -206,7 +209,7 @@ def main():
                 drawups if bubble_type == BubbleType.POSITIVE else drawdowns,
             )
 
-            days_from_start = len(observations.filter_between_date_ordinals(start_date=start_time.date_ordinal))
+            days_from_start = len(observations.filter_between_date_ordinals(start_date_ordinal=start_time.date_ordinal))
 
             plotted_time = max(RECENT_VISIBLE_WINDOWS, days_from_start)
             bubble_scores = get_bubble_scores(sornette, default_fitting_params, plotted_time)
