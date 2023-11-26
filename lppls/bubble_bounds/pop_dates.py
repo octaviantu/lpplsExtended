@@ -91,7 +91,7 @@ class PopDates:
             return Cluster()
 
         clusters = []
-        for k in range(MIN_NR_CLUSTERS, MAX_NR_CLUSTERS + 1):
+        for k in range(MIN_NR_CLUSTERS, min(len(tcs), MAX_NR_CLUSTERS + 1)):
             kmeans = KMeans(n_clusters=k, n_init=10)
             kmeans.fit(tcs)
             labels = kmeans.labels_
