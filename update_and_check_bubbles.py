@@ -38,7 +38,7 @@ for script in scripts_to_run:
     print(script["log"])
     script_start_time = time.time()
 
-    subprocess.run(script["cmd"])
+    subprocess.run(script["cmd"], check=True)
 
     script_end_time = time.time()
     script_elapsed_time = script_end_time - script_start_time

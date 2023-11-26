@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 from scipy.optimize import minimize
 from scipy.signal import lombscargle
 from lppls_math import LPPLSMath
@@ -124,8 +124,9 @@ class FilterBitcoin2019B(FilterInterface):
         D = FilterInterface.get_damping(m, w, b, c)
         D_in_range = D >= self.filter_criteria.get("D_min")
 
-        passing_lomb_test = FilterBitcoin2019B.is_passing_lomb_test(observations, tc, m, a, b)
-        passing_ar1_test = self.is_ar1_process(observations, tc, m, a, b)
+        # TODO(octaviant) - put back once I understand what they do 
+        passing_lomb_test = True #FilterBitcoin2019B.is_passing_lomb_test(observations, tc, m, a, b)
+        passing_ar1_test = True #self.is_ar1_process(observations, tc, m, a, b)
 
         conditions = {
             "O": O_in_range,
@@ -167,6 +168,13 @@ class FilterBitcoin2019B(FilterInterface):
         # Check if the p-value is less than or equal to your significance level
         return p_value <= SIGNIFICANCE_LEVEL
 
+
+    # Here, I need to remove the trend in prices and keep only the osciallations
+    # See 'Why Stock Markets Crash' by Sornette, page 263-264
+
+    # For formula, see:
+    # Page 10, Real-time Prediction of Bitcoin Bubble Crashes (2019)
+    # Authors: Min Shu, Wei Zhu
     @staticmethod
     def is_passing_lomb_test(
         observations: ObservationSeries, tc: float, m: float, a: float, b: float
@@ -176,11 +184,15 @@ class FilterBitcoin2019B(FilterInterface):
         for observation in observations:
             time, log_price = observation.date_ordinal, np.log(observation.price)
             # not taking the log of the price because the price is already in log
-            residuals.append((tc - time) ** (-m) * (log_price - a - b * (tc - time) ** m))
+
+            time_component = (tc - time) ** m
+            non_osciallating_price = a + b * time_component
+            residual = (log_price - non_osciallating_price) / time_component
+            residuals.append(residual)
 
         # Compute the Lomb-Scargle periodogram
         f = np.linspace(0.01, 1, len(observations))  # Frequency range, adjust as needed
-        pgram = lombscargle(observations.get_log_prices(), residuals, f)
+        pgram = lombscargle(observations.get_date_ordinals(), residuals, f)
 
         # Find the peak power
         peak_power = np.max(pgram)

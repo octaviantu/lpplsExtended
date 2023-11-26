@@ -10,6 +10,11 @@ slickcharts_to_yahoo_ticker_mapping = {"BRK.B": "BRK-B"}
 
 MOST_ACTIVE_FETCH_COUNT = 200
 
+BANNED_TICKERS = [
+    # The price is too low (close to 1), making my log formulas not work
+    "GSAT"
+]
+
 def fetch_most_traded_tickers():
     url = f"https://finance.yahoo.com/most-active/?offset=0&count={MOST_ACTIVE_FETCH_COUNT}"
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -37,6 +42,9 @@ def fetch_most_traded_tickers():
         cells = row.find_all("td")
         ticker = cells[0].text.strip()
         company = cells[1].text.strip()
+
+        if ticker in BANNED_TICKERS:
+            continue
 
         cur.execute(
             "INSERT INTO stocks_us_most_traded (company, ticker) VALUES (%s, %s) ON CONFLICT (ticker) DO NOTHING",

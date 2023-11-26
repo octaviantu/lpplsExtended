@@ -37,7 +37,6 @@ import warnings
 from pop_dates import PopDates
 from lppls_suggestions import LpplsSuggestions
 from db_dataclasses import Suggestion, OrderType
-from pop_dates import Cluster
 
 # Convert warnings to exceptions
 warnings.filterwarnings("error", category=RuntimeWarning)
@@ -88,7 +87,7 @@ def is_in_bubble_state(observations, filter_type, filter_file, default_fitting_p
     return None, 0, sornette
 
 
-SPECIFIC_TICKERS = ["XRAY"]
+SPECIFIC_TICKERS = ["XRAY", "BMY", "PDD"]
 def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) -> None:
     conn = psycopg2.connect(
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
@@ -99,6 +98,9 @@ def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) ->
         cursor.execute(query)
         rows = cursor.fetchall()
         observations = ObservationSeries([Observation(price=row[1], date_ordinal=row[0].toordinal()) for row in rows])
+        if len(observations) < LARGEST_WINDOW_SIZE:
+            print(f"Skipping {ticker} because it has too few observations.")
+            continue
 
         bubble_type, _, sornette = is_in_bubble_state(
             observations, "BitcoinB", "./lppls/conf/demos2015_filter.json", default_fitting_params
@@ -114,7 +116,7 @@ def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) ->
         best_end_cluster = PopDates().compute_bubble_end_cluster(bubble_start, bubble_scores)
 
         sornette.plot_bubble_scores(bubble_scores, ticker, bubble_start, best_end_cluster)
-        plt.show()
+    plt.show()
 
 
 def main():
@@ -177,6 +179,9 @@ def main():
         cursor.execute(query)
         rows = cursor.fetchall()
         observations = ObservationSeries([Observation(price=row[1], date_ordinal=row[0].toordinal()) for row in rows])
+        if len(observations) < LARGEST_WINDOW_SIZE:
+            print(f"Skipping {ticker} because it has too few observations.")
+            continue
 
         bubble_type, bubble_confidences, sornette = is_in_bubble_state(
             observations, "BitcoinB", "./lppls/conf/demos2015_filter.json", default_fitting_params
@@ -265,11 +270,7 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        # TODO(octaviant) - fix because this actually does not catch all exceptions
-        sys.exit(1)  # Exit with a non-zero code to indicate failure
+    main()
 
 
 # To show only a specific set of tickers:

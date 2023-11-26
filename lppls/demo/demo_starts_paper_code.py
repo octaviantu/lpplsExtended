@@ -18,7 +18,6 @@ from starts import Starts
 from matplotlib import pyplot as plt
 from datetime import datetime, timedelta
 import pandas as pd
-from lppls_defaults import SMALLEST_WINDOW_SIZE
 
 
 def simulateOLS() -> tuple[NDArray, NDArray]:
