@@ -11,16 +11,19 @@ from date_utils import ordinal_to_date
 import matplotlib.dates as mdates
 from matplotlib.dates import num2date, date2num
 
+
 class BubbleScores:
     def __init__(self, observations: ObservationSeries, filter: FilterInterface):
         self.observations = observations
         self.filter = filter
 
-
     def plot_bubble_scores(
-        self, bubble_scores: List[BubbleScore], ticker: str, bubble_start: BubbleStart, best_end_cluster: Cluster
+        self,
+        bubble_scores: List[BubbleScore],
+        ticker: str,
+        bubble_start: BubbleStart,
+        best_end_cluster: Cluster,
     ) -> None:
-
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(18, 10))
         fig.canvas.manager.set_window_title(ticker)
 
@@ -74,14 +77,16 @@ class BubbleScores:
         CountMetrics.print_metrics()
         plt.xticks(rotation=45)
 
-
     def draw_bubble_bounds(
-        self, axis, bubble_start: BubbleStart, earliest_end_date: int, best_end_cluster: Cluster, dates: List[str]
+        self,
+        axis,
+        bubble_start: BubbleStart,
+        earliest_end_date: int,
+        best_end_cluster: Cluster,
+        dates: List[str],
     ) -> None:
         bubble_start_date = ordinal_to_date(bubble_start.date_ordinal)
-        bubble_start_label = (
-            f'Start Date ({bubble_start_date})'  # Format the date
-        )
+        bubble_start_label = f"Start Date ({bubble_start_date})"  # Format the date
         closest_date = dates[np.searchsorted(dates, bubble_start_date)]
 
         # Draw the vertical line if it's later than the earliest fit
@@ -112,7 +117,6 @@ class BubbleScores:
         axis.legend(
             handles=axis.get_legend_handles_labels()[0] + cluster_legend, loc=2, facecolor="white"
         )
-
 
     def compute_bubble_scores(self, all_fits: List[IntervalFits]) -> List[BubbleScore]:
         bubble_scores = []
@@ -147,7 +151,7 @@ class BubbleScores:
                     np.log(fit.p2),
                     pos_qual_count / pos_count if pos_count > 0 else 0,
                     neg_qual_count / neg_count if neg_count > 0 else 0,
-                    fit.optimized_intervals
+                    fit.optimized_intervals,
                 )
             )
 

@@ -1,7 +1,9 @@
 import sys
 
 sys.path.append("/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls")
-sys.path.append("/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/bubble_bounds")
+sys.path.append(
+    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/bubble_bounds"
+)
 sys.path.append(
     "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/common"
 )
@@ -87,7 +89,9 @@ def is_in_bubble_state(observations, filter_type, filter_file, default_fitting_p
     return None, 0, sornette
 
 
-SPECIFIC_TICKERS = ["XRAY", "BMY", "PDD"]
+SPECIFIC_TICKERS = ["XLP"]
+
+
 def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) -> None:
     conn = psycopg2.connect(
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
@@ -97,7 +101,9 @@ def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) ->
         query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' ORDER BY date ASC;"
         cursor.execute(query)
         rows = cursor.fetchall()
-        observations = ObservationSeries([Observation(price=row[1], date_ordinal=row[0].toordinal()) for row in rows])
+        observations = ObservationSeries(
+            [Observation(price=row[1], date_ordinal=row[0].toordinal()) for row in rows]
+        )
         if len(observations) < LARGEST_WINDOW_SIZE:
             print(f"Skipping {ticker} because it has too few observations.")
             continue
@@ -178,7 +184,9 @@ def main():
         query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' ORDER BY date ASC;"
         cursor.execute(query)
         rows = cursor.fetchall()
-        observations = ObservationSeries([Observation(price=row[1], date_ordinal=row[0].toordinal()) for row in rows])
+        observations = ObservationSeries(
+            [Observation(price=row[1], date_ordinal=row[0].toordinal()) for row in rows]
+        )
         if len(observations) < LARGEST_WINDOW_SIZE:
             print(f"Skipping {ticker} because it has too few observations.")
             continue
@@ -216,7 +224,11 @@ def main():
                 drawups if bubble_type == BubbleType.POSITIVE else drawdowns,
             )
 
-            days_from_start = len(observations.filter_between_date_ordinals(start_date_ordinal=start_time.date_ordinal))
+            days_from_start = len(
+                observations.filter_between_date_ordinals(
+                    start_date_ordinal=start_time.date_ordinal
+                )
+            )
 
             plotted_time = max(RECENT_VISIBLE_WINDOWS, days_from_start)
             bubble_scores = get_bubble_scores(sornette, default_fitting_params, plotted_time)
@@ -250,14 +262,16 @@ def main():
             order_type = OrderType.SELL if bubble_type == BubbleType.POSITIVE else OrderType.BUY
 
             if pop_dates_range:
-                suggestions.append(Suggestion(
-                    order_type=order_type,
-                    ticker=ticker,
-                    confidence=bubble_confidences[-1], # the confidence for the last date
-                    price=observations[-1].price,
-                    open_date=observations[-1].date_ordinal,
-                    pop_dates_range=pop_dates_range,
-                ))
+                suggestions.append(
+                    Suggestion(
+                        order_type=order_type,
+                        ticker=ticker,
+                        confidence=bubble_confidences[-1],  # the confidence for the last date
+                        price=observations[-1].price,
+                        open_date=observations[-1].date_ordinal,
+                        pop_dates_range=pop_dates_range,
+                    )
+                )
 
     LpplsSuggestions().write_suggestions(suggestions)
 

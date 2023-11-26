@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from typing import List
 import numpy as np
 from date_utils import ordinal_to_date
+import sys
+
 
 class BubbleType(Enum):
     POSITIVE = "positive"
@@ -31,10 +33,10 @@ class Observation:
 @dataclass
 class ObservationSeries:
     observations: List[Observation]
-    
+
     def __len__(self):
         return len(self.observations)
-    
+
     def __getitem__(self, key):
         if isinstance(key, slice):
             # Handle slice objects
@@ -44,23 +46,25 @@ class ObservationSeries:
             return self.observations[key]
         else:
             raise TypeError("Invalid argument type.")
-        
+
     def __iter__(self):
         return iter(self.observations)
-    
+
     def get_prices(self):
         return [o.price for o in self.observations]
-    
+
     def get_log_returns(self):
         # We add a dummy first element to maintain the same index.
         log_returns = [0.0]
         for i in range(1, len(self.observations)):
-            log_returns.append(np.log(self.observations[i].price) - np.log(self.observations[i - 1].price))
+            log_returns.append(
+                np.log(self.observations[i].price) - np.log(self.observations[i - 1].price)
+            )
         return log_returns
-    
+
     def get_log_prices(self):
         return np.log(self.get_prices())
-    
+
     def get_date_at_ordinal(self, date_ordinal: int):
         return self.observations[date_ordinal].date_ordinal
 
@@ -70,18 +74,21 @@ class ObservationSeries:
     def filter_before_tc(self, tc: float):
         first_larger_index = int(np.searchsorted(self.get_date_ordinals(), tc, side="left"))
         return ObservationSeries(self.observations[:first_larger_index])
-    
-    def filter_between_date_ordinals(self, start_date_ordinal: int = 0, end_date_ordinal: int = np.inf):
-        start_index = int(np.searchsorted(self.get_date_ordinals(), start_date_ordinal, side="left"))
+
+    def filter_between_date_ordinals(
+        self, start_date_ordinal: int = 0, end_date_ordinal: int = sys.maxsize
+    ):
+        start_index = int(
+            np.searchsorted(self.get_date_ordinals(), start_date_ordinal, side="left")
+        )
         end_index = int(np.searchsorted(self.get_date_ordinals(), end_date_ordinal, side="left"))
         return ObservationSeries(self.observations[start_index:end_index])
-    
+
     def get_formatted_dates(self):
         return [ordinal_to_date(o.date_ordinal) for o in self.observations]
-    
+
     def get_between_indexes(self, start_index: int, end_index: int):
         return ObservationSeries(self.observations[start_index:end_index])
-
 
 
 @dataclass

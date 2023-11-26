@@ -11,6 +11,7 @@ from lppls_dataclasses import BubbleStart
 from date_utils import ordinal_to_date
 from matplotlib import dates as mdates
 
+
 class Starts:
     def getSSE(self, Y, Yhat, p=1, normed=False):
         """Obtain SSE (chi^2)

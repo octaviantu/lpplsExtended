@@ -1,7 +1,18 @@
 from datetime import date
+import pandas as pd
+from datetime import datetime
+
 
 def ordinal_to_date(ordinal: int) -> str:
     # Since pandas represents timestamps in nanosecond resolution,
     # the time span that can be represented using a 64-bit integer
     # is limited to approximately 584 years
     return date.fromordinal(ordinal).strftime("%Y-%m-%d")
+
+
+def today_ordinal() -> int:
+    return pd.Timestamp(datetime.today()).toordinal()
+
+
+def date_to_ordinal(date: date) -> int:
+    return pd.Timestamp(date).toordinal()

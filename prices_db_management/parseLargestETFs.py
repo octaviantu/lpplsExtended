@@ -18,7 +18,6 @@ BANNED_TICKERS = [
     "USFR",
     "BIL",
     "SHV",
-
     # Short term treasury - fluctuations noisy
     "SHY",
     "VGSH",
@@ -27,10 +26,10 @@ BANNED_TICKERS = [
 
 def fetch_tickers(url: str) -> None:
     # Fetch the webpage content
-    headers = {
+    request_headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36"
     }
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=request_headers)
 
     # Parse the HTML content
     soup = BeautifulSoup(response.text, "html.parser")
@@ -58,11 +57,11 @@ def fetch_tickers(url: str) -> None:
     )
 
     #  the webpages display the ETFs in different order
-    headers = [cell.text.strip() for cell in rows[0].find_all("th")]
-    if "Avg Daily Share Volume" in headers[2] and "AUM" in headers[3]:
+    table_headers = [cell.text.strip() for cell in rows[0].find_all("th")]
+    if "Avg Daily Share Volume" in table_headers[2] and "AUM" in table_headers[3]:
         VOLUME_ROW = 2
         AUM_ROW = 3
-    elif "Avg Daily Share Volume" in headers[3] and "AUM" in headers[2]:
+    elif "Avg Daily Share Volume" in table_headers[3] and "AUM" in table_headers[2]:
         VOLUME_ROW = 3
         AUM_ROW = 2
     else:

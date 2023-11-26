@@ -26,7 +26,7 @@ class FilterBitcoin2019B(FilterInterface):
 
     def fit(
         self, max_searches: int, observations: ObservationSeries, minimizer: str = "Nelder-Mead"
-    ) -> OptimizedParams:
+    ) -> OptimizedParams | None:
         """
         Args:
             max_searches (int): The maximum number of searches to perform before giving up. The literature suggests 25.
@@ -63,7 +63,6 @@ class FilterBitcoin2019B(FilterInterface):
         CountMetrics.add_bubble_rejected_because_can_not_fit()
         return None
 
-
     def estimate_params(
         self,
         observations: ObservationSeries,
@@ -71,7 +70,6 @@ class FilterBitcoin2019B(FilterInterface):
         minimizer: str,
         search_bounds: List[Tuple[float, float]],
     ) -> OptimizedParams:
-
         cofs = minimize(
             args=observations,
             fun=LPPLSMath.minimize_squared_residuals,
@@ -88,13 +86,13 @@ class FilterBitcoin2019B(FilterInterface):
             rM = LPPLSMath.matrix_equation(observations, tc, m, w)
             a, b, c1, c2 = rM[:, 0].tolist()
 
-
             return OptimizedParams(tc, m, w, a, b, c1, c2)
         else:
             return None
 
-
-    def check_bubble_fit(self, oi: OptimizedInterval, observations: ObservationSeries, t1_index: int, t2_index: int) -> Tuple[bool, bool]:
+    def check_bubble_fit(
+        self, oi: OptimizedInterval, observations: ObservationSeries, t1_index: int, t2_index: int
+    ) -> Tuple[bool, bool]:
         op = oi.optimized_params
         tc, m, w, a, b = op.tc, op.m, op.w, op.a, op.b
         t1, t2 = oi.t1, oi.t2
@@ -102,11 +100,7 @@ class FilterBitcoin2019B(FilterInterface):
 
         observations = observations.filter_before_tc(tc)
         prices_in_range = super().is_price_in_range(
-            observations,
-            t1_index,
-            t2_index,
-            self.filter_criteria.get("relative_error_max"),
-            op
+            observations, t1_index, t2_index, self.filter_criteria.get("relative_error_max"), op
         )
 
         tc_extra_space = self.filter_criteria.get("tc_extra_space")
@@ -124,9 +118,11 @@ class FilterBitcoin2019B(FilterInterface):
         D = FilterInterface.get_damping(m, w, b, c)
         D_in_range = D >= self.filter_criteria.get("D_min")
 
-        # TODO(octaviant) - put back once I understand what they do 
-        passing_lomb_test = True #FilterBitcoin2019B.is_passing_lomb_test(observations, tc, m, a, b)
-        passing_ar1_test = True #self.is_ar1_process(observations, tc, m, a, b)
+        # TODO(octaviant) - put back once I understand what they do
+        passing_lomb_test = (
+            True  # FilterBitcoin2019B.is_passing_lomb_test(observations, tc, m, a, b)
+        )
+        passing_ar1_test = True  # self.is_ar1_process(observations, tc, m, a, b)
 
         conditions = {
             "O": O_in_range,
@@ -167,7 +163,6 @@ class FilterBitcoin2019B(FilterInterface):
 
         # Check if the p-value is less than or equal to your significance level
         return p_value <= SIGNIFICANCE_LEVEL
-
 
     # Here, I need to remove the trend in prices and keep only the osciallations
     # See 'Why Stock Markets Crash' by Sornette, page 263-264

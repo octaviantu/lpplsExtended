@@ -22,11 +22,12 @@ while os.path.exists(backup_file_path):
     filename = f"asset_prices_backup_{today_str}_{counter}.sql"
     backup_file_path = os.path.join(BACKUP_DIR, filename)
 
-pg_dump_path = "/opt/homebrew/bin/pg_dump" # Path to pg_dump
+pg_dump_path = "/opt/homebrew/bin/pg_dump"  # Path to pg_dump
 # Command to run pg_dump
 command = [
-    "zsh", "-c",
-    f"{pg_dump_path} -h {DB_HOST} -p {DB_PORT} -U {DB_USER} -d {DB_NAME} -F c > {backup_file_path}"
+    "zsh",
+    "-c",
+    f"{pg_dump_path} -h {DB_HOST} -p {DB_PORT} -U {DB_USER} -d {DB_NAME} -F c > {backup_file_path}",
 ]
 
 # Set the environment variable for the password

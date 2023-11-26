@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Tuple
 from dataclasses import dataclass
 
 
@@ -18,10 +17,18 @@ class CloseReason:
     is_timeout: bool
     is_successful: bool
 
+
 @dataclass
 class ClosingPrices:
     close_price: float
     date: int
+
+
+@dataclass
+class PopRange:
+    first_pop_date: int
+    last_pop_date: int
+
 
 @dataclass
 class Suggestion:
@@ -30,7 +37,7 @@ class Suggestion:
     confidence: float
     price: float
     open_date: int
-    pop_dates_range: Tuple[int, int] = Tuple[None, None]
+    pop_dates_range: PopRange | None = None
 
 
 @dataclass
@@ -45,6 +52,6 @@ class StrategyResults:
         if self.paid == 0.0:
             return 0.0
         return (self.received - self.paid) / self.paid
-    
+
     def compute_trade_count(self) -> int:
         return self.succesful_count + self.timeout_count

@@ -8,6 +8,7 @@ import data_loader
 from count_metrics import CountMetrics
 from lppls_dataclasses import ObservationSeries
 
+
 # This filter is descipted in paper:
 # Real-time prediction and post-mortem analysis of the Shanghai 2015 stock market bubble and crash (2015)
 # Authors: Didier Sornette, Guilherme Demos, Qun Zhang, Peter Cauwels, Vladimir Filimonov and Qunzhi Zhang

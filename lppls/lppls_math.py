@@ -1,8 +1,9 @@
 import numpy as np
 from lppls_dataclasses import ObservationSeries, OptimizedParams
+from typing import List
+
 
 class LPPLSMath:
-
     @staticmethod
     def predict_log_price(t: float, op: OptimizedParams) -> float:
         tc, m, w, a, b, c1, c2 = op.tc, op.m, op.w, op.a, op.b, op.c1, op.c2
@@ -11,7 +12,6 @@ class LPPLSMath:
         return a + np.power(tc - t, m) * (
             b + ((c1 * np.cos(w * np.log(tc - t))) + (c2 * np.sin(w * np.log(tc - t))))
         )
-
 
     @staticmethod
     def matrix_equation(observations: ObservationSeries, tc, m, w):
@@ -56,7 +56,6 @@ class LPPLSMath:
 
         return np.linalg.solve(matrix_1, matrix_2)
 
-
     @staticmethod
     def minimize_squared_residuals(x, observations: ObservationSeries):
         """
@@ -81,13 +80,10 @@ class LPPLSMath:
 
     @staticmethod
     def sum_of_squared_residuals(observations: ObservationSeries, op: OptimizedParams) -> float:
-        log_price_predictions = LPPLSMath.get_log_price_predictions(
-            observations, op
-        )
+        log_price_predictions = LPPLSMath.get_log_price_predictions(observations, op)
         delta = np.subtract(log_price_predictions, observations.get_log_prices())
 
         return np.sum(np.power(delta, 2)) / len(delta)
-
 
     @staticmethod
     def get_c(c1: float, c2: float) -> float:
@@ -97,9 +93,10 @@ class LPPLSMath:
         else:
             return 0
 
-
     @staticmethod
-    def get_log_price_predictions(observations: ObservationSeries, op: OptimizedParams) -> float:
+    def get_log_price_predictions(
+        observations: ObservationSeries, op: OptimizedParams
+    ) -> List[float]:
         log_price_prediction = []
         date_ordinals = observations.get_date_ordinals()
 

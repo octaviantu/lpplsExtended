@@ -112,7 +112,7 @@ class Peaks:
             ax1.text(
                 formatted_drawup_date,
                 max_price,
-                f'{formatted_drawup_date}({drawup.score:.2f})',
+                f"{formatted_drawup_date}({drawup.score:.2f})",
                 color="red",
                 rotation=90,
                 verticalalignment="top",
@@ -129,7 +129,7 @@ class Peaks:
             ax2.text(
                 formatted_drawdown_date,
                 max_price,
-                f'{formatted_drawdown_date}({drawdown.score:.2f})',
+                f"{formatted_drawdown_date}({drawdown.score:.2f})",
                 color="green",
                 rotation=90,
                 verticalalignment="top",

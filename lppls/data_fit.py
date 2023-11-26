@@ -5,7 +5,13 @@ from tqdm import tqdm
 from matplotlib import pyplot as plt
 from multiprocessing import Pool
 from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP, MAX_SEARCHES
-from lppls_dataclasses import BubbleStart, ObservationSeries, OptimizedInterval, IntervalFits, OptimizedParams
+from lppls_dataclasses import (
+    BubbleStart,
+    ObservationSeries,
+    OptimizedInterval,
+    IntervalFits,
+    OptimizedParams,
+)
 from filter_interface import FilterInterface
 import sys
 from date_utils import ordinal_to_date
@@ -17,7 +23,7 @@ class DataFit:
         self.observations = observations
         self.filter = filter
 
-    def plot_fit(self, bubble_start: BubbleStart, op: OptimizedParams) -> None:
+    def plot_fit(self, bubble_start: BubbleStart | None, op: OptimizedParams) -> None:
         observations = self.observations.filter_before_tc(op.tc)
 
         if bubble_start:
@@ -43,7 +49,7 @@ class DataFit:
 
     def fit(
         self, max_searches: int, observations: ObservationSeries, minimizer: str = "Nelder-Mead"
-    ) -> OptimizedParams:
+    ) -> OptimizedParams | None:
         return self.filter.fit(max_searches, observations, minimizer)
 
     def parallel_compute_t2_fits(self, **kwargs) -> List[IntervalFits]:
@@ -60,9 +66,7 @@ class DataFit:
         max_searches=MAX_SEARCHES,
     ) -> List[IntervalFits]:
         stop_windows_beginnings = len(self.observations) - window_size + 1
-        start_windows_beginnings = max(
-            len(self.observations) - window_size - recent_windows + 1, 0
-        )
+        start_windows_beginnings = max(len(self.observations) - window_size - recent_windows + 1, 0)
 
         t2_fits_args = []
         for i in range(start_windows_beginnings, stop_windows_beginnings, t2_increment):
@@ -88,7 +92,6 @@ class DataFit:
             )
 
         return optimized_intervals
-
 
     def compute_t1_fits(self, args) -> IntervalFits:
         obs, window_size, t1_index, smallest_window_size, t1_increment, max_searches = args
@@ -121,5 +124,11 @@ class DataFit:
             # Append updated params_dict to windows
             optimized_intervals.append(optimizedInterval)
 
-        return IntervalFits(t1=t1, t2=t2, p2=p2, optimized_intervals=optimized_intervals,
-                            t1_index=t1_index, t2_index=t2_index)
+        return IntervalFits(
+            t1=t1,
+            t2=t2,
+            p2=p2,
+            optimized_intervals=optimized_intervals,
+            t1_index=t1_index,
+            t2_index=t2_index,
+        )

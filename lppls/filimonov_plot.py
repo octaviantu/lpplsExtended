@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from lppls_dataclasses import ObservationSeries
 from date_utils import ordinal_to_date
 
+
 class FilimonovPlot:
     def __init__(self, filter_file="./lppls/conf/filimonov_filter.json"):
         self.filter_criteria = data_loader.load_config(filter_file)

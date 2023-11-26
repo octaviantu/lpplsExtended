@@ -9,9 +9,8 @@ class FilterInterface(ABC):
     @abstractmethod
     def fit(
         self, max_searches: int, obsservations: ObservationSeries, minimizer: str
-    ) -> Tuple[bool, Dict[str, float]]:
+    ) -> OptimizedParams | None:
         pass
-
 
     @abstractmethod
     def check_bubble_fit(
@@ -19,14 +18,13 @@ class FilterInterface(ABC):
     ) -> Tuple[bool, bool]:
         pass
 
-
     def is_price_in_range(
         self,
         observations: ObservationSeries,
         t1_index: int,
         t2_index: int,
         relative_error_max: float,
-        optimized_params: OptimizedParams
+        optimized_params: OptimizedParams,
     ) -> bool:
         for observation in observations[t1_index:t2_index]:
             actual_log_price, date_ordinal = np.log(observation.price), observation.date_ordinal
@@ -45,7 +43,6 @@ class FilterInterface(ABC):
                 return False
 
         return True
-
 
     @staticmethod
     def get_damping(m: float, w: float, b: float, c: float) -> float:

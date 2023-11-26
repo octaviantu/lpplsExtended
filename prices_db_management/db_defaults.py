@@ -1,4 +1,3 @@
-
 DB_HOST = "localhost"
 DB_NAME = "asset_prices"
 DB_USER = "sornette"

@@ -4,15 +4,17 @@ from typing import List
 ATR_RANGE = 20
 ATR_BAND_NR_PROFIT = 2
 
-MAX_DAYS_UNTIL_CLOSE_POSITION_TAO = 3 * 30 # 3 months
+MAX_DAYS_UNTIL_CLOSE_POSITION_TAO = 3 * 30  # 3 months
+
 
 @dataclass
 class PriceData:
-    date: str
+    date_ordinal: int
     ticker: str
     close_price: float
     high_price: float
     low_price: float
+
 
 @dataclass
 class TipTechnicalData:
@@ -25,6 +27,7 @@ class TipTechnicalData:
     adx: float
     rsi_yesterday: float
     rsi_today: float
+
 
 @dataclass
 class FullTechnicalData:

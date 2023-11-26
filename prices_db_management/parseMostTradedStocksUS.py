@@ -15,6 +15,7 @@ BANNED_TICKERS = [
     "GSAT"
 ]
 
+
 def fetch_most_traded_tickers():
     url = f"https://finance.yahoo.com/most-active/?offset=0&count={MOST_ACTIVE_FETCH_COUNT}"
     headers = {"User-Agent": "Mozilla/5.0"}

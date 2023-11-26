@@ -41,7 +41,9 @@ def main():
     query = "SELECT date, close_price FROM pricing_history WHERE ticker='VLO' ORDER BY date ASC;"
     cursor.execute(query)
     rows = cursor.fetchall()
-    obs = ObservationSeries([Observation(price=row[1], date_ordinal=row[0].toordinal()) for row in rows])
+    obs = ObservationSeries(
+        [Observation(price=row[1], date_ordinal=row[0].toordinal()) for row in rows]
+    )
 
     # Filter data up to Jun 1, 2022
     latest_date = date(2022, 6, 1)
@@ -49,7 +51,9 @@ def main():
     earliest_date = date(2021, 1, 1)
 
     # we want dates BEFORE 1 June 2022, to check with the ETH FCO June 2022 report
-    obs_filtered = obs.filter_between_date_ordinals(earliest_date.toordinal(), latest_date.toordinal())
+    obs_filtered = obs.filter_between_date_ordinals(
+        earliest_date.toordinal(), latest_date.toordinal()
+    )
 
     # execute_lppls_logic(data_filtered, "Shanghai", "./lppls/conf/shanghai_filter_1relaxed.json")
     # execute_lppls_logic(data_filtered, "Shanghai", "./lppls/conf/shanghai_filter2.json")

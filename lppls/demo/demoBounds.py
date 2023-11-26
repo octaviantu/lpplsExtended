@@ -8,7 +8,7 @@ sys.path.append(
     "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/bubble_bounds"
 )
 sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/common"
+    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/common"
 )
 
 import pandas as pd
@@ -27,6 +27,7 @@ from lppls_defaults import (
 )
 from lppls_dataclasses import Observation, ObservationSeries
 from pop_dates import PopDates
+
 
 def get_bubble_scores(sornette: Sornette, default_fitting_params, recent_windows):
     return sornette.compute_bubble_scores(
@@ -56,13 +57,17 @@ def main():
     # Separate the dates and prices into two lists
     all_dates = [pd.Timestamp.toordinal(row[0]) for row in rows]
     all_actual_prices = [row[1] for row in rows]
-    all_observations = ObservationSeries([Observation(p, d) for d, p in zip(all_dates, all_actual_prices)])
+    all_observations = ObservationSeries(
+        [Observation(p, d) for d, p in zip(all_dates, all_actual_prices)]
+    )
 
     _, drawdowns, _ = Peaks(all_observations, ticker).plot_peaks()
     first_eligible_date = all_dates.index(drawdowns[-1].date_ordinal)
     selected_actual_prices = all_actual_prices[first_eligible_date:]
     selected_dates = all_dates[first_eligible_date:]
-    selected_observations = ObservationSeries([Observation(p, d) for d, p in zip(selected_dates, selected_actual_prices)])
+    selected_observations = ObservationSeries(
+        [Observation(p, d) for d, p in zip(selected_dates, selected_actual_prices)]
+    )
 
     sornette_on_interval = Sornette(
         selected_observations,
@@ -91,8 +96,12 @@ def main():
 
     # I want to see the start date on the entire interval, so I make another Sornettee object
     # TODO(octaviant) - creating a new Sornette object is complicated; simplify
-    sornette_on_interval = Sornette(all_observations, "BitcoinB", "./lppls/conf/demos2015_filter.json")
-    bubble_scores = get_bubble_scores(sornette_on_interval, default_fitting_params, RECENT_VISIBLE_WINDOWS)
+    sornette_on_interval = Sornette(
+        all_observations, "BitcoinB", "./lppls/conf/demos2015_filter.json"
+    )
+    bubble_scores = get_bubble_scores(
+        sornette_on_interval, default_fitting_params, RECENT_VISIBLE_WINDOWS
+    )
 
     best_cluster = PopDates().compute_bubble_end_cluster(optimal_start, bubble_scores)
     sornette_on_interval.plot_bubble_scores(bubble_scores, ticker, optimal_start, best_cluster)
