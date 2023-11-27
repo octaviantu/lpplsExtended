@@ -2,9 +2,10 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import List
 import numpy as np
-from date_utils import ordinal_to_date
+from date_utils import DateUtils as du
 import sys
 from typechecking import TypeCheckBase
+
 
 class BubbleType(Enum):
     POSITIVE = "positive"
@@ -85,7 +86,7 @@ class ObservationSeries(TypeCheckBase):
         return ObservationSeries(self.observations[start_index:end_index])
 
     def get_formatted_dates(self):
-        return [ordinal_to_date(o.date_ordinal) for o in self.observations]
+        return [du.ordinal_to_date(o.date_ordinal) for o in self.observations]
 
     def get_between_indexes(self, start_index: int, end_index: int):
         return ObservationSeries(self.observations[start_index:end_index])

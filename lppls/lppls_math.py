@@ -3,6 +3,7 @@ from lppls_dataclasses import ObservationSeries, OptimizedParams
 from typing import List
 from typechecking import TypeCheckBase
 
+
 class LPPLSMath(TypeCheckBase):
     @staticmethod
     def predict_log_price(t: float, op: OptimizedParams) -> float:

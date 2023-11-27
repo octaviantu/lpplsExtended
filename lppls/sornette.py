@@ -14,6 +14,7 @@ from lppls_dataclasses import BubbleStart, ObservationSeries, BubbleType, Peak
 from typechecking import TypeCheckBase
 from typing import List
 
+
 class Sornette(TypeCheckBase):
     def __init__(self, observations: ObservationSeries, filter_type, filter_file):
         filter: FilterInterface

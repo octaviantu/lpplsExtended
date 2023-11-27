@@ -14,7 +14,7 @@ from lppls_dataclasses import (
 )
 from filter_interface import FilterInterface
 import sys
-from date_utils import ordinal_to_date
+from date_utils import DateUtils as du
 import matplotlib.dates as mdates
 from typechecking import TypeCheckBase
 
@@ -32,7 +32,9 @@ class DataFit(TypeCheckBase):
             observations = observations.filter_between_date_ordinals(start_date)
 
         log_price_prediction = LPPLSMath.get_log_price_predictions(observations, op)
-        dates = [ordinal_to_date(date_ordinal) for date_ordinal in observations.get_date_ordinals()]
+        dates = [
+            du.ordinal_to_date(date_ordinal) for date_ordinal in observations.get_date_ordinals()
+        ]
 
         _, (ax) = plt.subplots(nrows=1, ncols=1, sharex=True, figsize=(14, 8))
         ax.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))

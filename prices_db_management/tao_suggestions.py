@@ -1,12 +1,12 @@
 from typing import List
-from db_dataclasses import Suggestion, StrategyResults, StrategyType, OrderType, CloseReason
+from db_dataclasses import Suggestion, StrategyType, OrderType, CloseReason
 from tao_dataclasses import ATR_RANGE
 from db_defaults import DEFAULT_POSITION_SIZE
 from datetime import date, timedelta
 from trade_suggestions import TradeSuggestions
 from price_technicals import PriceTechnicals
 from tao_dataclasses import PriceData, MAX_DAYS_UNTIL_CLOSE_POSITION_TAO
-from date_utils import ordinal_to_date, date_to_ordinal
+from date_utils import DateUtils as du
 
 STRATEGY_TYPE = StrategyType.TAO_RSI
 
@@ -22,7 +22,7 @@ class TaoSuggestions(TradeSuggestions):
             if self.is_position_open(cursor, suggestion.ticker, STRATEGY_TYPE):
                 continue
 
-            formatted_open_date = ordinal_to_date(suggestion.open_date)
+            formatted_open_date = du.ordinal_to_date(suggestion.open_date)
             cursor.execute(
                 """
                 INSERT INTO suggestions (strategy_t, order_t, open_date, open_price, ticker, confidence, position_size)
@@ -55,7 +55,7 @@ class TaoSuggestions(TradeSuggestions):
 
         pricing_data = [
             PriceData(
-                date_ordinal=date_to_ordinal(row["date"]),
+                date_ordinal=du.date_to_ordinal(row["date"]),
                 ticker=row["ticker"],
                 close_price=row["close_price"],
                 high_price=row["high_price"],

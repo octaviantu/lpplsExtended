@@ -6,9 +6,10 @@ from pop_dates import Cluster
 from matplotlib.lines import Line2D
 from filter_interface import FilterInterface
 from typing import List
-from date_utils import ordinal_to_date
+from date_utils import DateUtils as du
 import matplotlib.dates as mdates
 from typechecking import TypeCheckBase
+
 
 class BubbleScores(TypeCheckBase):
     def __init__(self, observations: ObservationSeries, filter: FilterInterface):
@@ -25,7 +26,7 @@ class BubbleScores(TypeCheckBase):
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(18, 10))
         fig.canvas.manager.set_window_title(ticker)
 
-        dates = [ordinal_to_date(bs.t2) for bs in bubble_scores]
+        dates = [du.ordinal_to_date(bs.t2) for bs in bubble_scores]
         log_prices = [bs.log_price for bs in bubble_scores]
         pos_conf = [bs.pos_conf for bs in bubble_scores]
         neg_conf = [bs.neg_conf for bs in bubble_scores]
@@ -83,7 +84,7 @@ class BubbleScores(TypeCheckBase):
         best_end_cluster: Cluster,
         dates: List[str],
     ) -> None:
-        bubble_start_date = ordinal_to_date(bubble_start.date_ordinal)
+        bubble_start_date = du.ordinal_to_date(bubble_start.date_ordinal)
         bubble_start_label = f"Start Date ({bubble_start_date})"  # Format the date
         closest_date = dates[np.searchsorted(dates, bubble_start_date)]
 

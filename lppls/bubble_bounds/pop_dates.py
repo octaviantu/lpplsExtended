@@ -8,9 +8,8 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 import numpy as np
 from lppls_dataclasses import BubbleStart, BubbleScore
-from date_utils import ordinal_to_date
 from db_dataclasses import PopRange
-from date_utils import today_ordinal
+from date_utils import DateUtils as du
 from typechecking import TypeCheckBase
 
 MIN_POINTS_CLUSTER_RATIO = 3
@@ -46,7 +45,7 @@ class Cluster(TypeCheckBase):
     def displayCluster(self):
         if not self.is_valid:
             return "Invalid cluster"
-        format_pop_dates = [ordinal_to_date(d) for d in self.mean_pop_dates]
+        format_pop_dates = [du.ordinal_to_date(d) for d in self.mean_pop_dates]
         return (
             f"Clustered in {format_pop_dates} with silhouette: {self.silhouette:.2f} (1 is optimal)"
         )
@@ -60,7 +59,7 @@ class Cluster(TypeCheckBase):
         # If pop dates are too dispersed, they are not actionable.
         if last_pop_date - first_pop_date > MAX_POP_TIMES_DISPERSION:
             return None
-        if last_pop_date > today_ordinal() + MAX_LAG_FROM_TODAY:
+        if last_pop_date > du.today_ordinal() + MAX_LAG_FROM_TODAY:
             return None
 
         return PopRange(first_pop_date, last_pop_date)
@@ -73,7 +72,7 @@ class PopDates(TypeCheckBase):
         tcs = []
 
         # Get the ordinal dates for the last LAST_DAYS_WITH_DATA days
-        last_days_ordinals = [today_ordinal() - i for i in range(LAST_DAYS_WITH_DATA, -1, -1)]
+        last_days_ordinals = [du.today_ordinal() - i for i in range(LAST_DAYS_WITH_DATA, -1, -1)]
 
         for bubble_score in bubble_scores:
             if bubble_score.t2 < last_days_ordinals[0]:

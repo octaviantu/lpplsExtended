@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from typing import List, Dict, Tuple
 from collections import defaultdict
 from lppls_dataclasses import BubbleType, Peak, ObservationSeries
@@ -14,9 +13,10 @@ from lppls_defaults import (
 )
 import matplotlib.pyplot as plt
 from datetime import datetime
-from date_utils import ordinal_to_date
+from date_utils import DateUtils as du
 import matplotlib.dates as mdates
 from typechecking import TypeCheckBase
+
 
 class Peaks(TypeCheckBase):
     def __init__(self, observations: ObservationSeries, ticker: str):
@@ -106,7 +106,7 @@ class Peaks(TypeCheckBase):
 
         ax1.plot(formtted_dates, prices, label="Price", color="black", linewidth=0.75)
         for drawup in drawups:
-            formatted_drawup_date = ordinal_to_date(drawup.date_ordinal)
+            formatted_drawup_date = du.ordinal_to_date(drawup.date_ordinal)
             ax1.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
             ax1.axvline(x=formatted_drawup_date, color="red", linewidth=0.5)
             ax1.text(
@@ -123,7 +123,7 @@ class Peaks(TypeCheckBase):
 
         ax2.plot(formtted_dates, prices, label="Price", color="black", linewidth=0.75)
         for drawdown in drawdowns:
-            formatted_drawdown_date = ordinal_to_date(drawdown.date_ordinal)
+            formatted_drawdown_date = du.ordinal_to_date(drawdown.date_ordinal)
             ax2.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
             ax2.axvline(x=formatted_drawdown_date, color="green", linewidth=0.5)
             ax2.text(

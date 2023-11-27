@@ -5,7 +5,7 @@ from datetime import date
 from trade_suggestions import TradeSuggestions
 from db_dataclasses import StrategyType
 from datetime import timedelta
-from date_utils import ordinal_to_date
+from date_utils import DateUtils as du
 
 STRATEGY_TYPE = StrategyType.SORNETTE
 
@@ -23,11 +23,11 @@ class LpplsSuggestions(TradeSuggestions):
             position_size = (
                 DEFAULT_POSITION_SIZE * suggestion.confidence / TOP_BUBBLE_CONFIDENCE_IN_PRACTICE
             )
-            formatted_open_date = ordinal_to_date(suggestion.open_date)
+            formatted_open_date = du.ordinal_to_date(suggestion.open_date)
 
             assert suggestion.pop_dates_range is not None
-            formmated_pop_start = ordinal_to_date(suggestion.pop_dates_range.first_pop_date)
-            formmated_pop_end = ordinal_to_date(suggestion.pop_dates_range.last_pop_date)
+            formmated_pop_start = du.ordinal_to_date(suggestion.pop_dates_range.first_pop_date)
+            formmated_pop_end = du.ordinal_to_date(suggestion.pop_dates_range.last_pop_date)
             cursor.execute(
                 """
                 INSERT INTO suggestions (strategy_t, order_t, open_date, open_price, ticker, confidence, position_size, earliest_pop_date, latest_pop_date)

@@ -8,9 +8,10 @@ from typing import List, Tuple
 from matplotlib import pyplot as plt
 from lppls_defaults import SMALLEST_WINDOW_SIZE
 from lppls_dataclasses import BubbleStart, BubbleType
-from date_utils import ordinal_to_date
+from date_utils import DateUtils as du
 from matplotlib import dates as mdates
 from typechecking import TypeCheckBase
+
 
 class Starts(TypeCheckBase):
     def getSSE(self, Y, Yhat, p=1, normed=False):
@@ -61,7 +62,9 @@ class Starts(TypeCheckBase):
 
         return ssrn_lgrn, lambda_coeff
 
-    def getSSE_and_SSEN_as_a_func_of_dt(self, actual_prices: List[float], predicted_prices: List[float]):
+    def getSSE_and_SSEN_as_a_func_of_dt(
+        self, actual_prices: List[float], predicted_prices: List[float]
+    ):
         """Obtain SSE and SSE/N for a given shrinking fitting window"""
 
         # Get a piece of it: Shrinking Window
@@ -78,9 +81,11 @@ class Starts(TypeCheckBase):
         return _sse / max(_sse), _ssen / max(_ssen), _ssen  # returns results + data
 
     def plot_all_fit_measures(self, actual_prices, predicted_prices, dates):
-        bounded_sse, bounded_ssen, _ = self.getSSE_and_SSEN_as_a_func_of_dt(actual_prices, predicted_prices)
+        bounded_sse, bounded_ssen, _ = self.getSSE_and_SSEN_as_a_func_of_dt(
+            actual_prices, predicted_prices
+        )
         ssen_reg, lambda_coeff = self.getLagrangeScore(actual_prices, predicted_prices)
-        formated_dates = [ordinal_to_date(d) for d in dates]
+        formated_dates = [du.ordinal_to_date(d) for d in dates]
 
         plt.figure(figsize=(10, 6))
 
@@ -132,8 +137,13 @@ class Starts(TypeCheckBase):
         plt.tight_layout()
 
     def compute_start_time(
-        self, dates: List[int], actual_prices: List[float],
-        predicted_prices: List[float], bubble_type: BubbleType, extremities) -> BubbleStart:
+        self,
+        dates: List[int],
+        actual_prices: List[float],
+        predicted_prices: List[float],
+        bubble_type: BubbleType,
+        extremities,
+    ) -> BubbleStart:
         # "We impose the constraint that, for a given developingbubble, its start time t1*
         # cannot be earlier than the previous peak, as determined in Figure 1.""
         #
