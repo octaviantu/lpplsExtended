@@ -89,9 +89,7 @@ def is_in_bubble_state(observations, filter_type, filter_file, default_fitting_p
     return None, 0, sornette
 
 
-SPECIFIC_TICKERS = ["XLP"]
-
-
+SPECIFIC_TICKERS = ["BMY"]
 def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) -> None:
     conn = psycopg2.connect(
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"

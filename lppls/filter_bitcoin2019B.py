@@ -166,7 +166,6 @@ class FilterBitcoin2019B(FilterInterface):
 
     # Here, I need to remove the trend in prices and keep only the osciallations
     # See 'Why Stock Markets Crash' by Sornette, page 263-264
-
     # For formula, see:
     # Page 10, Real-time Prediction of Bitcoin Bubble Crashes (2019)
     # Authors: Min Shu, Wei Zhu

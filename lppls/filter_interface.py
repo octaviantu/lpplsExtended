@@ -28,9 +28,11 @@ class FilterInterface(TypeCheckBase):
         optimized_params: OptimizedParams,
     ) -> bool:
         for observation in observations[t1_index:t2_index]:
-            actual_log_price, date_ordinal = np.log(observation.price), observation.date_ordinal
-            predicted_log_price = LPPLSMath.predict_log_price(date_ordinal, optimized_params)
+            actual_price, date_ordinal = observation.price, observation.date_ordinal
+            predicted_price = np.exp(LPPLSMath.predict_log_price(date_ordinal, optimized_params))
 
+            # Update: I changed this to use price instead of log - the fits are much tighter
+            #
             # In some papers such as the one underneath they are using the price, not its log.
             # However, in practice that will exclude all large enough windows because there is bound to be a
             # price difference larger than the prediction error, especially since we are not optimising for that
@@ -38,7 +40,7 @@ class FilterInterface(TypeCheckBase):
             #
             # Real-time Prediction of Bitcoin Bubble Crashes
             # Authors: Min Shu, Wei Zhu
-            prediction_error = abs(actual_log_price - predicted_log_price) / actual_log_price
+            prediction_error = abs(actual_price - predicted_price) / actual_price
 
             if prediction_error > relative_error_max:
                 return False
