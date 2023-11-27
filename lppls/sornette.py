@@ -11,9 +11,9 @@ from lppls_math import LPPLSMath
 from lppls_defaults import MAX_SEARCHES
 from starts import Starts
 from lppls_dataclasses import BubbleStart, ObservationSeries
+from typechecking import TypeCheckBase
 
-
-class Sornette:
+class Sornette(TypeCheckBase):
     def __init__(self, observations: ObservationSeries, filter_type, filter_file):
         filter: FilterInterface
 

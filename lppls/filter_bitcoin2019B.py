@@ -69,7 +69,7 @@ class FilterBitcoin2019B(FilterInterface):
         seed: np.ndarray,
         minimizer: str,
         search_bounds: List[Tuple[float, float]],
-    ) -> OptimizedParams:
+    ) -> OptimizedParams | None:
         cofs = minimize(
             args=observations,
             fun=LPPLSMath.minimize_squared_residuals,

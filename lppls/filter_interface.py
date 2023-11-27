@@ -1,11 +1,12 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 import numpy as np
-from typing import Dict, Tuple
+from typing import Tuple
 from lppls_math import LPPLSMath
 from lppls_dataclasses import ObservationSeries, OptimizedParams, OptimizedInterval
+from typechecking import TypeCheckBase
 
 
-class FilterInterface(ABC):
+class FilterInterface(TypeCheckBase):
     @abstractmethod
     def fit(
         self, max_searches: int, obsservations: ObservationSeries, minimizer: str
@@ -48,7 +49,7 @@ class FilterInterface(ABC):
     def get_damping(m: float, w: float, b: float, c: float) -> float:
         # this is the value in the Shanghai paper, but I recomputed
         # return (m * np.abs(b)) / (w * np.abs(c))
-        return (m * np.abs(b)) / (np.sqrt(pow(w, 2) + pow(m, 2)) * np.abs(c))
+        return float((m * np.abs(b)) / (np.sqrt(pow(w, 2) + pow(m, 2)) * np.abs(c)))
 
     @staticmethod
     def are_oscillations_in_range(
@@ -71,5 +72,5 @@ class FilterInterface(ABC):
         # here the divisior is different:
         # - in paper 1 it's 2
         # - in paper 2 it's pi
-        O = (w / oscillations_divisor) * np.log((tc - t1) / (tc - t2))
+        O = float((w / oscillations_divisor) * np.log((tc - t1) / (tc - t2)))
         return O >= O_min
