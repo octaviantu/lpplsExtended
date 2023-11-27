@@ -1,5 +1,4 @@
 from matplotlib import pyplot as plt
-import pandas as pd
 import numpy as np
 from count_metrics import CountMetrics
 from lppls_dataclasses import BubbleType, BubbleStart, ObservationSeries, IntervalFits, BubbleScore
@@ -9,10 +8,9 @@ from filter_interface import FilterInterface
 from typing import List
 from date_utils import ordinal_to_date
 import matplotlib.dates as mdates
-from matplotlib.dates import num2date, date2num
+from typechecking import TypeCheckBase
 
-
-class BubbleScores:
+class BubbleScores(TypeCheckBase):
     def __init__(self, observations: ObservationSeries, filter: FilterInterface):
         self.observations = observations
         self.filter = filter

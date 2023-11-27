@@ -10,6 +10,9 @@ sys.path.append(
 sys.path.append(
     "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/common"
 )
+sys.path.append(
+    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/prices_db_management"
+)
 
 import pandas as pd
 import psycopg2

@@ -16,9 +16,9 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from date_utils import ordinal_to_date
 import matplotlib.dates as mdates
+from typechecking import TypeCheckBase
 
-
-class Peaks:
+class Peaks(TypeCheckBase):
     def __init__(self, observations: ObservationSeries, ticker: str):
         self.D = PEAK_THRESHOLD
         self.epsilon_range = np.arange(

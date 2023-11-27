@@ -7,12 +7,11 @@ from lppls_defaults import MIN_NR_CLUSTERS, MAX_NR_CLUSTERS
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 import numpy as np
-from datetime import timedelta
 from lppls_dataclasses import BubbleStart, BubbleScore
 from date_utils import ordinal_to_date
 from db_dataclasses import PopRange
 from date_utils import today_ordinal
-
+from typechecking import TypeCheckBase
 
 MIN_POINTS_CLUSTER_RATIO = 3
 # Only extract windows from these last days
@@ -23,7 +22,7 @@ MAX_POP_TIMES_DISPERSION = 6 * 30  # More than this, and the data is too impreci
 MAX_LAG_FROM_TODAY = 3 * 30  # More than this, and I can not short/buy puts
 
 
-class Cluster:
+class Cluster(TypeCheckBase):
     def __init__(self, mean_pop_dates: List[int] | None = None, silhouette: float | None = None):
         if not mean_pop_dates or not silhouette:
             self.is_valid = False
@@ -67,7 +66,7 @@ class Cluster:
         return PopRange(first_pop_date, last_pop_date)
 
 
-class PopDates:
+class PopDates(TypeCheckBase):
     def compute_bubble_end_cluster(
         self, start_time: BubbleStart, bubble_scores: List[BubbleScore]
     ) -> Cluster:

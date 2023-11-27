@@ -4,9 +4,9 @@ import numpy as np
 from ta.trend import EMAIndicator
 import pandas as pd
 from db_dataclasses import OrderType
+from typechecking import TypeCheckBase
 
-
-class PriceTechnicals:
+class PriceTechnicals(TypeCheckBase):
     def calculate_atr(self, prices: List[PriceData]):
         tr_values = []
         atrs = []

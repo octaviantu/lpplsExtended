@@ -6,9 +6,10 @@ from abc import abstractmethod
 from db_dataclasses import StrategyType
 from psycopg2.extras import DictCursor
 from datetime import date
+from typechecking import TypeCheckBase
 
 
-class TradeSuggestions:
+class TradeSuggestions(TypeCheckBase):
     def create_if_not_exists(self, cursor) -> None:
         # Check and create ENUM types if they don't exist
         cursor.execute(

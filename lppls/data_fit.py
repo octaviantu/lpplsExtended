@@ -16,9 +16,10 @@ from filter_interface import FilterInterface
 import sys
 from date_utils import ordinal_to_date
 import matplotlib.dates as mdates
+from typechecking import TypeCheckBase
 
 
-class DataFit:
+class DataFit(TypeCheckBase):
     def __init__(self, observations: ObservationSeries, filter: FilterInterface):
         self.observations = observations
         self.filter = filter

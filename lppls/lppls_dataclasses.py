@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 from date_utils import ordinal_to_date
 import sys
-
+from typechecking import TypeCheckBase
 
 class BubbleType(Enum):
     POSITIVE = "positive"
@@ -31,7 +31,7 @@ class Observation:
 
 
 @dataclass
-class ObservationSeries:
+class ObservationSeries(TypeCheckBase):
     observations: List[Observation]
 
     def __len__(self):

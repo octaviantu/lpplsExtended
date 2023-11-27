@@ -10,8 +10,9 @@ from filimonov_plot import FilimonovPlot
 from lppls_math import LPPLSMath
 from lppls_defaults import MAX_SEARCHES
 from starts import Starts
-from lppls_dataclasses import BubbleStart, ObservationSeries
+from lppls_dataclasses import BubbleStart, ObservationSeries, BubbleType, Peak
 from typechecking import TypeCheckBase
+from typing import List
 
 class Sornette(TypeCheckBase):
     def __init__(self, observations: ObservationSeries, filter_type, filter_file):
@@ -35,7 +36,7 @@ class Sornette(TypeCheckBase):
     def estimate_prices(self):
         op = self.data_fit.fit(MAX_SEARCHES, self.data_fit.observations)
         assert op is not None
-        return np.exp(LPPLSMath.get_log_price_predictions(self.data_fit.observations, op))
+        return list(np.exp(LPPLSMath.get_log_price_predictions(self.data_fit.observations, op)))
 
     def plot_fit(self, bubble_start: BubbleStart | None = None) -> None:
         op = self.data_fit.fit(MAX_SEARCHES, self.data_fit.observations)
@@ -56,11 +57,11 @@ class Sornette(TypeCheckBase):
         self.filimonov_plot.plot_optimum(self.data_fit.observations)
 
     def compute_start_time(
-        self, observations: ObservationSeries, bubble_type, extremities
+        self, observations: ObservationSeries, bubble_type: BubbleType, extremities: List[Peak]
     ) -> BubbleStart:
         op = self.data_fit.fit(MAX_SEARCHES, self.data_fit.observations)
         assert op is not None
-        expected_prices = np.exp(LPPLSMath.get_log_price_predictions(observations, op))
+        expected_prices = list(np.exp(LPPLSMath.get_log_price_predictions(observations, op)))
         return self.starts.compute_start_time(
             observations.get_date_ordinals(),
             observations.get_prices(),

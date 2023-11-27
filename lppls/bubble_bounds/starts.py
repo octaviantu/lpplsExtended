@@ -7,12 +7,12 @@ from sklearn.linear_model import LinearRegression
 from typing import List, Tuple
 from matplotlib import pyplot as plt
 from lppls_defaults import SMALLEST_WINDOW_SIZE
-from lppls_dataclasses import BubbleStart
+from lppls_dataclasses import BubbleStart, BubbleType
 from date_utils import ordinal_to_date
 from matplotlib import dates as mdates
+from typechecking import TypeCheckBase
 
-
-class Starts:
+class Starts(TypeCheckBase):
     def getSSE(self, Y, Yhat, p=1, normed=False):
         """Obtain SSE (chi^2)
         p -> No. of parameters
@@ -41,19 +41,19 @@ class Starts:
         return res.coef_[0]
 
     def getLagrangeScore(
-        self, actualP: List[float], predictedP: List[float]
+        self, actual_prices: List[float], predicted_prices: List[float]
     ) -> Tuple[List[float], float]:
         ssrn_reg = []
-        for i in range(len(actualP) - SMALLEST_WINDOW_SIZE):
+        for i in range(len(actual_prices) - SMALLEST_WINDOW_SIZE):
             ssrn_reg.append(
-                self.getSSE(actualP[i:-1], predictedP[i:-1], normed=True)
+                self.getSSE(actual_prices[i:-1], predicted_prices[i:-1], normed=True)
             )  # Classical SSE
         lambda_coeff = self.calculate_lambda_of_normed_cost(ssrn_reg)
 
         # Estimate the cost function pondered by lambda using a Shrinking Window.
         ssrn_lgrn = []
-        for i in range(len(actualP) - SMALLEST_WINDOW_SIZE):
-            ssrn_lgrn_term = ssrn_reg[i] - lambda_coeff * len(actualP[i:-1])  # SSE lagrange
+        for i in range(len(actual_prices) - SMALLEST_WINDOW_SIZE):
+            ssrn_lgrn_term = ssrn_reg[i] - lambda_coeff * len(actual_prices[i:-1])  # SSE lagrange
             ssrn_lgrn.append(ssrn_lgrn_term)
 
         max_element = max(ssrn_lgrn)
@@ -61,25 +61,25 @@ class Starts:
 
         return ssrn_lgrn, lambda_coeff
 
-    def getSSE_and_SSEN_as_a_func_of_dt(self, actualP: List[float], predictedP: List[float]):
+    def getSSE_and_SSEN_as_a_func_of_dt(self, actual_prices: List[float], predicted_prices: List[float]):
         """Obtain SSE and SSE/N for a given shrinking fitting window"""
 
         # Get a piece of it: Shrinking Window
         _sse = []
         _ssen = []
-        for i in range(len(actualP) - SMALLEST_WINDOW_SIZE):  # loop t1 until: t1 = t2 - 10:
-            actualPBatch = actualP[i:-1]
-            predictedPBatch = predictedP[i:-1]
-            sse = self.getSSE(actualPBatch, predictedPBatch, normed=False)
-            ssen = self.getSSE(actualPBatch, predictedPBatch, normed=True)
+        for i in range(len(actual_prices) - SMALLEST_WINDOW_SIZE):  # loop t1 until: t1 = t2 - 10:
+            actual_prices_batch = actual_prices[i:-1]
+            predicted_prices_batch = predicted_prices[i:-1]
+            sse = self.getSSE(actual_prices_batch, predicted_prices_batch, normed=False)
+            ssen = self.getSSE(actual_prices_batch, predicted_prices_batch, normed=True)
             _sse.append(sse)
             _ssen.append(ssen)
 
         return _sse / max(_sse), _ssen / max(_ssen), _ssen  # returns results + data
 
-    def plot_all_fit_measures(self, actualP, predictedP, dates):
-        bounded_sse, bounded_ssen, _ = self.getSSE_and_SSEN_as_a_func_of_dt(actualP, predictedP)
-        ssen_reg, lambda_coeff = self.getLagrangeScore(actualP, predictedP)
+    def plot_all_fit_measures(self, actual_prices, predicted_prices, dates):
+        bounded_sse, bounded_ssen, _ = self.getSSE_and_SSEN_as_a_func_of_dt(actual_prices, predicted_prices)
+        ssen_reg, lambda_coeff = self.getLagrangeScore(actual_prices, predicted_prices)
         formated_dates = [ordinal_to_date(d) for d in dates]
 
         plt.figure(figsize=(10, 6))
@@ -118,7 +118,7 @@ class Starts:
 
         # Create a completely separate plot for 'prices'
         plt.figure(figsize=(10, 6))
-        plt.plot(formated_dates, actualP, color="purple", label="Prices")
+        plt.plot(formated_dates, actual_prices, color="purple", label="Prices")
 
         # Set labels and title for the prices plot
 
@@ -132,8 +132,8 @@ class Starts:
         plt.tight_layout()
 
     def compute_start_time(
-        self, dates: List[int], actual_prices, expected_prices, bubble_type, extremities
-    ) -> BubbleStart:
+        self, dates: List[int], actual_prices: List[float],
+        predicted_prices: List[float], bubble_type: BubbleType, extremities) -> BubbleStart:
         # "We impose the constraint that, for a given developingbubble, its start time t1*
         # cannot be earlier than the previous peak, as determined in Figure 1.""
         #
@@ -142,7 +142,7 @@ class Starts:
         if len(extremities) > 0:
             last_extremity_index = dates.index(extremities[-1].date_ordinal)
         ssrn_lgrn, _ = self.getLagrangeScore(
-            actual_prices[last_extremity_index:], expected_prices[last_extremity_index:]
+            actual_prices[last_extremity_index:], predicted_prices[last_extremity_index:]
         )
 
         min_index = last_extremity_index + ssrn_lgrn.index(min(ssrn_lgrn))
