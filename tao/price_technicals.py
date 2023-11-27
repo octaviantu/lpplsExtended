@@ -41,6 +41,6 @@ class PriceTechnicals(TypeCheckBase):
 
         # Check if the last close price is within the 2 ATR band
         if positionType == OrderType.BUY:
-            return prices[-1].close_price >= upper_band
+            return bool(prices[-1].close_price >= upper_band)
         else:
-            return prices[-1].close_price <= lower_band
+            return bool(prices[-1].close_price <= lower_band)
