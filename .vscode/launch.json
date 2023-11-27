@@ -23,44 +23,44 @@
       "name": "Bounds debug",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/lppls/demo/demoBounds.py"
+      "program": "${workspaceFolder}/lppls/demo/demo_bounds.py"
     },
     {
       "name": "VLO debug",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/lppls/demo/demoVLO.py"
+      "program": "${workspaceFolder}/lppls/demo/demo_VLO.py"
     },
     {
-      "name": "SP debug",
+      "name": "All tickers debug",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/lppls/demo/demoSP.py"
+      "program": "${workspaceFolder}/lppls/demo/demo_all_tickers.py"
     },
     {
-      "name": "SP debug specific",
+      "name": "All tickers debug specific",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/lppls/demo/demoSP.py",
+      "program": "${workspaceFolder}/lppls/demo/demo_all_tickers.py",
       "args": [
         "--specific"
       ]
     },
     {
-      "name": "SP debug only etf",
+      "name": "All tickers debug only etf",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/lppls/demo/demoSP.py",
+      "program": "${workspaceFolder}/lppls/demo/demo_all_tickers.py",
       "args": [
         "--type",
         "etf"
       ]
     },
     {
-      "name": "SP debug only stocks",
+      "name": "All tickers debug only stocks",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/lppls/demo/demoSP.py",
+      "program": "${workspaceFolder}/lppls/demo/demo_all_tickers.py",
       "args": [
         "--type",
         "stock"

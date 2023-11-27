@@ -3,19 +3,19 @@ import time
 
 scripts_to_run = [
     {
-        "cmd": ("python", "prices_db_management/parseLargestETFs.py"),
+        "cmd": ("python", "prices_db_management/parse_largest_ETFs.py"),
         "log": "Fetching latest ETF pricing",
     },
     {
-        "cmd": ("python", "prices_db_management/parseMostTradedStocksUS.py", "--fetch-tickers"),
+        "cmd": ("python", "prices_db_management/parse_most_traded_stocks_US.py", "--fetch-tickers"),
         "log": "Fetching most traded 100 stocks and their pricing",
     },
     {
-        "cmd": ("python", "prices_db_management/parseSP500Components.py", "--fetch-tickers"),
+        "cmd": ("python", "prices_db_management/parse_SP500_components.py", "--fetch-tickers"),
         "log": "Fetching latest S&P500 pricing",
     },
     {
-        "cmd": ("python", "lppls/demo/demoSP.py"),
+        "cmd": ("python", "lppls/demo/demo_all_tickers.py"),
         "log": "Running LPPLS fits on all available stocks and etfs",
     },
     {

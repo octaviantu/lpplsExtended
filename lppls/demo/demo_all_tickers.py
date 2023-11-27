@@ -286,13 +286,13 @@ if __name__ == "__main__":
 
 
 # To show only a specific set of tickers:
-# python demoSP.py --specific
+# python demo_all_tickers.py --specific
 
 # To display only stocks:
-# python demoSP.py --type stocks
+# python demo_all_tickers.py --type stocks
 
 # To display only etfs:
-# python demoSP.py --type etf
+# python demo_all_tickers.py --type etf
 
 # To Use more windows for fitting:
-# python demoSP.py --strict
+# python demo_all_tickers.py --strict
