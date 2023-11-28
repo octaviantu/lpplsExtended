@@ -7,9 +7,10 @@ import random
 from filter_interface import FilterInterface
 import data_loader
 from statsmodels.tsa.ar_model import AutoReg
-from lppls_defaults import SIGNIFICANCE_LEVEL
+from lppls_defaults import SIGNIFICANCE_LEVEL, ADF_SIGNIFICANCE_LEVEL
 from count_metrics import CountMetrics
 from lppls_dataclasses import ObservationSeries, OptimizedParams, OptimizedInterval
+from statsmodels.tsa.stattools import adfuller
 
 
 # This filter is descipted in paper 1:
@@ -98,10 +99,9 @@ class FilterBitcoin2019B(FilterInterface):
         t1, t2 = oi.t1, oi.t2
         c = LPPLSMath.get_c(op.c1, op.c2)
 
-        observations = observations.filter_before_tc(tc)
+        obs_within_t1_t2 = observations.filter_before_tc(tc)[t1_index:t2_index]
         prices_in_range = super().is_price_in_range(
-            observations, t1_index, t2_index, self.filter_criteria.get("relative_error_max"), op
-        )
+            obs_within_t1_t2, self.filter_criteria.get("relative_error_max"), op)
 
         tc_extra_space = self.filter_criteria.get("tc_extra_space")
         assert t2 + 1 <= tc <= t2 + ((t2 - t1) * tc_extra_space)
@@ -118,11 +118,8 @@ class FilterBitcoin2019B(FilterInterface):
         D = FilterInterface.get_damping(m, w, b, c)
         D_in_range = D >= self.filter_criteria.get("D_min")
 
-        # TODO(octaviant) - put back once I understand what they do
-        passing_lomb_test = (
-            True  # FilterBitcoin2019B.is_passing_lomb_test(observations, tc, m, a, b)
-        )
-        passing_ar1_test = True  # self.is_ar1_process(observations, tc, m, a, b)
+        passing_lomb_test = self.is_passing_lomb_test(obs_within_t1_t2, tc, m, a, b)
+        passing_ar1_test = self.is_ar1_process(obs_within_t1_t2, op)
 
         conditions = {
             "O": O_in_range,
@@ -143,15 +140,12 @@ class FilterBitcoin2019B(FilterInterface):
 
         return is_qualified, is_positive_bubble
 
-    @staticmethod
-    def is_ar1_process(
-        observations: ObservationSeries, tc: float, m: float, a: float, b: float
-    ) -> bool:
+    def is_ar1_process(self, observations: ObservationSeries, optimized_params: OptimizedParams) -> bool:
         # Compute the residuals between predicted and actual log prices
         residuals = []
         for observation in observations:
-            time, log_price = observation.date_ordinal, np.log(observation.price)
-            predicted_log_price = a + b * (tc - time) ** m
+            date_ordinal, log_price = observation.date_ordinal, np.log(observation.price)
+            predicted_log_price = LPPLSMath.predict_log_price(date_ordinal, optimized_params)
             # not taking the log of the price because the price is already in log
             residuals.append(predicted_log_price - log_price)
 
@@ -159,20 +153,22 @@ class FilterBitcoin2019B(FilterInterface):
         ar1_model = AutoReg(residuals, lags=1).fit()
 
         # Get the p-value for the AR(1) coefficient
-        p_value = ar1_model.pvalues[1]  # p-value for the AR(1) coefficient
+        p_value_ar1 = ar1_model.pvalues[1]  # p-value for the AR(1) coefficient
+
+        # Perform Dickey-Fuller unit-root test
+        df_test = adfuller(residuals)
+        p_value_df = df_test[1]  # p-value from the Dickey-Fuller test
 
         # Check if the p-value is less than or equal to your significance level
-        return p_value <= SIGNIFICANCE_LEVEL
+        return bool(p_value_ar1 <= SIGNIFICANCE_LEVEL and p_value_df <= ADF_SIGNIFICANCE_LEVEL)
 
     # Here, I need to remove the trend in prices and keep only the osciallations
     # See 'Why Stock Markets Crash' by Sornette, page 263-264
     # For formula, see:
     # Page 10, Real-time Prediction of Bitcoin Bubble Crashes (2019)
     # Authors: Min Shu, Wei Zhu
-    @staticmethod
     def is_passing_lomb_test(
-        observations: ObservationSeries, tc: float, m: float, a: float, b: float
-    ) -> bool:
+        self, observations: ObservationSeries, tc: float, m: float, a: float, b: float) -> bool:
         # Compute the detrended residuals
         residuals = []
         for observation in observations:
@@ -195,4 +191,5 @@ class FilterBitcoin2019B(FilterInterface):
         p_lomb = 1 - np.exp(-peak_power)
 
         # Check if the p-value is less than or equal to your significance level
-        return p_lomb <= SIGNIFICANCE_LEVEL
+        return bool(p_lomb <= SIGNIFICANCE_LEVEL)
+

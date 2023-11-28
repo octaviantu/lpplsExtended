@@ -95,7 +95,7 @@ class AllTickers(TypeCheckBase):
 
     @staticmethod
     def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) -> None:
-        SPECIFIC_TICKERS = ["BMY"]
+        SPECIFIC_TICKERS = ["XRAY"]
 
         conn = psycopg2.connect(
             host="localhost",
@@ -122,6 +122,8 @@ class AllTickers(TypeCheckBase):
                 "./lppls/conf/demos2015_filter.json",
                 default_fitting_params,
             )
+            #  Hack to graph something even if there is no bubble
+            bubble_type = BubbleType.NEGATIVE if not bubble_type else bubble_type
 
             drawups, drawdowns, _ = Peaks(observations, ticker).plot_peaks()
 

@@ -19,6 +19,9 @@ MAX_SEARCHES = 25
 # Real-time Prediction of Bitcoin Bubble Crashes (2019)
 # Authors: Min Shu, Wei Zhu
 SIGNIFICANCE_LEVEL = 0.05
+# This would take out too many fits if smaller.
+# It's also never mentioned by Sornette in his book so I rely on it less.
+ADF_SIGNIFICANCE_LEVEL = 0.4
 
 # From 'Dissection of Bitcoin’s Multiscale Bubble History from January 2012 to February 2018' - Demos, Sornette
 # The ratio of windows over which a value is min/max for us to consider it a peak

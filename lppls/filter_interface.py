@@ -22,12 +22,10 @@ class FilterInterface(TypeCheckBase):
     def is_price_in_range(
         self,
         observations: ObservationSeries,
-        t1_index: int,
-        t2_index: int,
         relative_error_max: float,
         optimized_params: OptimizedParams,
     ) -> bool:
-        for observation in observations[t1_index:t2_index]:
+        for observation in observations:
             actual_price, date_ordinal = observation.price, observation.date_ordinal
             predicted_price = np.exp(LPPLSMath.predict_log_price(date_ordinal, optimized_params))
 
