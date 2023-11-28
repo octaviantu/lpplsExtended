@@ -95,7 +95,7 @@ class AllTickers(TypeCheckBase):
 
     @staticmethod
     def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) -> None:
-        SPECIFIC_TICKERS = ["XRAY"]
+        SPECIFIC_TICKERS = ["VGIT"]
 
         conn = psycopg2.connect(
             host="localhost",

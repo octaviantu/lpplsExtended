@@ -29,12 +29,3 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.octaviantuchila.dail
 ```
 
 DO NOT put the codebase under `Documents`, because the mac launcher won't be allowed to access it.
-
-# Other notes 
-
-The Jupyter code and `lppls_cmaes` are from the repository I've forked.
-They don't work.
-TODO(octaviant) - update or more likely, remove
-
-
-Testing - not functional; TODO(octaviant) - fix existing testing and add new tests.

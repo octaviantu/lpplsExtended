@@ -97,8 +97,7 @@ def main():
         drawdowns,
     )
 
-    # I want to see the start date on the entire interval, so I make another Sornettee object
-    # TODO(octaviant) - creating a new Sornette object is complicated; simplify
+    # I want to see the start date on the entire interval, so I make another Sornette object
     sornette_on_interval = Sornette(
         all_observations, "BitcoinB", "./lppls/conf/demos2015_filter.json"
     )
