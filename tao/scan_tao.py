@@ -22,6 +22,7 @@ import os
 from datetime import datetime
 from price_technicals import PriceTechnicals
 from typechecking import TypeCheckBase
+from date_utils import DateUtils as du
 
 MAX_NEEDED_DATA_POINTS = 2 * 89
 
@@ -149,7 +150,7 @@ class ScanTao(TypeCheckBase):
         # Convert the fetched data into a list of PriceData instances
         price_data_list = [
             PriceData(
-                date_ordinal=pd.Timestamp.toordinal(d[0]),
+                date_ordinal=du.date_to_ordinal(d[0]),
                 ticker=d[1],
                 close_price=d[2],
                 high_price=d[3],
@@ -197,7 +198,7 @@ class ScanTao(TypeCheckBase):
                 plot_dir = buy_plots_dir if order_type == "BUY" else sell_plots_dir
 
                 # Plotting
-                dates = [pd.Timestamp.fromordinal(p.date_ordinal) for p in prices]
+                dates = [du.ordinal_to_date(p.date_ordinal) for p in prices]
                 close_prices = [p.close_price for p in prices]
                 plt.figure(figsize=(10, 6))
                 plt.plot(dates, close_prices, label="Close Price")
