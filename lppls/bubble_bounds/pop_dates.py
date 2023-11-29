@@ -78,7 +78,7 @@ class PopDates(TypeCheckBase):
             if bubble_score.t2 < last_days_ordinals[0]:
                 continue
             for oi in bubble_score.optimized_intervals:
-                if oi.is_qualified and oi.t1 >= start_time.date_ordinal:
+                if not oi.bubble_fit.rejection_reasons and oi.t1 >= start_time.date_ordinal:
                     tcs.append([oi.optimized_params.tc])  # need 2D array
 
         print("Number of tcs considered in clustering: ", len(tcs))

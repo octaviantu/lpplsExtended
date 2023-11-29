@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append(
     "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/prices_db_management"
 )

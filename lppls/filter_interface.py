@@ -1,8 +1,7 @@
 from abc import abstractmethod
 import numpy as np
-from typing import Tuple
 from lppls_math import LPPLSMath
-from lppls_dataclasses import ObservationSeries, OptimizedParams, OptimizedInterval
+from lppls_dataclasses import ObservationSeries, OptimizedParams, OptimizedInterval, BubbleFit
 from typechecking import TypeCheckBase
 
 
@@ -16,7 +15,7 @@ class FilterInterface(TypeCheckBase):
     @abstractmethod
     def check_bubble_fit(
         self, oi: OptimizedInterval, observations: ObservationSeries, t1_index: int, t2_index: int
-    ) -> Tuple[bool, bool]:
+    ) -> BubbleFit:
         pass
 
     def is_price_in_range(

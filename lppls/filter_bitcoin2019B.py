@@ -9,7 +9,14 @@ import data_loader
 from statsmodels.tsa.ar_model import AutoReg
 from lppls_defaults import SIGNIFICANCE_LEVEL, ADF_SIGNIFICANCE_LEVEL
 from count_metrics import CountMetrics
-from lppls_dataclasses import ObservationSeries, OptimizedParams, OptimizedInterval
+from lppls_dataclasses import (
+    ObservationSeries,
+    OptimizedParams,
+    OptimizedInterval,
+    RejectionReason,
+    BubbleType,
+    BubbleFit,
+)
 from statsmodels.tsa.stattools import adfuller
 
 
@@ -93,7 +100,7 @@ class FilterBitcoin2019B(FilterInterface):
 
     def check_bubble_fit(
         self, oi: OptimizedInterval, observations: ObservationSeries, t1_index: int, t2_index: int
-    ) -> Tuple[bool, bool]:
+    ) -> BubbleFit:
         op = oi.optimized_params
         tc, m, w, a, b = op.tc, op.m, op.w, op.a, op.b
         t1, t2 = oi.t1, oi.t2
@@ -101,7 +108,8 @@ class FilterBitcoin2019B(FilterInterface):
 
         obs_within_t1_t2 = observations.filter_before_tc(tc)[t1_index:t2_index]
         prices_in_range = super().is_price_in_range(
-            obs_within_t1_t2, self.filter_criteria.get("relative_error_max"), op)
+            obs_within_t1_t2, self.filter_criteria.get("relative_error_max"), op
+        )
 
         tc_extra_space = self.filter_criteria.get("tc_extra_space")
         assert t2 + 1 <= tc <= t2 + ((t2 - t1) * tc_extra_space)
@@ -128,19 +136,28 @@ class FilterBitcoin2019B(FilterInterface):
             "lomb_test": passing_lomb_test,
             "ar1_test": passing_ar1_test,
         }
-
         CountMetrics.add_bubble(conditions, t2_index)
 
-        is_qualified = (
-            O_in_range and D_in_range and prices_in_range and passing_lomb_test and passing_ar1_test
-        )
+        rejection_reasons = []
+        if not O_in_range:
+            rejection_reasons.append(RejectionReason.OSCILLATIONS)
+        if not D_in_range:
+            rejection_reasons.append(RejectionReason.DAMPING)
+        if not prices_in_range:
+            rejection_reasons.append(RejectionReason.PRICE_DELTA)
+        if not passing_lomb_test:
+            rejection_reasons.append(RejectionReason.LOMB_TEST)
+        if not passing_ar1_test:
+            rejection_reasons.append(RejectionReason.AR1_TEST)
 
         # if B is negative, the predicted price will increase in value as t tends to tc (because 0 < m < 1)
-        is_positive_bubble = b < 0
+        bubble_type = BubbleType.POSITIVE if b < 0 else BubbleType.NEGATIVE
 
-        return is_qualified, is_positive_bubble
+        return BubbleFit(rejection_reasons, type=bubble_type)
 
-    def is_ar1_process(self, observations: ObservationSeries, optimized_params: OptimizedParams) -> bool:
+    def is_ar1_process(
+        self, observations: ObservationSeries, optimized_params: OptimizedParams
+    ) -> bool:
         # Compute the residuals between predicted and actual log prices
         residuals = []
         for observation in observations:
@@ -168,7 +185,8 @@ class FilterBitcoin2019B(FilterInterface):
     # Page 10, Real-time Prediction of Bitcoin Bubble Crashes (2019)
     # Authors: Min Shu, Wei Zhu
     def is_passing_lomb_test(
-        self, observations: ObservationSeries, tc: float, m: float, a: float, b: float) -> bool:
+        self, observations: ObservationSeries, tc: float, m: float, a: float, b: float
+    ) -> bool:
         # Compute the detrended residuals
         residuals = []
         for observation in observations:
@@ -192,4 +210,3 @@ class FilterBitcoin2019B(FilterInterface):
 
         # Check if the p-value is less than or equal to your significance level
         return bool(p_lomb <= SIGNIFICANCE_LEVEL)
-

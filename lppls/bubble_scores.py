@@ -1,7 +1,14 @@
 from matplotlib import pyplot as plt
 import numpy as np
 from count_metrics import CountMetrics
-from lppls_dataclasses import BubbleType, BubbleStart, ObservationSeries, IntervalFits, BubbleScore
+from lppls_dataclasses import (
+    BubbleType,
+    BubbleStart,
+    ObservationSeries,
+    IntervalFits,
+    BubbleScore,
+    RejectionReason,
+)
 from pop_dates import Cluster
 from matplotlib.lines import Line2D
 from filter_interface import FilterInterface
@@ -76,6 +83,68 @@ class BubbleScores(TypeCheckBase):
         CountMetrics.print_metrics()
         plt.xticks(rotation=45)
 
+    def plot_rejection_reasons(self, bubble_scores: List[BubbleScore], ticker: str) -> None:
+        fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(18, 10))
+        fig.canvas.manager.set_window_title(ticker)
+
+        # Prepare data for plotting
+        dates = [du.ordinal_to_date(bs.t2) for bs in bubble_scores]
+        log_prices = [bs.log_price for bs in bubble_scores]
+        pos_conf = [100 * bs.pos_conf for bs in bubble_scores]
+        neg_conf = [100 * bs.neg_conf for bs in bubble_scores]
+
+        # Plot log prices and pos/neg bubbles
+        ax1.plot(dates, log_prices, color="black", linewidth=2)
+        ax1_0 = ax1.twinx()
+        ax1.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
+        ax1_0.plot(dates, pos_conf, label="bubble indicator (pos)", color="red", linewidth=2)
+        ax2.plot(dates, log_prices, color="black", linewidth=2)
+        ax2_0 = ax2.twinx()
+        ax2.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
+        ax2_0.plot(dates, neg_conf, label="bubble indicator (neg)", color="green", linewidth=2)
+
+        # Calculate and plot rejection reasons
+        colors = ["blue", "orange", "purple", "brown", "cyan"]
+        rejection_percentages = {reason: [] for reason in RejectionReason}
+        for bs in bubble_scores:
+            total_intervals = len(bs.optimized_intervals)
+            counts = {reason: 0 for reason in RejectionReason}
+            for interval in bs.optimized_intervals:
+                for reason in interval.bubble_fit.rejection_reasons:
+                    counts[reason] += 1
+            for reason, count in counts.items():
+                rejection_percentages[reason].append(
+                    (count / total_intervals) * 100 if total_intervals > 0 else 0
+                )
+
+        for i, (reason, percentages) in enumerate(rejection_percentages.items()):
+            color = colors[i % len(colors)]  # Cycle through colors
+            ax1_0.plot(
+                dates,
+                percentages,
+                label=f"rejection reason: {reason.name}",
+                linestyle="--",
+                color=color,
+            )
+            ax2_0.plot(
+                dates,
+                percentages,
+                label=f"rejection reason: {reason.name}",
+                linestyle="--",
+                color=color,
+            )
+
+        # Set grids, labels, and legends
+        ax1.grid(which="major", axis="both", linestyle="--")
+        ax2.grid(which="major", axis="both", linestyle="--")
+        ax1.set_ylabel("ln(p)")
+        ax2.set_ylabel("ln(p)")
+        ax1_0.set_ylabel("bubble indicator (pos) / Rejection Reason %")
+        ax2_0.set_ylabel("bubble indicator (neg) / Rejection Reason %")
+        ax1_0.legend(loc="upper left")
+        ax2_0.legend(loc="upper left")
+        plt.xticks(rotation=45)
+
     def draw_bubble_bounds(
         self,
         axis,
@@ -129,20 +198,20 @@ class BubbleScores(TypeCheckBase):
             t2_index = fit.t2_index
 
             for idx, optimizedInterval in enumerate(fit.optimized_intervals):
-                is_qualified, is_positive_bubble = self.filter.check_bubble_fit(
+                bubble_fit = self.filter.check_bubble_fit(
                     optimizedInterval, self.observations, t1_index, t2_index
                 )
 
-                if is_positive_bubble:
+                if bubble_fit.type == BubbleType.POSITIVE:
                     pos_count += 1
-                    if is_qualified:
+                    if not bubble_fit.rejection_reasons:
                         pos_qual_count += 1
                 else:
                     neg_count += 1
-                    if is_qualified:
+                    if not bubble_fit.rejection_reasons:
                         neg_qual_count += 1
 
-                fit.optimized_intervals[idx].is_qualified = is_qualified
+                fit.optimized_intervals[idx].bubble_fit = bubble_fit
 
             bubble_scores.append(
                 BubbleScore(

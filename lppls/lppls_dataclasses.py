@@ -5,11 +5,26 @@ import numpy as np
 from date_utils import DateUtils as du
 import sys
 from typechecking import TypeCheckBase
+from dataclasses import dataclass
 
 
 class BubbleType(Enum):
     POSITIVE = "positive"
     NEGATIVE = "negative"
+
+
+class RejectionReason(Enum):
+    PRICE_DELTA = "price_delta"
+    OSCILLATIONS = "oscillations"
+    DAMPING = "damping"
+    LOMB_TEST = "lomb_test"
+    AR1_TEST = "ar1_test"
+
+
+@dataclass
+class BubbleFit:
+    rejection_reasons: List[RejectionReason]
+    type: BubbleType
 
 
 @dataclass
@@ -108,10 +123,10 @@ class OptimizedInterval:
     t1: int
     t2: int
     optimized_params: OptimizedParams
-    is_qualified: bool = False
+    # Make this an empty list by default
+    bubble_fit: BubbleFit = None
 
 
-# TODO(octaviant) - check if we really need t1_index, t2_index
 @dataclass
 class IntervalFits:
     optimized_intervals: List[OptimizedInterval]

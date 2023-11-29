@@ -95,7 +95,7 @@ class AllTickers(TypeCheckBase):
 
     @staticmethod
     def plot_specific(cursor: psycopg2.extensions.cursor, default_fitting_params) -> None:
-        SPECIFIC_TICKERS = ["VGIT"]
+        SPECIFIC_TICKERS = ["XRAY"]
 
         conn = psycopg2.connect(
             host="localhost",
@@ -133,11 +133,13 @@ class AllTickers(TypeCheckBase):
                 drawups if bubble_type == BubbleType.POSITIVE else drawdowns,
             )
             sornette.plot_fit(bubble_start)
-            bubble_scores = AllTickers.get_bubble_scores(sornette, default_fitting_params, 100)
+            bubble_scores = AllTickers.get_bubble_scores(sornette, default_fitting_params, 50)
             best_end_cluster = PopDates().compute_bubble_end_cluster(bubble_start, bubble_scores)
 
             sornette.plot_bubble_scores(bubble_scores, ticker, bubble_start, best_end_cluster)
-        plt.show()
+
+            sornette.plot_rejection_reasons(bubble_scores, ticker)
+        plt.show(block=True)
 
     @staticmethod
     def main():
@@ -269,6 +271,11 @@ class AllTickers(TypeCheckBase):
                 bubble_score_file_name = f"{ticker}.png"
                 bubble_score_file_path = os.path.join(dir_path, bubble_score_file_name)
                 plt.savefig(bubble_score_file_path, dpi=300, bbox_inches="tight")
+
+                rejections_file_name = f"{ticker}-rejections-breakdown.png"
+                rejected_file_path = os.path.join(dir_path, rejections_file_name)
+                sornette.plot_rejection_reasons(bubble_scores, ticker)
+                plt.savefig(rejected_file_path, dpi=300, bbox_inches="tight")
 
                 bubble_assets.append(
                     {

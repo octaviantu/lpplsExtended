@@ -6,7 +6,7 @@ import random
 from filter_interface import FilterInterface
 import data_loader
 from count_metrics import CountMetrics
-from lppls_dataclasses import ObservationSeries
+from lppls_dataclasses import ObservationSeries, BubbleFit
 
 
 # This filter is descipted in paper:
@@ -104,7 +104,7 @@ class FilterSwiss(FilterInterface):
 
     def check_bubble_fit(
         self, fits: Dict[str, float], observations: ObservationSeries, t1_index: int, t2_index: int
-    ) -> Tuple[bool, bool]:
+    ) -> BubbleFit:
         t1, t2, tc, m, w, a, b, c, c1, c2 = (
             fits[key] for key in ["t1", "t2", "tc", "m", "w", "a", "b", "c", "c1", "c2"]
         )

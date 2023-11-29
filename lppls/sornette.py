@@ -10,7 +10,7 @@ from filimonov_plot import FilimonovPlot
 from lppls_math import LPPLSMath
 from lppls_defaults import MAX_SEARCHES
 from starts import Starts
-from lppls_dataclasses import BubbleStart, ObservationSeries, BubbleType, Peak
+from lppls_dataclasses import BubbleStart, ObservationSeries, BubbleType, Peak, BubbleScore
 from typechecking import TypeCheckBase
 from typing import List
 
@@ -53,6 +53,9 @@ class Sornette(TypeCheckBase):
 
     def plot_bubble_scores(self, bubble_scores, ticker, bubble_start, best_end_cluster):
         self.bubble_scores.plot_bubble_scores(bubble_scores, ticker, bubble_start, best_end_cluster)
+
+    def plot_rejection_reasons(self, bubble_scores: List[BubbleScore], ticker: str) -> None:
+        self.bubble_scores.plot_rejection_reasons(bubble_scores, ticker)
 
     def plot_filimonov(self):
         self.filimonov_plot.plot_optimum(self.data_fit.observations)
