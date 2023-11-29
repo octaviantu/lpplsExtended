@@ -12,7 +12,6 @@ from lppls_defaults import (
     W_STEP,
 )
 import matplotlib.pyplot as plt
-from datetime import datetime
 from date_utils import DateUtils as du
 import matplotlib.dates as mdates
 from typechecking import TypeCheckBase
@@ -93,7 +92,7 @@ class Peaks(TypeCheckBase):
         drawdowns = self.find_extremities(BubbleType.NEGATIVE)
 
         # Create subplots for drawups and drawdowns
-        today_date = datetime.today().strftime("%Y-%m-%d")
+        today_date = du.today()
         image_name = f"{self.ticker} on {today_date}"
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(14, 10))
         fig.canvas.manager.set_window_title(image_name)

@@ -2,7 +2,7 @@ from typing import List
 from db_dataclasses import Suggestion, StrategyType, OrderType, CloseReason
 from tao_dataclasses import ATR_RANGE
 from db_defaults import DEFAULT_POSITION_SIZE
-from datetime import date, timedelta
+from datetime import timedelta
 from trade_suggestions import TradeSuggestions
 from price_technicals import PriceTechnicals
 from tao_dataclasses import PriceData, MAX_DAYS_UNTIL_CLOSE_POSITION_TAO
@@ -41,7 +41,7 @@ class TaoSuggestions(TradeSuggestions):
             )
 
     def maybe_close(
-        self, order_type: OrderType, ticker: str, open_date: date, last_date: date, cursor
+        self, order_type: OrderType, ticker: str, open_date: str, last_date: str, cursor
     ) -> CloseReason:
         # Get pricing data for the ticker
         cursor.execute(

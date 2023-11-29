@@ -1,7 +1,6 @@
 from typing import List
 from db_dataclasses import Suggestion, ClosingPrices, OrderType, CloseReason
 from db_defaults import DEFAULT_POSITION_SIZE, TOP_BUBBLE_CONFIDENCE_IN_PRACTICE
-from datetime import date
 from trade_suggestions import TradeSuggestions
 from db_dataclasses import StrategyType
 from datetime import timedelta
@@ -48,7 +47,7 @@ class LpplsSuggestions(TradeSuggestions):
             )
 
     def maybe_close(
-        self, order_type: OrderType, ticker: str, open_date: date, last_date: date, cursor
+        self, order_type: OrderType, ticker: str, open_date: str, last_date: str, cursor
     ) -> CloseReason:
         cursor.execute(
             """

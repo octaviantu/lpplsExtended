@@ -8,7 +8,6 @@ sys.path.append(
     "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/common"
 )
 
-from datetime import datetime
 from tao_suggestions import TaoSuggestions
 from lppls_suggestions import LpplsSuggestions
 from db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
@@ -16,6 +15,7 @@ import psycopg2
 import csv
 import os
 from typechecking import TypeCheckBase
+from date_utils import DateUtils as du
 
 
 class ScorePreviousResults(TypeCheckBase):
@@ -53,7 +53,7 @@ class ScorePreviousResults(TypeCheckBase):
         }
 
         # Define the file path
-        current_date = datetime.now().strftime("%Y-%m-%d")
+        current_date = du.today()
         file_path = f"plots/previous_performance/{current_date}.csv"
 
         # Make sure the directory exists
@@ -65,7 +65,8 @@ class ScorePreviousResults(TypeCheckBase):
         # Write or append the data to the CSV file
         with open(file_path, mode=file_mode, newline="") as file:
             writer = csv.DictWriter(file, fieldnames=data_to_write.keys())
-            writer.writeheader()
+            if first_call:
+                writer.writeheader()
             writer.writerow(data_to_write)
 
 

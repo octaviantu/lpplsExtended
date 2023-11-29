@@ -20,10 +20,10 @@ from db_dataclasses import OrderType, Suggestion
 from tao_suggestions import TaoSuggestions
 import matplotlib.pyplot as plt
 import os
-from datetime import datetime
 from price_technicals import PriceTechnicals
 from typechecking import TypeCheckBase
 from date_utils import DateUtils as du
+from matplotlib import dates as mdates
 
 MAX_NEEDED_DATA_POINTS = 2 * 89
 
@@ -55,14 +55,12 @@ class ScanTao(TypeCheckBase):
         ema_55 = EMAIndicator(prices_series, window=55).ema_indicator()
         ema_89 = EMAIndicator(prices_series, window=89).ema_indicator()
 
-        # TODO(octaviant) - maybe change window to higher number - computing smoothed 3 over 8 is pretty morononic(overfitting++++)
         stoch = StochasticOscillator(
             high=prices_series, low=prices_series, close=prices_series, window=8, smooth_window=3
         )
         slow_stoch_d = stoch.stoch_signal()
 
         # Calculate ADX
-        # TODO(octavian) - maybe increase this window because on the price chart I don't see it trending
         adx_i = ADXIndicator(high=prices_series, low=prices_series, close=prices_series, window=13)
         adx = adx_i.adx()
 
@@ -167,7 +165,7 @@ class ScanTao(TypeCheckBase):
                 grouped_data[data.ticker] = []
             grouped_data[data.ticker].append(data)
 
-        current_date = datetime.now().strftime("%Y-%m-%d")
+        current_date = du.today()
         buy_plots_dir = f"plots/tao/{current_date}/buy"
         sell_plots_dir = f"plots/tao/{current_date}/sell"
         os.makedirs(buy_plots_dir, exist_ok=True)
@@ -196,7 +194,9 @@ class ScanTao(TypeCheckBase):
                     )
                 )
 
-                plot_dir = buy_plots_dir if order_type == "BUY" else sell_plots_dir
+                plot_dir = buy_plots_dir if order_type == OrderType.BUY else sell_plots_dir
+                extra_plot_dir = f"{plot_dir}/extra"
+                os.makedirs(extra_plot_dir, exist_ok=True)
 
                 # Plotting
                 dates = [du.ordinal_to_date(p.date_ordinal) for p in prices]
@@ -206,8 +206,9 @@ class ScanTao(TypeCheckBase):
                 plt.title(f"{ticker} Close Prices")
                 plt.xlabel("Date")
                 plt.ylabel("Price")
+                plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
                 plt.legend()
-                plot_path = os.path.join(plot_dir, f"{ticker}.png")
+                plot_path = os.path.join(extra_plot_dir, f"{ticker}.png")
                 plt.savefig(plot_path)
                 plt.close()
 
@@ -218,6 +219,7 @@ class ScanTao(TypeCheckBase):
                 plt.subplot(511)
                 plt.plot(dates, close_prices, label="Close Price")
                 plt.title(f"{ticker} Technical Analysis")
+                plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
                 plt.legend()
 
                 # Plotting EMAs
@@ -228,6 +230,7 @@ class ScanTao(TypeCheckBase):
                 plt.plot(dates, fullTechnicalData.ema_34, label="EMA 34")
                 plt.plot(dates, fullTechnicalData.ema_55, label="EMA 55")
                 plt.plot(dates, fullTechnicalData.ema_89, label="EMA 89")
+                plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
                 plt.legend()
 
                 # Plotting Stochastic Oscillator
@@ -235,12 +238,14 @@ class ScanTao(TypeCheckBase):
                 plt.plot(dates, fullTechnicalData.slow_stoch_d, label="Slow Stoch D", color="green")
                 plt.axhline(y=40, color="grey", linestyle="--")
                 plt.axhline(y=60, color="grey", linestyle="--")
+                plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
                 plt.legend()
 
                 # Plotting ADX
                 plt.subplot(514)
                 plt.plot(dates, fullTechnicalData.adx, label="ADX", color="green")
                 plt.axhline(y=20, color="grey", linestyle="--")
+                plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
                 plt.legend()
 
                 # Plotting RSI
@@ -248,6 +253,7 @@ class ScanTao(TypeCheckBase):
                 plt.plot(dates, fullTechnicalData.rsi, label="RSI", color="green")
                 plt.axhline(y=10, color="grey", linestyle="--")
                 plt.axhline(y=90, color="grey", linestyle="--")
+                plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
                 plt.legend()
 
                 # Save the plot
@@ -299,10 +305,11 @@ class ScanTao(TypeCheckBase):
                 plt.title(f"{ticker} Close Prices with ATR Lines")
                 plt.xlabel("Date")
                 plt.ylabel("Price")
+                plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
                 plt.legend()
 
                 # Save the plot
-                plot_path = os.path.join(plot_dir, f"{ticker}_ATRs.png")
+                plot_path = os.path.join(extra_plot_dir, f"{ticker}_ATRs.png")
                 plt.tight_layout()
                 plt.savefig(plot_path)
                 plt.close()

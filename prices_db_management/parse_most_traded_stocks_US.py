@@ -8,9 +8,9 @@ import requests
 from bs4 import BeautifulSoup
 import psycopg2
 import yfinance as yf
-from datetime import datetime, timedelta
 import argparse
 from typechecking import TypeCheckBase
+from date_utils import DateUtils as du
 
 slickcharts_to_yahoo_ticker_mapping = {"BRK.B": "BRK-B"}
 
@@ -91,15 +91,15 @@ class ParseMostTradedStocksUS(TypeCheckBase):
             last_date = cursor.fetchone()[0]
 
             if last_date is None:  # If ticker doesn't exist, fetch all the data in the last 4 years
-                start_date = (datetime.now() - timedelta(days=4 * 365)).strftime("%Y-%m-%d")
-                end_date = datetime.now().strftime("%Y-%m-%d")
+                start_date = du.days_ago(4 * 365)  # 4 years ago
+                end_date = du.today()
             else:
                 # If the last day is today or the previous working day, do nothing
-                if last_date == datetime.now().date():
+                if last_date == du.today():
                     continue
                 else:  # Fetch the data from the last day until now
-                    start_date = last_date.strftime("%Y-%m-%d")
-                    end_date = datetime.now().strftime("%Y-%m-%d")
+                    start_date = last_date
+                    end_date = du.today()
 
             # Fetch the stock data
             pricing_history = yf.download(ticker, start=start_date, end=end_date)

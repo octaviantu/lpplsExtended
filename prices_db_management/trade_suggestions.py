@@ -5,7 +5,6 @@ from db_dataclasses import Suggestion, StrategyResults, StrategyType, OrderType,
 from abc import abstractmethod
 from db_dataclasses import StrategyType
 from psycopg2.extras import DictCursor
-from datetime import date
 from typechecking import TypeCheckBase
 
 
@@ -171,7 +170,7 @@ class TradeSuggestions(TypeCheckBase):
 
     @abstractmethod
     def maybe_close(
-        self, order_type: OrderType, ticker: str, open_date: date, last_date: date, cursor
+        self, order_type: OrderType, ticker: str, open_date: str, last_date: str, cursor
     ) -> CloseReason:
         pass
 

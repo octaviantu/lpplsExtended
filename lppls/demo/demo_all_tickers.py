@@ -32,7 +32,6 @@ from lppls_defaults import (
 import argparse
 from matplotlib import pyplot as plt
 import os
-from datetime import datetime
 from lppls_dataclasses import BubbleType, Observation, ObservationSeries
 from peaks import Peaks
 import warnings
@@ -40,6 +39,7 @@ from pop_dates import PopDates
 from lppls_suggestions import LpplsSuggestions
 from db_dataclasses import Suggestion, OrderType
 from typechecking import TypeCheckBase
+from date_utils import DateUtils as du
 
 # Convert warnings to exceptions
 warnings.filterwarnings("error", category=RuntimeWarning)
@@ -198,7 +198,7 @@ class AllTickers(TypeCheckBase):
         tickers = cursor.fetchall()
         positive_bubbles, negative_bubbles = [], []
         bubble_assets = []
-        today_date = datetime.today().strftime("%Y-%m-%d")
+        today_date = du.today()
         suggestions = []
 
         print(f"Will go through {len(tickers)} tickers.")

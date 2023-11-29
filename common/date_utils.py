@@ -1,6 +1,6 @@
 from datetime import date
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from typechecking import TypeCheckBase
 
 
@@ -13,9 +13,17 @@ class DateUtils(TypeCheckBase):
         return date.fromordinal(ordinal).strftime("%Y-%m-%d")
 
     @staticmethod
+    def date_to_ordinal(date: date) -> int:
+        return pd.Timestamp(date).toordinal()
+    
+    @staticmethod
     def today_ordinal() -> int:
         return pd.Timestamp(datetime.today()).toordinal()
 
     @staticmethod
-    def date_to_ordinal(date: date) -> int:
-        return pd.Timestamp(date).toordinal()
+    def today() -> str:
+        return datetime.today().strftime("%Y-%m-%d")
+
+    @staticmethod
+    def days_ago(number_of_days: int) -> str:
+        return (datetime.now() - timedelta(days=number_of_days)).strftime("%Y-%m-%d")
