@@ -24,6 +24,7 @@ from price_technicals import PriceTechnicals
 from typechecking import TypeCheckBase
 from date_utils import DateUtils as du
 from matplotlib import dates as mdates
+import argparse
 
 MAX_NEEDED_DATA_POINTS = 2 * 89
 
@@ -119,7 +120,7 @@ class ScanTao(TypeCheckBase):
 
         return bool(ema_condition and slow_stoch_condition and adx_condition and rsi_condition)
 
-    def main(self):
+    def discover_trending(self, test_date):
         # Establish the connection to the database
         conn = psycopg2.connect(**conn_params)
 
@@ -130,6 +131,7 @@ class ScanTao(TypeCheckBase):
                 SELECT date, ticker, close_price, high_price, low_price,
                     ROW_NUMBER() OVER (PARTITION BY ticker ORDER BY date DESC) as rn 
                 FROM pricing_history
+                WHERE date <= '{test_date}'
             ) sub
             WHERE rn <= {MAX_NEEDED_DATA_POINTS}
             ORDER BY date ASC, ticker
@@ -165,9 +167,8 @@ class ScanTao(TypeCheckBase):
                 grouped_data[data.ticker] = []
             grouped_data[data.ticker].append(data)
 
-        current_date = du.today()
-        buy_plots_dir = f"plots/tao/{current_date}/buy"
-        sell_plots_dir = f"plots/tao/{current_date}/sell"
+        buy_plots_dir = f"plots/tao/{test_date}/buy"
+        sell_plots_dir = f"plots/tao/{test_date}/sell"
         os.makedirs(buy_plots_dir, exist_ok=True)
         os.makedirs(sell_plots_dir, exist_ok=True)
 
@@ -321,5 +322,25 @@ class ScanTao(TypeCheckBase):
             print(f"{suggestion.order_type.value} {suggestion.ticker}")
 
 
+    def backtest(self, days_ago: int = 95):
+        for i in range(days_ago, -1, -1):
+            test_date = du.days_ago(i)
+            self.discover_trending(test_date)
+
+
 if __name__ == "__main__":
-    ScanTao().main()
+    # Create the parser
+    parser = argparse.ArgumentParser(description='Process some integers.')
+
+    # Add the --backtest argument
+    parser.add_argument('--backtest', type=int, nargs='?',
+                        help='Number of days to run the backtest for', const=95, default=-1)
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Check if backtest argument is provided
+    if args.backtest != -1:
+        ScanTao().backtest(days_ago=args.backtest)
+    else:
+        ScanTao().discover_trending(du.today())

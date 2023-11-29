@@ -14,6 +14,15 @@
       "program": "${workspaceFolder}/tao/scan_tao.py"
     },
     {
+      "name": "Tao backtest",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/tao/scan_tao.py",
+      "args": [
+        "--backtest"
+      ]
+    },
+    {
       "name": "Starts Paper code debug",
       "type": "python",
       "request": "launch",
