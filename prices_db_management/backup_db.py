@@ -10,6 +10,7 @@ from db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
 from typechecking import TypeCheckBase
 from date_utils import DateUtils as du
 
+
 class BackupDb(TypeCheckBase):
     @staticmethod
     def main():

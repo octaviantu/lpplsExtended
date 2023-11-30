@@ -27,6 +27,7 @@ from matplotlib import dates as mdates
 import argparse
 
 MAX_NEEDED_DATA_POINTS = 2 * 89
+DEFAULT_BACKTEST_DAYS_BACK = 95
 
 # Define the connection parameters to the database
 conn_params = {
@@ -177,7 +178,12 @@ class ScanTao(TypeCheckBase):
         # Check each ticker and collect those that satisfy the conditions
         suggestions = []
         for ticker, prices in grouped_data.items():
+            # Some stocks like VFS have been added more recently and don't have enough data points.
+            if len(prices) < MAX_NEEDED_DATA_POINTS:
+                continue
+
             fullTechnicalData, tipTechnicalData = self.compute_technical_data(prices)
+
             order_type = None
             if self.is_bull(tipTechnicalData):
                 order_type = OrderType.BUY
@@ -321,8 +327,7 @@ class ScanTao(TypeCheckBase):
         for suggestion in suggestions:
             print(f"{suggestion.order_type.value} {suggestion.ticker}")
 
-
-    def backtest(self, days_ago: int = 95):
+    def backtest(self, days_ago: int = DEFAULT_BACKTEST_DAYS_BACK):
         for i in range(days_ago, -1, -1):
             test_date = du.days_ago(i)
             self.discover_trending(test_date)
@@ -330,11 +335,17 @@ class ScanTao(TypeCheckBase):
 
 if __name__ == "__main__":
     # Create the parser
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description="Get number of days needed for backtesting.")
 
     # Add the --backtest argument
-    parser.add_argument('--backtest', type=int, nargs='?',
-                        help='Number of days to run the backtest for', const=95, default=-1)
+    parser.add_argument(
+        "--backtest",
+        type=int,
+        nargs="?",
+        help="Number of days to run the backtest for",
+        const=DEFAULT_BACKTEST_DAYS_BACK,
+        default=-1,
+    )
 
     # Parse the arguments
     args = parser.parse_args()

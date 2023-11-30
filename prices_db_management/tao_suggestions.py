@@ -2,7 +2,6 @@ from typing import List
 from db_dataclasses import Suggestion, StrategyType, OrderType, CloseReason
 from tao_dataclasses import ATR_RANGE
 from db_defaults import DEFAULT_POSITION_SIZE
-from datetime import timedelta
 from trade_suggestions import TradeSuggestions
 from price_technicals import PriceTechnicals
 from tao_dataclasses import PriceData, MAX_DAYS_UNTIL_CLOSE_POSITION_TAO
@@ -42,14 +41,16 @@ class TaoSuggestions(TradeSuggestions):
 
     def maybe_close(
         self, order_type: OrderType, ticker: str, open_date: str, last_date: str, cursor
-    ) -> CloseReason:
+    ) -> CloseReason | None:
         # Get pricing data for the ticker
         cursor.execute(
             """
             SELECT date, ticker, close_price, high_price, low_price FROM pricing_history
-            WHERE ticker = %s ORDER BY date DESC LIMIT %s;
+            WHERE ticker = %s
+            AND date <= %s
+            ORDER BY date ASC LIMIT %s;
         """,
-            (ticker, ATR_RANGE + 1),
+            (ticker, last_date, ATR_RANGE + 1),
         )
         rows = cursor.fetchall()
 
@@ -64,10 +65,13 @@ class TaoSuggestions(TradeSuggestions):
             for row in rows
         ]
 
-        is_successful = self.price_technicals.is_outside_atr_band(pricing_data, order_type)
-        is_timeout = open_date + timedelta(days=MAX_DAYS_UNTIL_CLOSE_POSITION_TAO) < last_date
-
-        return CloseReason(is_timeout=is_timeout, is_successful=is_successful)
+        if self.price_technicals.is_outside_atr_band(pricing_data, order_type):
+            return CloseReason.SUCCESS
+        if du.date_to_ordinal(open_date) + MAX_DAYS_UNTIL_CLOSE_POSITION_TAO < du.date_to_ordinal(
+            last_date
+        ):
+            return CloseReason.TIMEOUT
+        return None
 
     def getStrategyType(self) -> StrategyType:
         return STRATEGY_TYPE

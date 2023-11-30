@@ -14,7 +14,7 @@ Format the code:
 python setup.py format
 ```
 
-To debug, check the configurations in `launch.json` and the files under '/lppls/demo'
+To debug the fit parameters, check the configurations in `launch.json` and the files under '/lppls/demo'
 
 
 # See daily bubbles

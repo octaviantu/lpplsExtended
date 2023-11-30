@@ -123,7 +123,7 @@ class ParseLargetsETFs(TypeCheckBase):
             last_date = cursor.fetchone()[0]
 
             if last_date is None:  # If ticker doesn't exist, fetch all the data in the last 4 years
-                start_date = du.days_ago(4 * 365) # 4 years ago
+                start_date = du.days_ago(4 * 365)  # 4 years ago
                 end_date = du.today()
             else:
                 # If the last day is today, do nothing

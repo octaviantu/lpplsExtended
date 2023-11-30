@@ -1,7 +1,14 @@
 import psycopg2
 from typing import List
 from db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
-from db_dataclasses import Suggestion, StrategyResults, StrategyType, OrderType, CloseReason
+from db_dataclasses import (
+    Suggestion,
+    StrategyResult,
+    StrategyType,
+    OrderType,
+    CloseReason,
+    ClosedPosition,
+)
 from abc import abstractmethod
 from db_dataclasses import StrategyType
 from psycopg2.extras import DictCursor
@@ -21,6 +28,9 @@ class TradeSuggestions(TypeCheckBase):
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_type') THEN
                     CREATE TYPE order_type AS ENUM ('BUY', 'SELL');
                 END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'close_reason') THEN
+                    CREATE TYPE close_reason AS ENUM ('SUCCESS', 'TIMEOUT');
+                END IF;
             END
             $$;
             """
@@ -39,6 +49,7 @@ class TradeSuggestions(TypeCheckBase):
                 earliest_pop_date DATE,
                 latest_pop_date DATE,
                 close_price FLOAT,
+                close_reason close_reason,
                 ticker VARCHAR(10),
                 confidence FLOAT CHECK (confidence >= 0 AND confidence <= 1),
                 position_size FLOAT,
@@ -83,7 +94,7 @@ class TradeSuggestions(TypeCheckBase):
     def maybe_insert_suggestions(self, suggestions: List[Suggestion], cursor) -> None:
         pass
 
-    def score_previous_suggestions(self, conn) -> StrategyResults:
+    def score_previous_suggestions(self, conn, test_date: str) -> StrategyResult:
         conn.cursor_factory = DictCursor
         cursor = conn.cursor()
 
@@ -94,84 +105,185 @@ class TradeSuggestions(TypeCheckBase):
             """
             SELECT ticker, open_price, position_size, order_t, open_date
             FROM suggestions 
-            WHERE strategy_t = %s AND is_position_open = TRUE;
+            WHERE strategy_t = %s AND is_position_open = TRUE AND open_date <= %s;
         """,
-            (STRATEGY_TYPE.value,),
+            (STRATEGY_TYPE.value, test_date),
         )
         suggestions = cursor.fetchall()
-
-        # Query to get the latest date from pricing_history
-        cursor.execute(
-            """
-            SELECT date, close_price FROM pricing_history
-            WHERE date = (SELECT MAX(date) FROM pricing_history)
-        """
-        )
-        result = cursor.fetchone()
-        last_date, last_close_price = result
 
         paid = 0.0
         received = 0.0
         succesful_count = 0
         timeout_count = 0
         STRATEGY_TYPE = self.getStrategyType()
+        closed_positions = []
 
         for suggestion in suggestions:
             ticker = suggestion["ticker"]
             open_price = suggestion["open_price"]
             position_size = suggestion["position_size"]
             order_type = OrderType[suggestion["order_t"]]
-            open_date = suggestion["open_date"]
+            open_date = str(suggestion["open_date"])
+
+            # Query to get the latest price from pricing_history
+            cursor.execute(
+                """
+                SELECT date, close_price FROM pricing_history
+                WHERE date = (
+                    SELECT MAX(date) FROM pricing_history WHERE date <= %s
+                )
+                AND ticker = %s;
+            """,
+                (test_date, ticker),
+            )
+            row = cursor.fetchone()
+            if not row:
+                continue
+
+            last_date, last_close_price = str(row[0]), row[1]
 
             # Check conditions to close the position
-            closeReason = self.maybe_close(order_type, ticker, open_date, last_date, cursor)
-            is_timeout, is_successful = closeReason.is_timeout, closeReason.is_successful
+            close_reason = self.maybe_close(order_type, ticker, open_date, last_date, cursor)
 
-            if is_successful:
-                succesful_count += 1
-            elif is_timeout:
-                timeout_count += 1
-
-            if is_timeout or is_successful:
-                close_sum = (last_close_price / open_price) * position_size
+            if close_reason:
+                if close_reason == CloseReason.SUCCESS:
+                    succesful_count += 1
+                elif close_reason == CloseReason.TIMEOUT:
+                    timeout_count += 1
 
                 if order_type == OrderType.BUY:
                     paid += position_size
-                    received += close_sum
+                    received += last_close_price * (position_size / open_price)
                 else:
-                    paid += close_sum
+                    paid += last_close_price * (position_size / open_price)
                     received += position_size
+
+                closed_positions.append(
+                    ClosedPosition(
+                        ticker=ticker,
+                        open_date=open_date,
+                        open_price=open_price,
+                        close_date=last_date,
+                        close_price=last_close_price,
+                        position_size=position_size,
+                        strategy_type=STRATEGY_TYPE,
+                        close_reason=close_reason,
+                        order_type=order_type,
+                    )
+                )
 
                 # Update the suggestion
                 cursor.execute(
                     """
                     UPDATE suggestions SET 
                     is_position_open = FALSE, 
-                    close_date = %s ,
-                    close_price = %s
+                    close_date = %s,
+                    close_price = %s,
+                    close_reason = %s
                     WHERE open_date = %s AND ticker = %s AND strategy_t = %s;
                 """,
-                    (last_date, last_close_price, open_date, ticker, STRATEGY_TYPE.value),
+                    (
+                        last_date,
+                        last_close_price,
+                        close_reason.value,
+                        open_date,
+                        ticker,
+                        STRATEGY_TYPE.value,
+                    ),
                 )
                 conn.commit()
 
-        strategy_results = StrategyResults(
+        strategy_results = StrategyResult(
             strategy_type=STRATEGY_TYPE,
             succesful_count=succesful_count,
             timeout_count=timeout_count,
             paid=paid,
             received=received,
+            closed_positions=closed_positions,
         )
 
         # Close the cursor and the connection
         cursor.close()
 
         return strategy_results
+    
+    def fetch_all_closed_suggestions(self, conn) -> StrategyResult:
+        conn.cursor_factory = DictCursor
+        cursor = conn.cursor()
+
+        STRATEGY_TYPE = self.getStrategyType()
+
+        # Query to get all TAO_RSI suggestions that are open
+        cursor.execute(
+            """
+            SELECT ticker, open_price, position_size, order_t, open_date, close_date, close_price, close_reason
+            FROM suggestions 
+            WHERE strategy_t = %s AND is_position_open = FALSE;
+        """,
+            (STRATEGY_TYPE.value,),
+        )
+        suggestions = cursor.fetchall()
+
+        paid = 0.0
+        received = 0.0
+        succesful_count = 0
+        timeout_count = 0
+        STRATEGY_TYPE = self.getStrategyType()
+        closed_positions = []
+
+        for suggestion in suggestions:
+            ticker = suggestion["ticker"]
+            open_price = suggestion["open_price"]
+            position_size = suggestion["position_size"]
+            order_type = OrderType[suggestion["order_t"]]
+            open_date = str(suggestion["open_date"])
+            last_date = str(suggestion["close_date"])
+            close_price = suggestion["close_price"]
+            close_reason = CloseReason[suggestion["close_reason"]]
+
+            if close_reason == CloseReason.SUCCESS:
+                succesful_count += 1
+            elif close_reason == CloseReason.TIMEOUT:
+                timeout_count += 1
+
+            if order_type == OrderType.BUY:
+                paid += position_size
+                received += close_price * (position_size / open_price)
+            else:
+                paid += close_price * (position_size / open_price)
+                received += position_size
+
+            closed_positions.append(
+                ClosedPosition(
+                    ticker=ticker,
+                    open_date=open_date,
+                    open_price=open_price,
+                    close_date=last_date,
+                    close_price=close_price,
+                    position_size=position_size,
+                    strategy_type=STRATEGY_TYPE,
+                    close_reason=close_reason,
+                    order_type=order_type,
+                )
+            )
+
+        # Close the cursor and the connection
+        cursor.close()
+
+        return StrategyResult(
+            strategy_type=STRATEGY_TYPE,
+            succesful_count=succesful_count,
+            timeout_count=timeout_count,
+            paid=paid,
+            received=received,
+            closed_positions=closed_positions,
+        )
+
 
     @abstractmethod
     def maybe_close(
-        self, order_type: OrderType, ticker: str, open_date: str, last_date: str, cursor
-    ) -> CloseReason:
+        self, order_type: OrderType, ticker: str, open_date: int, last_date: int, cursor
+    ) -> CloseReason | None:
         pass
 
     @abstractmethod

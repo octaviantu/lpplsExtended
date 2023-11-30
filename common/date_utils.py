@@ -15,7 +15,7 @@ class DateUtils(TypeCheckBase):
     @staticmethod
     def date_to_ordinal(date: date) -> int:
         return pd.Timestamp(date).toordinal()
-    
+
     @staticmethod
     def today_ordinal() -> int:
         return pd.Timestamp(datetime.today()).toordinal()

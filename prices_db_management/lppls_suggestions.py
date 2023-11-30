@@ -1,10 +1,10 @@
 from typing import List
-from db_dataclasses import Suggestion, ClosingPrices, OrderType, CloseReason
+from db_dataclasses import Suggestion, OrderType, CloseReason
 from db_defaults import DEFAULT_POSITION_SIZE, TOP_BUBBLE_CONFIDENCE_IN_PRACTICE
 from trade_suggestions import TradeSuggestions
 from db_dataclasses import StrategyType
-from datetime import timedelta
 from date_utils import DateUtils as du
+
 
 STRATEGY_TYPE = StrategyType.SORNETTE
 
@@ -48,7 +48,7 @@ class LpplsSuggestions(TradeSuggestions):
 
     def maybe_close(
         self, order_type: OrderType, ticker: str, open_date: str, last_date: str, cursor
-    ) -> CloseReason:
+    ) -> CloseReason | None:
         cursor.execute(
             """
             SELECT latest_pop_date
@@ -57,40 +57,39 @@ class LpplsSuggestions(TradeSuggestions):
         """,
             (ticker,),
         )
-        latest_pop_date = cursor.fetchone()[0]
+        latest_pop_date = str(cursor.fetchone()[0])
 
         cursor.execute(
             """
             SELECT date, ticker, close_price, high_price, low_price FROM pricing_history
             WHERE ticker = %s
-            AND date >= %s
-            ORDER BY date;
+            AND date BETWEEN %s AND %s
+            ORDER BY date ASC;
         """,
-            (ticker, open_date),
+            (ticker, open_date, last_date),
         )
         rows = cursor.fetchall()
 
-        closing_prices = [
-            ClosingPrices(close_price=row["close_price"], date=row["date"]) for row in rows
-        ]
+        closing_prices = [row["close_price"] for row in rows]
 
-        last_price = closing_prices[-1].close_price
+        last_price = closing_prices[-1]
 
         if order_type == OrderType.BUY:
-            min_price = max(closing_prices, key=lambda price: price.close_price).close_price
+            min_price = min(closing_prices)
             profit = (last_price - min_price) / min_price
         elif order_type == OrderType.SELL:
-            max_price = max(closing_prices, key=lambda price: price.close_price).close_price
+            max_price = max(closing_prices)
             profit = -1 * (last_price - max_price) / max_price
         else:
             raise Exception("Invalid order type")
 
-        is_successful = profit >= CLOSE_THRESHOLD
-        is_timeout = (
-            latest_pop_date + timedelta(days=MAX_DAYS_AFTER_BUBBLE_POP_CLOSE_LPPLS) < last_date
-        )
-
-        return CloseReason(is_timeout=is_timeout, is_successful=is_successful)
+        if profit >= CLOSE_THRESHOLD:
+            return CloseReason.SUCCESS
+        if du.date_to_ordinal(
+            latest_pop_date
+        ) + MAX_DAYS_AFTER_BUBBLE_POP_CLOSE_LPPLS < du.date_to_ordinal(last_date):
+            return CloseReason.TIMEOUT
+        return None
 
     def getStrategyType(self) -> StrategyType:
         return STRATEGY_TYPE

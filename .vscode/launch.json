@@ -8,6 +8,16 @@
       "program": "${workspaceFolder}/previous_performance/score_previous_result.py"
     },
     {
+      "name": "Previous performance backtest",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/previous_performance/score_previous_result.py",
+      "args": [
+        "--backtest",
+        "95"
+      ]
+    },
+    {
       "name": "Tao debug",
       "type": "python",
       "request": "launch",
@@ -19,7 +29,8 @@
       "request": "launch",
       "program": "${workspaceFolder}/tao/scan_tao.py",
       "args": [
-        "--backtest"
+        "--backtest",
+        "95"
       ]
     },
     {
