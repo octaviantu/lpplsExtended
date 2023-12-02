@@ -280,6 +280,7 @@ class TradeSuggestions(TypeCheckBase):
         timeout_count = 0
         stop_loss_count = 0
 
+        closed_positions = sorted(closed_positions, key=lambda x: (x.close_date, x.ticker))
         for closed_position in closed_positions:
             open_price = closed_position.open_price
             position_size = closed_position.position_size
