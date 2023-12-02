@@ -15,6 +15,7 @@ from psycopg2.extras import DictCursor
 from typechecking import TypeCheckBase
 from performance_defaults import STOP_LOSS, MIN_PROFIT
 
+
 class TradeSuggestions(TypeCheckBase):
     def create_if_not_exists(self, cursor) -> None:
         # Check and create ENUM types if they don't exist
@@ -139,7 +140,7 @@ class TradeSuggestions(TypeCheckBase):
             last_date, last_close_price = str(row[0]), row[1]
 
             sign = 1 if order_type == OrderType.BUY else -1
-            profit = ((last_close_price - open_price) / open_price ) * sign
+            profit = ((last_close_price - open_price) / open_price) * sign
 
             close_reason = None
             if profit <= STOP_LOSS:
@@ -149,7 +150,6 @@ class TradeSuggestions(TypeCheckBase):
                 close_reason = self.maybe_close(order_type, ticker, open_date, last_date, cursor)
 
             if close_reason:
-
                 closed_positions.append(
                     ClosedPosition(
                         ticker=ticker,
@@ -185,7 +185,9 @@ class TradeSuggestions(TypeCheckBase):
                 )
                 conn.commit()
 
-        paid, received, succesful_count, timeout_count, stop_loss_count = self.aggregate_counts(closed_positions)
+        paid, received, succesful_count, timeout_count, stop_loss_count = self.aggregate_counts(
+            closed_positions
+        )
 
         strategy_results = StrategyResult(
             strategy_type=STRATEGY_TYPE,
@@ -201,7 +203,7 @@ class TradeSuggestions(TypeCheckBase):
         cursor.close()
 
         return strategy_results
-    
+
     def fetch_all_closed_suggestions(self, conn) -> StrategyResult:
         conn.cursor_factory = DictCursor
         cursor = conn.cursor()
@@ -219,7 +221,6 @@ class TradeSuggestions(TypeCheckBase):
         )
         suggestions = cursor.fetchall()
 
-
         STRATEGY_TYPE = self.getStrategyType()
         closed_positions = []
 
@@ -231,7 +232,7 @@ class TradeSuggestions(TypeCheckBase):
             open_date = str(suggestion["open_date"])
             last_date = str(suggestion["close_date"])
             close_price = suggestion["close_price"]
-            close_reason = CloseReason[suggestion["close_reason"]]            
+            close_reason = CloseReason[suggestion["close_reason"]]
 
             closed_positions.append(
                 ClosedPosition(
@@ -250,7 +251,9 @@ class TradeSuggestions(TypeCheckBase):
         # Close the cursor and the connection
         cursor.close()
 
-        paid, received, succesful_count, timeout_count, stop_loss_count = self.aggregate_counts(closed_positions)
+        paid, received, succesful_count, timeout_count, stop_loss_count = self.aggregate_counts(
+            closed_positions
+        )
 
         return StrategyResult(
             strategy_type=STRATEGY_TYPE,
@@ -262,7 +265,6 @@ class TradeSuggestions(TypeCheckBase):
             closed_positions=closed_positions,
         )
 
-
     @abstractmethod
     def maybe_close(
         self, order_type: OrderType, ticker: str, open_date: int, last_date: int, cursor
@@ -273,7 +275,9 @@ class TradeSuggestions(TypeCheckBase):
     def getStrategyType(self) -> StrategyType:
         pass
 
-    def aggregate_counts(self, closed_positions: List[ClosedPosition]) -> Tuple[float, float, int, int, int]:
+    def aggregate_counts(
+        self, closed_positions: List[ClosedPosition]
+    ) -> Tuple[float, float, int, int, int]:
         paid = 0.0
         received = 0.0
         succesful_count = 0

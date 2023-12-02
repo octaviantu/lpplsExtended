@@ -30,6 +30,7 @@ from lppls_defaults import (
 )
 from lppls_dataclasses import Observation, ObservationSeries
 from pop_dates import PopDates
+from date_utils import DateUtils as du
 
 
 def get_bubble_scores(sornette: Sornette, default_fitting_params, recent_windows):
@@ -50,10 +51,9 @@ def main():
     conn = psycopg2.connect(
         host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
     )
+    test_date = du.today()
     cursor = conn.cursor()
-    query = (
-        f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' ORDER BY date ASC;"
-    )
+    query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' AND date <= '{test_date}' ORDER BY date ASC;"
     cursor.execute(query)
     rows = cursor.fetchall()
 
@@ -64,7 +64,7 @@ def main():
         [Observation(p, d) for d, p in zip(all_dates, all_actual_prices)]
     )
 
-    _, drawdowns, _ = Peaks(all_observations, ticker).plot_peaks()
+    _, drawdowns, _ = Peaks(all_observations, ticker).plot_peaks(test_date)
     first_eligible_date = all_dates.index(drawdowns[-1].date_ordinal)
     selected_actual_prices = all_actual_prices[first_eligible_date:]
     selected_dates = all_dates[first_eligible_date:]
@@ -76,6 +76,7 @@ def main():
         selected_observations,
         "BitcoinB",
         "./lppls/conf/demos2015_filter.json",
+        should_optimize=False,
     )
     sornette_on_interval.plot_fit()
 
@@ -99,13 +100,13 @@ def main():
 
     # I want to see the start date on the entire interval, so I make another Sornette object
     sornette_on_interval = Sornette(
-        all_observations, "BitcoinB", "./lppls/conf/demos2015_filter.json"
+        all_observations, "BitcoinB", "./lppls/conf/demos2015_filter.json", should_optimize=False
     )
     bubble_scores = get_bubble_scores(
         sornette_on_interval, default_fitting_params, RECENT_VISIBLE_WINDOWS
     )
 
-    best_cluster = PopDates().compute_bubble_end_cluster(optimal_start, bubble_scores)
+    best_cluster = PopDates().compute_bubble_end_cluster(optimal_start, bubble_scores, test_date)
     sornette_on_interval.plot_bubble_scores(bubble_scores, ticker, optimal_start, best_cluster)
 
     plt.show(block=True)

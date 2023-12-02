@@ -10,6 +10,7 @@ from date_utils import DateUtils as du
 STRATEGY_TYPE = StrategyType.TAO_RSI
 MIN_PROFIT = 0.03  # 5%
 
+
 class TaoSuggestions(TradeSuggestions):
     def __init__(self):
         # Initialize the parent class
@@ -59,7 +60,6 @@ class TaoSuggestions(TradeSuggestions):
             (ticker, last_date, ATR_RANGE + 1),
         )
         rows = cursor.fetchall()
-
 
         pricing_data = [
             PriceData(

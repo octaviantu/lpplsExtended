@@ -16,7 +16,7 @@ from typing import List
 
 
 class Sornette(TypeCheckBase):
-    def __init__(self, observations: ObservationSeries, filter_type, filter_file):
+    def __init__(self, observations: ObservationSeries, filter_type, filter_file, should_optimize):
         filter: FilterInterface
 
         if filter_type == "Shanghai":
@@ -33,6 +33,7 @@ class Sornette(TypeCheckBase):
         self.filimonov_plot = FilimonovPlot()
         CountMetrics.reset()
         self.starts = Starts()
+        self.should_optimize = should_optimize
 
     def estimate_prices(self):
         op = self.data_fit.fit(MAX_SEARCHES, self.data_fit.observations)
@@ -47,9 +48,9 @@ class Sornette(TypeCheckBase):
     def parallel_compute_t2_fits(self, **kwargs):
         return self.data_fit.parallel_compute_t2_fits(**kwargs)
 
-    def compute_bubble_scores(self, **kwargs):
+    def compute_bubble_scores(self, **kwargs) -> List[BubbleScore]:
         all_fits = self.data_fit.parallel_compute_t2_recent_fits(**kwargs)
-        return self.bubble_scores.compute_bubble_scores(all_fits)
+        return self.bubble_scores.compute_bubble_scores(all_fits, self.should_optimize)
 
     def plot_bubble_scores(self, bubble_scores, ticker, bubble_start, best_end_cluster):
         self.bubble_scores.plot_bubble_scores(bubble_scores, ticker, bubble_start, best_end_cluster)

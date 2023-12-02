@@ -50,7 +50,7 @@ class Cluster(TypeCheckBase):
             f"Clustered in {format_pop_dates} with silhouette: {self.silhouette:.2f} (1 is optimal)"
         )
 
-    def give_pop_dates_range(self) -> PopRange | None:
+    def give_pop_dates_range(self, test_date) -> PopRange | None:
         if not self.is_valid or not self.mean_pop_dates:
             return None
 
@@ -59,7 +59,7 @@ class Cluster(TypeCheckBase):
         # If pop dates are too dispersed, they are not actionable.
         if last_pop_date - first_pop_date > MAX_POP_TIMES_DISPERSION:
             return None
-        if last_pop_date > du.today_ordinal() + MAX_LAG_FROM_TODAY:
+        if last_pop_date > du.date_to_ordinal(test_date) + MAX_LAG_FROM_TODAY:
             return None
 
         return PopRange(first_pop_date, last_pop_date)
@@ -67,12 +67,14 @@ class Cluster(TypeCheckBase):
 
 class PopDates(TypeCheckBase):
     def compute_bubble_end_cluster(
-        self, start_time: BubbleStart, bubble_scores: List[BubbleScore]
+        self, start_time: BubbleStart, bubble_scores: List[BubbleScore], test_date: str
     ) -> Cluster:
         tcs = []
 
         # Get the ordinal dates for the last LAST_DAYS_WITH_DATA days
-        last_days_ordinals = [du.today_ordinal() - i for i in range(LAST_DAYS_WITH_DATA, -1, -1)]
+        last_days_ordinals = [
+            du.date_to_ordinal(test_date) - i for i in range(LAST_DAYS_WITH_DATA, -1, -1)
+        ]
 
         for bubble_score in bubble_scores:
             if bubble_score.t2 < last_days_ordinals[0]:

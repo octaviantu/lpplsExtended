@@ -25,6 +25,7 @@ PREVIOUS_PERF_DIR = "plots/previous_performance"
 DAILY_DIR = PREVIOUS_PERF_DIR + "/daily"
 HISTORIC_DIR = PREVIOUS_PERF_DIR + "/historic"
 
+
 class ScorePreviousResults(TypeCheckBase):
     def score_end_day(self, test_date: str) -> None:
         conn = psycopg2.connect(
@@ -42,26 +43,41 @@ class ScorePreviousResults(TypeCheckBase):
         lppls_all_closed = lppls_suggestions.fetch_all_closed_suggestions(conn)
 
         daily_dir_path = os.path.join(DAILY_DIR, test_date)
-        self.write_historic_aggregate_results([tao_closed_now, lppls_closed_now], daily_dir_path + '/daily-aggregate.csv')
-        self.write_historic_aggregate_results([tao_all_closed, lppls_all_closed], daily_dir_path + '/historic-aggregate.csv')
+        self.write_historic_aggregate_results(
+            [tao_closed_now, lppls_closed_now], daily_dir_path + "/daily-aggregate.csv"
+        )
+        self.write_historic_aggregate_results(
+            [tao_all_closed, lppls_all_closed], daily_dir_path + "/historic-aggregate.csv"
+        )
 
-        self.write_closed_positions(tao_closed_now.closed_positions, daily_dir_path + '/tao-positions.csv')
-        self.write_closed_positions(lppls_closed_now.closed_positions, daily_dir_path + '/lppls-positions.csv')
+        self.write_closed_positions(
+            tao_closed_now.closed_positions, daily_dir_path + "/tao-positions.csv"
+        )
+        self.write_closed_positions(
+            lppls_closed_now.closed_positions, daily_dir_path + "/lppls-positions.csv"
+        )
 
-        self.write_closed_positions(tao_all_closed.closed_positions, HISTORIC_DIR + '/tao-all-positions.csv')
-        self.write_closed_positions(lppls_all_closed.closed_positions, HISTORIC_DIR + '/lppls-all-positions.csv')
+        self.write_closed_positions(
+            tao_all_closed.closed_positions, HISTORIC_DIR + "/tao-all-positions.csv"
+        )
+        self.write_closed_positions(
+            lppls_all_closed.closed_positions, HISTORIC_DIR + "/lppls-all-positions.csv"
+        )
 
         conn.close()
 
-
-    def write_closed_positions(self, closed_positions: List[ClosedPosition], file_path: str) -> None:
+    def write_closed_positions(
+        self, closed_positions: List[ClosedPosition], file_path: str
+    ) -> None:
         if len(closed_positions) == 0:
             return
 
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        with open(file_path, 'w') as file:
+        with open(file_path, "w") as file:
             # Write the header line
-            file.write("Ticker, Open Date, Open Price, Close Date, Close Price, Position Size, Strategy Type, Close Reason, Order Type, Profit Percent, Profit Absolute\n")
+            file.write(
+                "Ticker, Open Date, Open Price, Close Date, Close Price, Position Size, Strategy Type, Close Reason, Order Type, Profit Percent, Profit Absolute\n"
+            )
 
             for position in closed_positions:
                 # Extracting each field
@@ -80,28 +96,35 @@ class ScorePreviousResults(TypeCheckBase):
                 profit_absolute = round(position.compute_profit_absolute(), 2)
 
                 # Writing data to the file
-                file.write(f"{ticker}, {open_date}, {open_price}, {close_date}, {close_price}, {position_size}, {strategy_type}, {close_reason}, {order_type}, {profit_percent}, {profit_absolute}\n")
+                file.write(
+                    f"{ticker}, {open_date}, {open_price}, {close_date}, {close_price}, {position_size}, {strategy_type}, {close_reason}, {order_type}, {profit_percent}, {profit_absolute}\n"
+                )
 
-
-    def write_historic_aggregate_results(self, strategyResults: List[StrategyResult], file_path: str) -> None:
+    def write_historic_aggregate_results(
+        self, strategyResults: List[StrategyResult], file_path: str
+    ) -> None:
         all_closed_positions = [sr.closed_positions for sr in strategyResults]
         if len(all_closed_positions) == 0:
             return
-    
+
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        with open(file_path, 'w') as file:
+        with open(file_path, "w") as file:
             # Write the header line
-            file.write("Strategy Type, Successful Count, Timeout Count, Stop Loss Count, Paid, Received, Closed Positions, Profit Percent, Profit Absolute, Trade Count\n")
+            file.write(
+                "Strategy Type, Successful Count, Timeout Count, Stop Loss Count, Paid, Received, Closed Positions, Profit Percent, Profit Absolute, Trade Count\n"
+            )
 
             for result in strategyResults:
                 # Extracting each field
                 strategy_type = result.strategy_type.value
-                successful_count = result.succesful_count   
+                successful_count = result.succesful_count
                 timeout_count = result.timeout_count
                 stop_loss_count = result.stop_loss_count
                 paid = round(result.paid, 2)
                 received = round(result.received, 2)
-                closed_positions = len(result.closed_positions)  # Assuming you want the count of closed positions
+                closed_positions = len(
+                    result.closed_positions
+                )  # Assuming you want the count of closed positions
 
                 # Calling methods of StrategyResult
                 profit_percent = result.compute_profit_percent()
@@ -109,8 +132,9 @@ class ScorePreviousResults(TypeCheckBase):
                 trade_count = round(result.compute_trade_count(), 2)
 
                 # Writing data to the file
-                file.write(f"{strategy_type}, {successful_count}, {timeout_count}, {stop_loss_count}, {paid}, {received}, {closed_positions}, {profit_percent}, {profit_absolute}, {trade_count}\n")
-
+                file.write(
+                    f"{strategy_type}, {successful_count}, {timeout_count}, {stop_loss_count}, {paid}, {received}, {closed_positions}, {profit_percent}, {profit_absolute}, {trade_count}\n"
+                )
 
     def backtest(self, days_ago: int = 95):
         for i in range(days_ago, -1, -1):

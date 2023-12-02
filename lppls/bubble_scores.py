@@ -186,7 +186,9 @@ class BubbleScores(TypeCheckBase):
             handles=axis.get_legend_handles_labels()[0] + cluster_legend, loc=2, facecolor="white"
         )
 
-    def compute_bubble_scores(self, all_fits: List[IntervalFits]) -> List[BubbleScore]:
+    def compute_bubble_scores(
+        self, all_fits: List[IntervalFits], should_optimize: bool
+    ) -> List[BubbleScore]:
         bubble_scores = []
 
         for fit in all_fits:
@@ -199,7 +201,7 @@ class BubbleScores(TypeCheckBase):
 
             for idx, optimizedInterval in enumerate(fit.optimized_intervals):
                 bubble_fit = self.filter.check_bubble_fit(
-                    optimizedInterval, self.observations, t1_index, t2_index
+                    optimizedInterval, self.observations, t1_index, t2_index, should_optimize
                 )
 
                 if bubble_fit.type == BubbleType.POSITIVE:

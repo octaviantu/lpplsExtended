@@ -99,22 +99,30 @@ class FilterBitcoin2019B(FilterInterface):
             return None
 
     def check_bubble_fit(
-        self, oi: OptimizedInterval, observations: ObservationSeries, t1_index: int, t2_index: int
+        self,
+        oi: OptimizedInterval,
+        observations: ObservationSeries,
+        t1_index: int,
+        t2_index: int,
+        should_optimize: bool,
     ) -> BubbleFit:
         op = oi.optimized_params
         tc, m, w, a, b = op.tc, op.m, op.w, op.a, op.b
         t1, t2 = oi.t1, oi.t2
         c = LPPLSMath.get_c(op.c1, op.c2)
 
-        obs_within_t1_t2 = observations.filter_before_tc(tc)[t1_index:t2_index]
-        prices_in_range = super().is_price_in_range(
-            obs_within_t1_t2, self.filter_criteria.get("relative_error_max"), op
-        )
-
         tc_extra_space = self.filter_criteria.get("tc_extra_space")
         assert t2 + 1 <= tc <= t2 + ((t2 - t1) * tc_extra_space)
         assert self.filter_criteria.get("m_min") <= m <= self.filter_criteria.get("m_max")
         assert self.filter_criteria.get("w_min") <= w <= self.filter_criteria.get("w_max")
+
+        # if B is negative, the predicted price will increase in value as t tends to tc (because 0 < m < 1)
+        bubble_type = BubbleType.POSITIVE if b < 0 else BubbleType.NEGATIVE
+
+        D = FilterInterface.get_damping(m, w, b, c)
+        D_in_range = D >= self.filter_criteria.get("D_min")
+        if should_optimize and not D_in_range:
+            return BubbleFit([RejectionReason.ANY_REASON], type=bubble_type)
 
         oscillations_divisor = self.filter_criteria.get("oscillations_divisor")
         O_min = self.filter_criteria.get("O_min")
@@ -122,12 +130,23 @@ class FilterBitcoin2019B(FilterInterface):
         O_in_range = FilterInterface.are_oscillations_in_range(
             w, oscillations_divisor, tc, t1, t2, O_min, b, c, min_c_b_ratio
         )
+        if should_optimize and not O_in_range:
+            return BubbleFit([RejectionReason.ANY_REASON], type=bubble_type)
 
-        D = FilterInterface.get_damping(m, w, b, c)
-        D_in_range = D >= self.filter_criteria.get("D_min")
+        obs_within_t1_t2 = observations.filter_before_tc(tc)[t1_index:t2_index]
+        prices_in_range = super().is_price_in_range(
+            obs_within_t1_t2, self.filter_criteria.get("relative_error_max"), op
+        )
+        if should_optimize and not prices_in_range:
+            return BubbleFit([RejectionReason.ANY_REASON], type=bubble_type)
 
         passing_lomb_test = self.is_passing_lomb_test(obs_within_t1_t2, tc, m, a, b)
+        if should_optimize and not passing_lomb_test:
+            return BubbleFit([RejectionReason.ANY_REASON], type=bubble_type)
+
         passing_ar1_test = self.is_ar1_process(obs_within_t1_t2, op)
+        if should_optimize and not passing_ar1_test:
+            return BubbleFit([RejectionReason.ANY_REASON], type=bubble_type)
 
         conditions = {
             "O": O_in_range,
@@ -149,9 +168,6 @@ class FilterBitcoin2019B(FilterInterface):
             rejection_reasons.append(RejectionReason.LOMB_TEST)
         if not passing_ar1_test:
             rejection_reasons.append(RejectionReason.AR1_TEST)
-
-        # if B is negative, the predicted price will increase in value as t tends to tc (because 0 < m < 1)
-        bubble_type = BubbleType.POSITIVE if b < 0 else BubbleType.NEGATIVE
 
         return BubbleFit(rejection_reasons, type=bubble_type)
 

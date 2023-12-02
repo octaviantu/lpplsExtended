@@ -53,7 +53,7 @@ class ClosedPosition:
             return 0.0
         profit = 100 * (self.close_price - self.open_price) / self.open_price
         sign = 1 if self.order_type == OrderType.BUY else -1
-        return f'{round(sign *profit, 2)}%'
+        return f"{round(sign *profit, 2)}%"
 
     def compute_profit_absolute(self) -> float:
         abs_sum = (self.close_price * (self.position_size / self.open_price)) - self.position_size
@@ -73,10 +73,10 @@ class StrategyResult:
 
     def compute_profit_percent(self) -> str:
         if self.paid == 0.0:
-            return '0%'
+            return "0%"
         profit = 100 * (self.received - self.paid) / self.paid
-        return f'{round(profit, 2)}%'
-    
+        return f"{round(profit, 2)}%"
+
     def compute_profit_absolute(self) -> float:
         return self.received - self.paid
 

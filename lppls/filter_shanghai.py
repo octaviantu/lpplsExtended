@@ -104,7 +104,12 @@ class FilterShanghai(FilterInterface):
             return False, {}
 
     def check_bubble_fit(
-        self, fits: Dict[str, float], observations: ObservationSeries, t1_index: int, t2_index: int
+        self,
+        fits: Dict[str, float],
+        observations: ObservationSeries,
+        t1_index: int,
+        t2_index: int,
+        should_optimize: bool,
     ) -> BubbleFit:
         t1, t2, tc, m, w, a, b, c, c1, c2 = (
             fits[key] for key in ["t1", "t2", "tc", "m", "w", "a", "b", "c", "c1", "c2"]

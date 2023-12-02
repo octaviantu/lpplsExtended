@@ -14,7 +14,12 @@ class FilterInterface(TypeCheckBase):
 
     @abstractmethod
     def check_bubble_fit(
-        self, oi: OptimizedInterval, observations: ObservationSeries, t1_index: int, t2_index: int
+        self,
+        oi: OptimizedInterval,
+        observations: ObservationSeries,
+        t1_index: int,
+        t2_index: int,
+        should_optimize: bool,
     ) -> BubbleFit:
         pass
 

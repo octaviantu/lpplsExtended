@@ -67,6 +67,16 @@
       ]
     },
     {
+      "name": "All tickers backtest",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/lppls/demo/demo_all_tickers.py",
+      "args": [
+        "--backtest",
+        "95"
+      ]
+    },
+    {
       "name": "All tickers debug only etf",
       "type": "python",
       "request": "launch",

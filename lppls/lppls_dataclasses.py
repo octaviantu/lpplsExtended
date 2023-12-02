@@ -18,7 +18,10 @@ class RejectionReason(Enum):
     OSCILLATIONS = "oscillations"
     DAMPING = "damping"
     LOMB_TEST = "lomb_test"
-    AR1_TEST = "ar1_test"
+    AR1_TEST = ("ar1_test",)
+    # This is used when I want to optimise the time taken by the entire run.
+    # It should never appear in a plot.
+    ANY_REASON = "any_reason"
 
 
 @dataclass

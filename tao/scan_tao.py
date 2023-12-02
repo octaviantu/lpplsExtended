@@ -121,7 +121,7 @@ class ScanTao(TypeCheckBase):
 
         return bool(ema_condition and slow_stoch_condition and adx_condition and rsi_condition)
 
-    def discover_trending(self, test_date):
+    def discover_daily(self, test_date):
         # Establish the connection to the database
         conn = psycopg2.connect(**conn_params)
 
@@ -330,7 +330,7 @@ class ScanTao(TypeCheckBase):
     def backtest(self, days_ago: int = DEFAULT_BACKTEST_DAYS_BACK):
         for i in range(days_ago, -1, -1):
             test_date = du.days_ago(i)
-            self.discover_trending(test_date)
+            self.discover_daily(test_date)
 
 
 if __name__ == "__main__":
@@ -354,4 +354,4 @@ if __name__ == "__main__":
     if args.backtest != -1:
         ScanTao().backtest(days_ago=args.backtest)
     else:
-        ScanTao().discover_trending(du.today())
+        ScanTao().discover_daily(du.today())

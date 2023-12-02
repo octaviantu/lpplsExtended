@@ -86,14 +86,13 @@ class Peaks(TypeCheckBase):
 
         return peak_times_counter
 
-    def plot_peaks(self) -> Tuple[List[Peak], List[Peak], str]:
+    def plot_peaks(self, test_date) -> Tuple[List[Peak], List[Peak], str]:
         # Find drawups and drawdowns
         drawups = self.find_extremities(BubbleType.POSITIVE)
         drawdowns = self.find_extremities(BubbleType.NEGATIVE)
 
         # Create subplots for drawups and drawdowns
-        today_date = du.today()
-        image_name = f"{self.ticker} on {today_date}"
+        image_name = f"{self.ticker} on {test_date}"
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(14, 10))
         fig.canvas.manager.set_window_title(image_name)
 

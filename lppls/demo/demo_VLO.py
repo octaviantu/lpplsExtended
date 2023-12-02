@@ -17,7 +17,7 @@ from lppls_dataclasses import Observation, ObservationSeries
 
 def execute_lppls_logic(observations, filter_type, filter_file):
     # LPPLS Model for filtered data
-    sornette = Sornette(observations, filter_type, filter_file)
+    sornette = Sornette(observations, filter_type, filter_file, should_optimize=False)
     # sornette.plot_filimonov()
     sornette.plot_fit()
 
