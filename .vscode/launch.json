@@ -72,8 +72,10 @@
       "request": "launch",
       "program": "${workspaceFolder}/lppls/demo/demo_all_tickers.py",
       "args": [
-        "--backtest",
-        "95"
+        "--backtest-start",
+        "105",
+        "--backtest-end",
+        "104"
       ]
     },
     {
@@ -94,6 +96,15 @@
       "args": [
         "--type",
         "stock"
+      ]
+    },
+    {
+      "name": "All tickers profile",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/lppls/demo/demo_all_tickers.py",
+      "args": [
+        "--profile"
       ]
     },
     {

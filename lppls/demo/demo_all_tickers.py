@@ -45,7 +45,7 @@ from typechecking import TypeCheckBase
 from date_utils import DateUtils as du
 from db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
 from typing import List
-
+import cProfile
 
 # Convert warnings to exceptions
 warnings.filterwarnings("error", category=RuntimeWarning)
@@ -122,7 +122,7 @@ class AllTickers(TypeCheckBase):
         return None, [0.0], sornette
 
     def plot_specific(self, test_date: str) -> None:
-        SPECIFIC_TICKERS = ["EQT"]
+        SPECIFIC_TICKERS = ["PDD", "BMY"]
         conn = self.get_connection()
         cursor = conn.cursor()
         for ticker in SPECIFIC_TICKERS:
@@ -159,7 +159,7 @@ class AllTickers(TypeCheckBase):
             sornette.plot_bubble_scores(bubble_scores, ticker, bubble_start, best_end_cluster)
 
             sornette.plot_rejection_reasons(bubble_scores, ticker)
-        plt.show(block=True)
+        plt.show(block=False)
 
     def discover_daily(self, test_date: str, should_optimize=False) -> None:
         conn = self.get_connection()
@@ -241,8 +241,8 @@ class AllTickers(TypeCheckBase):
                 )
             )
 
-            recent_visible_windows = (
-                RECENT_VISIBLE_WINDOWS / 2 if should_optimize else RECENT_VISIBLE_WINDOWS
+            recent_visible_windows: int = (
+                RECENT_VISIBLE_WINDOWS // 2 if should_optimize else RECENT_VISIBLE_WINDOWS
             )
             plotted_time = max(recent_visible_windows, days_from_start)
             bubble_scores = self.get_bubble_scores(sornette, plotted_time)
@@ -304,8 +304,8 @@ class AllTickers(TypeCheckBase):
             for asset in bubble_assets:
                 writer.writerow(asset)
 
-    def backtest(self, days_ago: int = DEFAULT_BACKTEST_DAYS_BACK_LPPLS) -> None:
-        for i in range(days_ago, -1, -1):
+    def backtest(self, backtest_start: int, backtest_end: int) -> None:
+        for i in range(backtest_start, backtest_end, -1):
             test_date = du.days_ago(i)
             self.discover_daily(test_date, should_optimize=True)
 
@@ -316,12 +316,20 @@ if __name__ == "__main__":
 
     # Add the --backtest argument
     parser.add_argument(
-        "--backtest",
+        "--backtest-start",
         type=int,
-        nargs="?",
-        help="Number of days to run the backtest for",
+        nargs='?',
+        help="Number of days to start the backtest from today (or the end date if specified).",
         const=DEFAULT_BACKTEST_DAYS_BACK_LPPLS,
-        default=-1,
+        default=-1
+    )
+    parser.add_argument(
+        "--backtest-end",
+        type=int,
+        nargs='?',
+        help="Number of days to end the backtest from today. Requires --backtest-start to be set.",
+        const=DEFAULT_BACKTEST_DAYS_BACK_LPPLS,
+        default=-1
     )
     parser.add_argument("--specific", action="store_true", help="Plot only specific stocks")
     parser.add_argument(
@@ -330,18 +338,27 @@ if __name__ == "__main__":
         help="Apply smaller and more fitting windows",
         default=False,
     )
+    parser.add_argument("--profile", action="store_true", help="Enable profiling")
 
     # Parse the arguments
     args = parser.parse_args()
+
+    # Check if --backtest-end is provided while --backtest-start is not
+    if args.backtest_end != -1 and args.backtest_start == -1:
+        parser.error("When specifying --backtest-end, you must also specify --backtest-start.")
+
     all_tickers = AllTickers(args.strict)
 
     # Check if backtest argument is provided
-    if args.specific:
+    if args.profile:
+        cProfile.run("AllTickers(False).plot_specific(du.today())", "profile_output.pstats")
+    elif args.specific:
         all_tickers.plot_specific(du.today())
-    elif args.backtest != -1:
-        all_tickers.backtest(days_ago=args.backtest)
+    elif args.backtest_start != -1:
+        all_tickers.backtest(args.backtest_start, args.backtest_end)
     else:
         all_tickers.discover_daily(du.today())
+
 
 
 # To show only a specific set of tickers:
@@ -351,4 +368,7 @@ if __name__ == "__main__":
 # python demo_all_tickers.py --strict
 
 # To backtest:
-# python demo_all_tickers.py --backtest 95
+# python demo_all_tickers.py --backtest-start 95
+
+# To backtest with range:
+# python demo_all_tickers.py --backtest-start 95 --backtest-end 90

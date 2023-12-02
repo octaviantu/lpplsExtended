@@ -5,6 +5,7 @@ build/
 temp_out/
 plots/
 mac_automation/logs/
+profiling/
 
 .idea
 .DS_Store
