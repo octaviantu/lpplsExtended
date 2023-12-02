@@ -1,5 +1,5 @@
 import psycopg2
-from typing import List
+from typing import List, Tuple
 from db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
 from db_dataclasses import (
     Suggestion,
@@ -13,7 +13,7 @@ from abc import abstractmethod
 from db_dataclasses import StrategyType
 from psycopg2.extras import DictCursor
 from typechecking import TypeCheckBase
-
+from performance_defaults import STOP_LOSS, MIN_PROFIT
 
 class TradeSuggestions(TypeCheckBase):
     def create_if_not_exists(self, cursor) -> None:
@@ -29,7 +29,7 @@ class TradeSuggestions(TypeCheckBase):
                     CREATE TYPE order_type AS ENUM ('BUY', 'SELL');
                 END IF;
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'close_reason') THEN
-                    CREATE TYPE close_reason AS ENUM ('SUCCESS', 'TIMEOUT');
+                    CREATE TYPE close_reason AS ENUM ('VALUE_INCREASE', 'KELTNER CHANNELS', 'TIMEOUT');
                 END IF;
             END
             $$;
@@ -111,10 +111,6 @@ class TradeSuggestions(TypeCheckBase):
         )
         suggestions = cursor.fetchall()
 
-        paid = 0.0
-        received = 0.0
-        succesful_count = 0
-        timeout_count = 0
         STRATEGY_TYPE = self.getStrategyType()
         closed_positions = []
 
@@ -142,21 +138,17 @@ class TradeSuggestions(TypeCheckBase):
 
             last_date, last_close_price = str(row[0]), row[1]
 
-            # Check conditions to close the position
-            close_reason = self.maybe_close(order_type, ticker, open_date, last_date, cursor)
+            sign = 1 if order_type == OrderType.BUY else -1
+            profit = ((last_close_price - open_price) / open_price ) * sign
+
+            close_reason = None
+            if profit <= STOP_LOSS:
+                close_reason = CloseReason.STOP_LOSS
+            elif profit >= MIN_PROFIT:
+                # Check conditions to close the position
+                close_reason = self.maybe_close(order_type, ticker, open_date, last_date, cursor)
 
             if close_reason:
-                if close_reason == CloseReason.SUCCESS:
-                    succesful_count += 1
-                elif close_reason == CloseReason.TIMEOUT:
-                    timeout_count += 1
-
-                if order_type == OrderType.BUY:
-                    paid += position_size
-                    received += last_close_price * (position_size / open_price)
-                else:
-                    paid += last_close_price * (position_size / open_price)
-                    received += position_size
 
                 closed_positions.append(
                     ClosedPosition(
@@ -193,10 +185,13 @@ class TradeSuggestions(TypeCheckBase):
                 )
                 conn.commit()
 
+        paid, received, succesful_count, timeout_count, stop_loss_count = self.aggregate_counts(closed_positions)
+
         strategy_results = StrategyResult(
             strategy_type=STRATEGY_TYPE,
             succesful_count=succesful_count,
             timeout_count=timeout_count,
+            stop_loss_count=stop_loss_count,
             paid=paid,
             received=received,
             closed_positions=closed_positions,
@@ -224,10 +219,7 @@ class TradeSuggestions(TypeCheckBase):
         )
         suggestions = cursor.fetchall()
 
-        paid = 0.0
-        received = 0.0
-        succesful_count = 0
-        timeout_count = 0
+
         STRATEGY_TYPE = self.getStrategyType()
         closed_positions = []
 
@@ -239,19 +231,7 @@ class TradeSuggestions(TypeCheckBase):
             open_date = str(suggestion["open_date"])
             last_date = str(suggestion["close_date"])
             close_price = suggestion["close_price"]
-            close_reason = CloseReason[suggestion["close_reason"]]
-
-            if close_reason == CloseReason.SUCCESS:
-                succesful_count += 1
-            elif close_reason == CloseReason.TIMEOUT:
-                timeout_count += 1
-
-            if order_type == OrderType.BUY:
-                paid += position_size
-                received += close_price * (position_size / open_price)
-            else:
-                paid += close_price * (position_size / open_price)
-                received += position_size
+            close_reason = CloseReason[suggestion["close_reason"]]            
 
             closed_positions.append(
                 ClosedPosition(
@@ -270,10 +250,13 @@ class TradeSuggestions(TypeCheckBase):
         # Close the cursor and the connection
         cursor.close()
 
+        paid, received, succesful_count, timeout_count, stop_loss_count = self.aggregate_counts(closed_positions)
+
         return StrategyResult(
             strategy_type=STRATEGY_TYPE,
             succesful_count=succesful_count,
             timeout_count=timeout_count,
+            stop_loss_count=stop_loss_count,
             paid=paid,
             received=received,
             closed_positions=closed_positions,
@@ -289,3 +272,37 @@ class TradeSuggestions(TypeCheckBase):
     @abstractmethod
     def getStrategyType(self) -> StrategyType:
         pass
+
+    def aggregate_counts(self, closed_positions: List[ClosedPosition]) -> Tuple[float, float, int, int, int]:
+        paid = 0.0
+        received = 0.0
+        succesful_count = 0
+        timeout_count = 0
+        stop_loss_count = 0
+
+        for closed_position in closed_positions:
+            open_price = closed_position.open_price
+            position_size = closed_position.position_size
+            order_type = closed_position.order_type
+            close_price = closed_position.close_price
+            close_reason = closed_position.close_reason
+
+            if not close_reason:
+                continue
+            if close_reason == CloseReason.TIMEOUT:
+                timeout_count += 1
+            elif close_reason == CloseReason.STOP_LOSS:
+                stop_loss_count += 1
+            elif close_reason in [CloseReason.KELTNER_CHANNELS, CloseReason.VALUE_INCREASE]:
+                succesful_count += 1
+            else:
+                raise Exception("Invalid close reason")
+
+            if order_type == OrderType.BUY:
+                paid += position_size
+                received += close_price * (position_size / open_price)
+            else:
+                paid += close_price * (position_size / open_price)
+                received += position_size
+
+        return paid, received, succesful_count, timeout_count, stop_loss_count

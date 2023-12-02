@@ -4,6 +4,7 @@
         "./lppls",
         "./lppls/metrics",
         "./lppls/bubble_bounds",
+        "./previous_performance",
         "./prices_db_management",
         "./tao"
     ]

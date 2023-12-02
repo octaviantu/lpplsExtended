@@ -91,13 +91,14 @@ class ScorePreviousResults(TypeCheckBase):
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, 'w') as file:
             # Write the header line
-            file.write("Strategy Type, Successful Count, Timeout Count, Paid, Received, Closed Positions, Profit Percent, Profit Absolute, Trade Count\n")
+            file.write("Strategy Type, Successful Count, Timeout Count, Stop Loss Count, Paid, Received, Closed Positions, Profit Percent, Profit Absolute, Trade Count\n")
 
             for result in strategyResults:
                 # Extracting each field
                 strategy_type = result.strategy_type.value
                 successful_count = result.succesful_count   
                 timeout_count = result.timeout_count
+                stop_loss_count = result.stop_loss_count
                 paid = round(result.paid, 2)
                 received = round(result.received, 2)
                 closed_positions = len(result.closed_positions)  # Assuming you want the count of closed positions
@@ -108,7 +109,7 @@ class ScorePreviousResults(TypeCheckBase):
                 trade_count = round(result.compute_trade_count(), 2)
 
                 # Writing data to the file
-                file.write(f"{strategy_type}, {successful_count}, {timeout_count}, {paid}, {received}, {closed_positions}, {profit_percent}, {profit_absolute}, {trade_count}\n")
+                file.write(f"{strategy_type}, {successful_count}, {timeout_count}, {stop_loss_count}, {paid}, {received}, {closed_positions}, {profit_percent}, {profit_absolute}, {trade_count}\n")
 
 
     def backtest(self, days_ago: int = 95):

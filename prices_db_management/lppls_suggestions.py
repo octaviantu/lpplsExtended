@@ -84,7 +84,7 @@ class LpplsSuggestions(TradeSuggestions):
             raise Exception("Invalid order type")
 
         if profit >= CLOSE_THRESHOLD:
-            return CloseReason.SUCCESS
+            return CloseReason.VALUE_INCREASE
         if du.date_to_ordinal(
             latest_pop_date
         ) + MAX_DAYS_AFTER_BUBBLE_POP_CLOSE_LPPLS < du.date_to_ordinal(last_date):

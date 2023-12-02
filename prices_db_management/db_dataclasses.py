@@ -15,7 +15,9 @@ class StrategyType(Enum):
 
 class CloseReason(Enum):
     TIMEOUT = "TIMEOUT"
-    SUCCESS = "SUCCESS"
+    KELTNER_CHANNELS = "KELTNER_CHANNELS"
+    VALUE_INCREASE = "VALUE_INCREASE"
+    STOP_LOSS = "STOP_LOSS"
 
 
 @dataclass
@@ -64,6 +66,7 @@ class StrategyResult:
     strategy_type: StrategyType
     succesful_count: int
     timeout_count: int
+    stop_loss_count: int
     paid: float
     received: float
     closed_positions: List[ClosedPosition]

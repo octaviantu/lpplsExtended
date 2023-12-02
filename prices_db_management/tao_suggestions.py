@@ -8,7 +8,7 @@ from tao_dataclasses import PriceData, MAX_DAYS_UNTIL_CLOSE_POSITION_TAO
 from date_utils import DateUtils as du
 
 STRATEGY_TYPE = StrategyType.TAO_RSI
-
+MIN_PROFIT = 0.03  # 5%
 
 class TaoSuggestions(TradeSuggestions):
     def __init__(self):
@@ -45,14 +45,21 @@ class TaoSuggestions(TradeSuggestions):
         # Get pricing data for the ticker
         cursor.execute(
             """
-            SELECT date, ticker, close_price, high_price, low_price FROM pricing_history
-            WHERE ticker = %s
-            AND date <= %s
-            ORDER BY date ASC LIMIT %s;
+            SELECT sub.date, sub.ticker, sub.close_price, sub.high_price, sub.low_price
+            FROM (
+                SELECT date, ticker, close_price, high_price, low_price
+                FROM pricing_history
+                WHERE ticker = %s
+                AND date <= %s
+                ORDER BY date DESC
+                LIMIT %s
+            ) AS sub
+            ORDER BY sub.date ASC;
         """,
             (ticker, last_date, ATR_RANGE + 1),
         )
         rows = cursor.fetchall()
+
 
         pricing_data = [
             PriceData(
@@ -66,8 +73,8 @@ class TaoSuggestions(TradeSuggestions):
         ]
 
         if self.price_technicals.is_outside_atr_band(pricing_data, order_type):
-            return CloseReason.SUCCESS
-        if du.date_to_ordinal(open_date) + MAX_DAYS_UNTIL_CLOSE_POSITION_TAO < du.date_to_ordinal(
+            return CloseReason.KELTNER_CHANNELS
+        elif du.date_to_ordinal(open_date) + MAX_DAYS_UNTIL_CLOSE_POSITION_TAO < du.date_to_ordinal(
             last_date
         ):
             return CloseReason.TIMEOUT

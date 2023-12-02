@@ -1,0 +1,2 @@
+STOP_LOSS = - 0.15  # 15%
+MIN_PROFIT = 0.03  # 5%
