@@ -27,10 +27,10 @@ from lppls_defaults import (
     T1_STEP,
     T2_STEP,
     MAX_SEARCHES,
-    T1_STEP_STRICT,
-    SMALLEST_WINDOW_SIZE_STRICT,
-    LARGEST_WINDOW_SIZE_STRICT,
+    OPTIMIZE_T1_STEP,
     RECENT_VISIBLE_WINDOWS,
+    OPTIMIZE_DISQUALIFY_PRICE_DIFF,
+    OPTIMIZE_DISQUALIFY_TIME,
 )
 import argparse
 from matplotlib import pyplot as plt
@@ -72,13 +72,6 @@ DEFAULT_BACKTEST_DAYS_BACK_LPPLS = 40
 
 
 class AllTickers(TypeCheckBase):
-    def __init__(self, strict) -> None:
-        self.strict = strict
-        self.default_fitting_params = {
-            "t1_step": T1_STEP_STRICT if strict else T1_STEP,
-            "smallest_window_size": SMALLEST_WINDOW_SIZE_STRICT if strict else SMALLEST_WINDOW_SIZE,
-            "largest_window_size": LARGEST_WINDOW_SIZE_STRICT if strict else LARGEST_WINDOW_SIZE,
-        }
 
     def get_connection(self):
         return psycopg2.connect(
@@ -89,13 +82,13 @@ class AllTickers(TypeCheckBase):
             port=DB_PORT,
         )
 
-    def get_bubble_scores(self, sornette: Sornette, recent_windows: int) -> List[BubbleScore]:
+    def get_bubble_scores(self, sornette: Sornette, recent_windows: int, t1_step: int) -> List[BubbleScore]:
         return sornette.compute_bubble_scores(
             workers=8,
             recent_windows=recent_windows,
-            window_size=self.default_fitting_params["largest_window_size"],
-            smallest_window_size=self.default_fitting_params["smallest_window_size"],
-            t1_increment=self.default_fitting_params["t1_step"],
+            window_size=LARGEST_WINDOW_SIZE,
+            smallest_window_size=SMALLEST_WINDOW_SIZE,
+            t1_increment=t1_step,
             t2_increment=T2_STEP,
             max_searches=MAX_SEARCHES,
         )
@@ -107,10 +100,21 @@ class AllTickers(TypeCheckBase):
         filter_file: str,
         should_optimize: bool,
     ) -> tuple[BubbleType | None, List[float], Sornette]:
+        if should_optimize:
+            min_price = min([o.price for o in observations[OPTIMIZE_DISQUALIFY_TIME:]])
+            max_price = max([o.price for o in observations[OPTIMIZE_DISQUALIFY_TIME:]])
+            last_price = observations[-1].price
+            has_not_risen_enough = (last_price - min_price) / min_price < OPTIMIZE_DISQUALIFY_PRICE_DIFF
+            has_not_fallen_enough = (max_price - last_price) / last_price < OPTIMIZE_DISQUALIFY_PRICE_DIFF
+            if has_not_risen_enough and has_not_fallen_enough:
+                print(f'Has not fluctuated enough, min: {min_price}, max: {max_price}, last: {last_price}')
+                return None, [0.0], Sornette(observations, filter_type, filter_file, False)
+            
         sornette = Sornette(observations, filter_type, filter_file, should_optimize)
 
         relevant_windows = 1 if should_optimize else RECENT_RELEVANT_WINDOWS
-        bubble_scores = self.get_bubble_scores(sornette, relevant_windows)
+        t1_step = T1_STEP if should_optimize else OPTIMIZE_T1_STEP
+        bubble_scores = self.get_bubble_scores(sornette, relevant_windows, t1_step)
         pos_conf = [bs.pos_conf for bs in bubble_scores]
         neg_conf = [bs.neg_conf for bs in bubble_scores]
 
@@ -151,7 +155,7 @@ class AllTickers(TypeCheckBase):
                 drawups if bubble_type == BubbleType.POSITIVE else drawdowns,
             )
             sornette.plot_fit(bubble_start)
-            bubble_scores = self.get_bubble_scores(sornette, 50)
+            bubble_scores = self.get_bubble_scores(sornette, 50, T1_STEP)
             best_end_cluster = PopDates().compute_bubble_end_cluster(
                 bubble_start, bubble_scores, test_date
             )
@@ -245,7 +249,7 @@ class AllTickers(TypeCheckBase):
                 RECENT_VISIBLE_WINDOWS // 2 if should_optimize else RECENT_VISIBLE_WINDOWS
             )
             plotted_time = max(recent_visible_windows, days_from_start)
-            bubble_scores = self.get_bubble_scores(sornette, plotted_time)
+            bubble_scores = self.get_bubble_scores(sornette, plotted_time, T1_STEP)
 
             best_end_cluster = PopDates().compute_bubble_end_cluster(
                 start_time, bubble_scores, test_date
@@ -332,12 +336,6 @@ if __name__ == "__main__":
         default=-1
     )
     parser.add_argument("--specific", action="store_true", help="Plot only specific stocks")
-    parser.add_argument(
-        "--strict",
-        action="store_true",
-        help="Apply smaller and more fitting windows",
-        default=False,
-    )
     parser.add_argument("--profile", action="store_true", help="Enable profiling")
 
     # Parse the arguments
@@ -347,11 +345,11 @@ if __name__ == "__main__":
     if args.backtest_end != -1 and args.backtest_start == -1:
         parser.error("When specifying --backtest-end, you must also specify --backtest-start.")
 
-    all_tickers = AllTickers(args.strict)
+    all_tickers = AllTickers()
 
     # Check if backtest argument is provided
     if args.profile:
-        cProfile.run("AllTickers(False).plot_specific(du.today())", "profile_output.pstats")
+        cProfile.run("AllTickers().backtest(123, 122)", "profile_output.pstats")
     elif args.specific:
         all_tickers.plot_specific(du.today())
     elif args.backtest_start != -1:
@@ -363,9 +361,6 @@ if __name__ == "__main__":
 
 # To show only a specific set of tickers:
 # python demo_all_tickers.py --specific
-
-# To use more windows for fitting:
-# python demo_all_tickers.py --strict
 
 # To backtest:
 # python demo_all_tickers.py --backtest-start 95

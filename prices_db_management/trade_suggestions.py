@@ -13,7 +13,11 @@ from abc import abstractmethod
 from db_dataclasses import StrategyType
 from psycopg2.extras import DictCursor
 from typechecking import TypeCheckBase
-from performance_defaults import STOP_LOSS, MIN_PROFIT
+
+STOP_LOS_THRESHOLD = -0.1  # 10%
+# Over thit profit, we check if we should close. This is a minimum required to close.
+# However, implementations of this class will have different criteria.
+MIN_PROFIT_THREDHOLD = 0.05  # 5%
 
 
 class TradeSuggestions(TypeCheckBase):
@@ -143,9 +147,9 @@ class TradeSuggestions(TypeCheckBase):
             profit = ((last_close_price - open_price) / open_price) * sign
 
             close_reason = None
-            if profit <= STOP_LOSS:
+            if profit <= STOP_LOS_THRESHOLD:
                 close_reason = CloseReason.STOP_LOSS
-            elif profit >= MIN_PROFIT:
+            elif profit >= MIN_PROFIT_THREDHOLD:
                 # Check conditions to close the position
                 close_reason = self.maybe_close(order_type, ticker, open_date, last_date, cursor)
 

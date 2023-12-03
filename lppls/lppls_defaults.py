@@ -1,14 +1,10 @@
 LARGEST_WINDOW_SIZE = 150  # working days in 7 months
 SMALLEST_WINDOW_SIZE = 30
 
-LARGEST_WINDOW_SIZE_STRICT = 180
-SMALLEST_WINDOW_SIZE_STRICT = 20
-
 RECENT_VISIBLE_WINDOWS = 200
 
 # t1 is set to 5 in the Shanghai paper but there they move it between 125 and 750
 T1_STEP = 2
-T1_STEP_STRICT = 1
 
 # t2 of 5 is used in the Bitcoin paper
 T2_STEP = 1
@@ -42,3 +38,14 @@ W_STEP = 5
 # Dissection of Bitcoin’s Multiscale Bubble History from January 2012 to February 2018
 MIN_NR_CLUSTERS = 2
 MAX_NR_CLUSTERS = 10
+
+
+OPTIMIZE_DISQUALIFY_PRICE_DIFF = 0.25
+OPTIMIZE_DISQUALIFY_TIME = 8 * 22 # 8 months, with working days
+OPTIMIZE_T1_STEP = 4
+
+
+# These could be used for a stricter fit.However, that is not implemented at present.
+LARGEST_WINDOW_SIZE_STRICT = 180
+SMALLEST_WINDOW_SIZE_STRICT = 20
+T1_STEP_STRICT = 1

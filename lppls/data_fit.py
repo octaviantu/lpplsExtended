@@ -55,9 +55,6 @@ class DataFit(TypeCheckBase):
     ) -> OptimizedParams | None:
         return self.filter.fit(max_searches, observations, minimizer)
 
-    def parallel_compute_t2_fits(self, **kwargs) -> List[IntervalFits]:
-        return self.parallel_compute_t2_recent_fits(np.inf, **kwargs)
-
     def parallel_compute_t2_recent_fits(
         self,
         recent_windows,

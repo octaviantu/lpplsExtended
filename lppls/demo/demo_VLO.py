@@ -21,7 +21,7 @@ def execute_lppls_logic(observations, filter_type, filter_file):
     # sornette.plot_filimonov()
     sornette.plot_fit()
 
-    res_filtered = sornette.parallel_compute_t2_fits(
+    res_filtered = sornette.parallel_compute_recent_t2_fits(
         workers=8,
         window_size=LARGEST_WINDOW_SIZE,
         smallest_window_size=SMALLEST_WINDOW_SIZE,

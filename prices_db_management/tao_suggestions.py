@@ -8,7 +8,6 @@ from tao_dataclasses import PriceData, MAX_DAYS_UNTIL_CLOSE_POSITION_TAO
 from date_utils import DateUtils as du
 
 STRATEGY_TYPE = StrategyType.TAO_RSI
-MIN_PROFIT = 0.03  # 5%
 
 
 class TaoSuggestions(TradeSuggestions):

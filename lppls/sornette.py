@@ -45,9 +45,6 @@ class Sornette(TypeCheckBase):
         assert op is not None
         self.data_fit.plot_fit(bubble_start, op)
 
-    def parallel_compute_t2_fits(self, **kwargs):
-        return self.data_fit.parallel_compute_t2_fits(**kwargs)
-
     def compute_bubble_scores(self, **kwargs) -> List[BubbleScore]:
         all_fits = self.data_fit.parallel_compute_t2_recent_fits(**kwargs)
         return self.bubble_scores.compute_bubble_scores(all_fits, self.should_optimize)

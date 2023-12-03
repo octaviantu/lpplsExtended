@@ -9,7 +9,7 @@ from date_utils import DateUtils as du
 STRATEGY_TYPE = StrategyType.SORNETTE
 
 MAX_DAYS_AFTER_BUBBLE_POP_CLOSE_LPPLS = 30  # 1 month
-CLOSE_THRESHOLD = 0.15  # 15%
+CLOSE_THRESHOLD_LPPLS = 0.10  # 10%
 STRATEGY_TYPE = StrategyType.SORNETTE
 
 
@@ -83,7 +83,7 @@ class LpplsSuggestions(TradeSuggestions):
         else:
             raise Exception("Invalid order type")
 
-        if profit >= CLOSE_THRESHOLD:
+        if profit >= CLOSE_THRESHOLD_LPPLS:
             return CloseReason.VALUE_INCREASE
         if du.date_to_ordinal(
             latest_pop_date
