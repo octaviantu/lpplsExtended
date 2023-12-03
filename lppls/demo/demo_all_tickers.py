@@ -100,15 +100,6 @@ class AllTickers(TypeCheckBase):
         filter_file: str,
         should_optimize: bool,
     ) -> tuple[BubbleType | None, List[float], Sornette]:
-        if should_optimize:
-            min_price = min([o.price for o in observations[OPTIMIZE_DISQUALIFY_TIME:]])
-            max_price = max([o.price for o in observations[OPTIMIZE_DISQUALIFY_TIME:]])
-            last_price = observations[-1].price
-            has_not_risen_enough = (last_price - min_price) / min_price < OPTIMIZE_DISQUALIFY_PRICE_DIFF
-            has_not_fallen_enough = (max_price - last_price) / last_price < OPTIMIZE_DISQUALIFY_PRICE_DIFF
-            if has_not_risen_enough and has_not_fallen_enough:
-                print(f'Has not fluctuated enough, min: {min_price}, max: {max_price}, last: {last_price}')
-                return None, [0.0], Sornette(observations, filter_type, filter_file, False)
             
         sornette = Sornette(observations, filter_type, filter_file, should_optimize)
 
@@ -185,6 +176,10 @@ class AllTickers(TypeCheckBase):
         bubble_assets = []
         suggestions = []
 
+        daily_plots_dir_path = os.path.join(PLOTS_DIR, test_date)
+        if not os.path.exists(daily_plots_dir_path):
+            os.makedirs(daily_plots_dir_path)
+
         print(f"Will go through {len(tickers)} tickers.")
         for index, (ticker,) in enumerate(tickers):
             print(f"Now checking {ticker}, step {index} of {len(tickers)}")
@@ -228,10 +223,10 @@ class AllTickers(TypeCheckBase):
 
             if bubble_type == BubbleType.POSITIVE:
                 positive_bubbles.append(ticker)
-                dir_path = os.path.join(PLOTS_DIR, test_date, "positive")
+                bubble_dir_path = os.path.join(daily_plots_dir_path, "positive")
             elif bubble_type == BubbleType.NEGATIVE:
                 negative_bubbles.append(ticker)
-                dir_path = os.path.join(PLOTS_DIR, test_date, "negative")
+                bubble_dir_path = os.path.join(daily_plots_dir_path, "negative")
 
             start_time = sornette.compute_start_time(
                 observations,
@@ -256,17 +251,17 @@ class AllTickers(TypeCheckBase):
             )
             sornette.plot_bubble_scores(bubble_scores, ticker, start_time, best_end_cluster)
 
-            if not os.path.exists(dir_path):
-                os.makedirs(dir_path)
+            if not os.path.exists(bubble_dir_path):
+                os.makedirs(bubble_dir_path)
 
             # Save the figure
             bubble_score_file_name = f"{ticker}.png"
-            bubble_score_file_path = os.path.join(dir_path, bubble_score_file_name)
+            bubble_score_file_path = os.path.join(bubble_dir_path, bubble_score_file_name)
             plt.savefig(bubble_score_file_path, dpi=300, bbox_inches="tight")
 
             if not should_optimize:
                 rejections_file_name = f"{ticker}-rejections-breakdown.png"
-                rejected_file_path = os.path.join(dir_path, rejections_file_name)
+                rejected_file_path = os.path.join(bubble_dir_path, rejections_file_name)
                 sornette.plot_rejection_reasons(bubble_scores, ticker)
                 plt.savefig(rejected_file_path, dpi=300, bbox_inches="tight")
 
@@ -301,7 +296,7 @@ class AllTickers(TypeCheckBase):
 
         LpplsSuggestions().write_suggestions(suggestions)
 
-        csv_file_path = os.path.join(PLOTS_DIR, test_date, "bubble_assets.csv")
+        csv_file_path = os.path.join(daily_plots_dir_path, "bubble_assets.csv")
         with open(csv_file_path, mode="w", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=CSV_COLUMN_NAMES)
             writer.writeheader()
