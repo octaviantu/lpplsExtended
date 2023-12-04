@@ -258,14 +258,14 @@ class AllTickers(TypeCheckBase):
             bubble_score_file_name = f"{ticker}.png"
             bubble_score_file_path = os.path.join(bubble_dir_path, bubble_score_file_name)
             plt.savefig(bubble_score_file_path, dpi=300, bbox_inches="tight")
-            plt.close()
+            plt.close('all')
 
             if not should_optimize:
                 rejections_file_name = f"{ticker}-rejections-breakdown.png"
                 rejected_file_path = os.path.join(bubble_dir_path, rejections_file_name)
                 sornette.plot_rejection_reasons(bubble_scores, ticker)
                 plt.savefig(rejected_file_path, dpi=300, bbox_inches="tight")
-                plt.close()
+                plt.close('all')
 
             bubble_assets.append(
                 {

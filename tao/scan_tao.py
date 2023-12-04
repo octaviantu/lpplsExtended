@@ -217,7 +217,7 @@ class ScanTao(TypeCheckBase):
                 plt.legend()
                 plot_path = os.path.join(extra_plot_dir, f"{ticker}.png")
                 plt.savefig(plot_path)
-                plt.close()
+                plt.close('all')
 
                 # Additional Plotting for Technical Indicators
                 plt.figure(figsize=(15, 10))
@@ -267,7 +267,7 @@ class ScanTao(TypeCheckBase):
                 plot_path = os.path.join(plot_dir, f"{ticker}_technical.png")
                 plt.tight_layout()
                 plt.savefig(plot_path)
-                plt.close()
+                plt.close('all')
 
                 # Plot ATRs
                 atrs = price_technicals.calculate_atr(prices)
@@ -319,7 +319,7 @@ class ScanTao(TypeCheckBase):
                 plot_path = os.path.join(extra_plot_dir, f"{ticker}_ATRs.png")
                 plt.tight_layout()
                 plt.savefig(plot_path)
-                plt.close()
+                plt.close('all')
 
         TaoSuggestions().write_suggestions(suggestions)
 
