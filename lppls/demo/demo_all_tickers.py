@@ -117,7 +117,7 @@ class AllTickers(TypeCheckBase):
         return None, [0.0], sornette
 
     def plot_specific(self, test_date: str) -> None:
-        SPECIFIC_TICKERS = ["PDD", "BMY"]
+        SPECIFIC_TICKERS = ["TJX"]
         conn = self.get_connection()
         cursor = conn.cursor()
         for ticker in SPECIFIC_TICKERS:
@@ -154,7 +154,7 @@ class AllTickers(TypeCheckBase):
             sornette.plot_bubble_scores(bubble_scores, ticker, bubble_start, best_end_cluster)
 
             sornette.plot_rejection_reasons(bubble_scores, ticker)
-        plt.show(block=False)
+        plt.show(block=True)
 
     def discover_daily(self, test_date: str, should_optimize=False) -> None:
         conn = self.get_connection()
@@ -258,12 +258,14 @@ class AllTickers(TypeCheckBase):
             bubble_score_file_name = f"{ticker}.png"
             bubble_score_file_path = os.path.join(bubble_dir_path, bubble_score_file_name)
             plt.savefig(bubble_score_file_path, dpi=300, bbox_inches="tight")
+            plt.close()
 
             if not should_optimize:
                 rejections_file_name = f"{ticker}-rejections-breakdown.png"
                 rejected_file_path = os.path.join(bubble_dir_path, rejections_file_name)
                 sornette.plot_rejection_reasons(bubble_scores, ticker)
                 plt.savefig(rejected_file_path, dpi=300, bbox_inches="tight")
+                plt.close()
 
             bubble_assets.append(
                 {
@@ -306,6 +308,13 @@ class AllTickers(TypeCheckBase):
     def backtest(self, backtest_start: int, backtest_end: int) -> None:
         for i in range(backtest_start, backtest_end, -1):
             test_date = du.days_ago(i)
+            day_of_week = du.day_of_week(test_date)
+
+            if day_of_week == 'Sunday':
+                print(f"Skipping {test_date} because it is a Sunday.")
+                continue
+
+            print(f"Will run simulation for: {test_date}, Day of Week: {day_of_week}")
             self.discover_daily(test_date, should_optimize=True)
 
 

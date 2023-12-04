@@ -23,3 +23,8 @@ class DateUtils(TypeCheckBase):
     @staticmethod
     def days_ago(number_of_days: int) -> str:
         return (datetime.now() - timedelta(days=number_of_days)).strftime("%Y-%m-%d")
+    
+    @staticmethod
+    def day_of_week(day: str) -> str:
+        date_obj = datetime.strptime(day, '%Y-%m-%d').date()  # Parse the string to a date object
+        return date_obj.strftime('%A')  # Returns the full name of the weekday
