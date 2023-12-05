@@ -53,7 +53,8 @@ def main():
     )
     test_date = du.today()
     cursor = conn.cursor()
-    query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' AND date <= '{test_date}' ORDER BY date ASC;"
+    # Never select today - we run this before the market opens
+    query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' AND date < '{test_date}' ORDER BY date ASC;"
     cursor.execute(query)
     rows = cursor.fetchall()
 

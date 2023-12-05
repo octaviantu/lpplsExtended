@@ -29,3 +29,10 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.octaviantuchila.dail
 ```
 
 DO NOT put the codebase under `Documents`, because the mac launcher won't be allowed to access it.
+
+
+# Other spefications
+
+The code always does not take into account today's price.
+That's because I want consistency: I usually run it before market open.
+If I run other historic simulations, they should also be before market open.

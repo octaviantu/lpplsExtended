@@ -121,7 +121,8 @@ class AllTickers(TypeCheckBase):
         conn = self.get_connection()
         cursor = conn.cursor()
         for ticker in SPECIFIC_TICKERS:
-            query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' AND date <= '{test_date}' ORDER BY date ASC;"
+            # Never select today - we run this before the market opens
+            query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' AND date < '{test_date}' ORDER BY date ASC;"
             cursor.execute(query)
             rows = cursor.fetchall()
             observations = ObservationSeries(
@@ -134,7 +135,6 @@ class AllTickers(TypeCheckBase):
                 "./lppls/conf/demos2015_filter.json",
                 should_optimize=True,
             )
-            #  Hack to graph something even if there is no bubble
             if not bubble_type:
                 continue
 
@@ -183,7 +183,9 @@ class AllTickers(TypeCheckBase):
         print(f"Will go through {len(tickers)} tickers.")
         for index, (ticker,) in enumerate(tickers):
             print(f"Now checking {ticker}, step {index} of {len(tickers)}")
-            query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' AND date <= '{test_date}' ORDER BY date ASC;"
+
+            # Never select today - we run this before the market opens
+            query = f"SELECT date, close_price FROM pricing_history WHERE ticker='{ticker}' AND date < '{test_date}' ORDER BY date ASC;"
             cursor.execute(query)
             rows = cursor.fetchall()
             observations = ObservationSeries(
