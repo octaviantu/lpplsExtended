@@ -8,13 +8,14 @@
       "program": "${workspaceFolder}/previous_performance/score_previous_result.py"
     },
     {
-      "name": "Previous performance backtest",
+      "name": "Previous performance backtest and clear previous",
       "type": "python",
       "request": "launch",
       "program": "${workspaceFolder}/previous_performance/score_previous_result.py",
       "args": [
         "--backtest",
-        "95"
+        "130",
+        "--clear-previous"
       ]
     },
     {

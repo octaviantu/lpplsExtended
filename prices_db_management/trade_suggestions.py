@@ -219,7 +219,8 @@ class TradeSuggestions(TypeCheckBase):
             """
             SELECT ticker, open_price, position_size, order_t, open_date, close_date, close_price, close_reason
             FROM suggestions 
-            WHERE strategy_t = %s AND is_position_open = FALSE;
+            WHERE strategy_t = %s AND is_position_open = FALSE
+            ORDER BY open_date, close_date, ticker;
         """,
             (STRATEGY_TYPE.value,),
         )

@@ -18,6 +18,7 @@ from typechecking import TypeCheckBase
 from date_utils import DateUtils as du
 import argparse
 from typing import List
+import shutil
 
 
 DEFAULT_BACKTEST_DAYS_BACK = 95
@@ -136,7 +137,34 @@ class ScorePreviousResults(TypeCheckBase):
                     f"{strategy_type}, {successful_count}, {timeout_count}, {stop_loss_count}, {paid}, {received}, {closed_positions}, {profit_percent}, {profit_absolute}, {trade_count}\n"
                 )
 
-    def backtest(self, days_ago: int = 95):
+    def backtest(self, days_ago: int = 95, should_clear_previous: bool = False) -> None:
+        if should_clear_previous:
+            if os.path.exists(PREVIOUS_PERF_DIR):
+                # Remove the directory and all its contents
+                shutil.rmtree(PREVIOUS_PERF_DIR)
+            else:
+                print(f"Directory {PREVIOUS_PERF_DIR} does not exist.")
+
+            conn = psycopg2.connect(
+                host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASSWORD, port=DB_PORT
+            )
+            cursor = conn.cursor()
+            update_query = """
+            UPDATE suggestions
+            SET is_position_open = TRUE,
+                close_date = NULL,
+                close_price = NULL,
+                close_reason = NULL
+            WHERE NOT is_position_open;
+            """
+
+            # Execute the query
+            cursor.execute(update_query)
+
+            # Commit the changes to the database
+            conn.commit()
+            conn.close()  
+
         for i in range(days_ago, -1, -1):
             self.score_end_day(du.days_ago(i))
 
@@ -154,12 +182,20 @@ if __name__ == "__main__":
         const=95,
         default=-1,
     )
+    # Add the --clear-previous argument
+    parser.add_argument(
+        "--clear-previous",
+        action='store_true', 
+        help="Clear previous results"
+    )
 
     # Parse the arguments
     args = parser.parse_args()
 
     # Check if backtest argument is provided
     if args.backtest != -1:
-        ScorePreviousResults().backtest(days_ago=args.backtest)
+        ScorePreviousResults().backtest(days_ago=args.backtest, should_clear_previous=args.clear_previous)
+    elif args.clear_previous:
+        parser.error("--clear-previous requires --backtest")
     else:
         ScorePreviousResults().score_end_day(du.today())
