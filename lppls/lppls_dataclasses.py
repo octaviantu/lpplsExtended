@@ -9,8 +9,8 @@ from dataclasses import dataclass
 
 
 class BubbleType(Enum):
-    POSITIVE = "positive"
-    NEGATIVE = "negative"
+    POSITIVE = "positive" # Means price is too getting to high, should sell
+    NEGATIVE = "negative" # Means price is getting too low, should buy
 
 
 class RejectionReason(Enum):

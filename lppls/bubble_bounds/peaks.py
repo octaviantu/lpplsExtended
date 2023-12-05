@@ -49,6 +49,10 @@ class Peaks(TypeCheckBase):
         cum_return = 0.0
         current_peak = 0
 
+        # We don't go to the end of the range because we don't have a symetric window.
+        # (Example: the price could keep on rising)
+        stop_index = len(log_returns) - W_RANGE_END
+
         for epsilon_0 in self.epsilon_range:
             for w in self.w_range:
                 vol = np.std(log_returns[0:w])
@@ -56,7 +60,7 @@ class Peaks(TypeCheckBase):
                 cum_return = 0
                 current_peak = 0
 
-                for i, current_log_return in enumerate(log_returns):
+                for i, current_log_return in enumerate(log_returns[:stop_index]):
                     # Optimised to reduce complexity and avoid computing vol for each iteration
                     if i > w:
                         vol = np.std(log_returns[i - w : i])
