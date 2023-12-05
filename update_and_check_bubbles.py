@@ -1,5 +1,11 @@
+import sys
+sys.path.append(
+    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/common"
+)
+
 import subprocess
 import time
+from date_utils import DateUtils as du
 
 scripts_to_run = [
     {
@@ -32,18 +38,33 @@ scripts_to_run = [
     },
 ]
 
+def main():
+    #  Don't run simulation if today is a Sunday or Monday.
+    test_date = du.today()
+    day_of_week = du.day_of_week(test_date)
 
-total_start_time = time.time()
-for script in scripts_to_run:
-    print(script["log"])
-    script_start_time = time.time()
+    if day_of_week in ['Sunday', 'Monday']:
+        print(f"Skipping {test_date} because it is a {day_of_week}.")
+        return
 
-    subprocess.run(script["cmd"], check=True)
+    print(f"Will run simulation for: {test_date}, Day of Week: {day_of_week}")
 
-    script_end_time = time.time()
-    script_elapsed_time = script_end_time - script_start_time
-    print(f"{script['log']} took {script_elapsed_time:.2f} seconds.\n")
+    # Run all scripts.
+    total_start_time = time.time()
+    for script in scripts_to_run:
+        print(script["log"])
+        script_start_time = time.time()
 
-total_end_time = time.time()
-total_elapsed_time = total_end_time - total_start_time
-print(f"Total execution took {total_elapsed_time:.2f} seconds.\n")
+        subprocess.run(script["cmd"], check=True)
+
+        script_end_time = time.time()
+        script_elapsed_time = script_end_time - script_start_time
+        print(f"{script['log']} took {script_elapsed_time:.2f} seconds.\n")
+
+    total_end_time = time.time()
+    total_elapsed_time = total_end_time - total_start_time
+    print(f"Total execution took {total_elapsed_time:.2f} seconds.\n")
+
+
+if __name__ == "__main__":
+    main()

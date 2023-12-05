@@ -132,7 +132,7 @@ class ScanTao(TypeCheckBase):
                 SELECT date, ticker, close_price, high_price, low_price,
                     ROW_NUMBER() OVER (PARTITION BY ticker ORDER BY date DESC) as rn 
                 FROM pricing_history
-                WHERE date <= '{test_date}'
+                WHERE date < '{test_date}'
             ) sub
             WHERE rn <= {MAX_NEEDED_DATA_POINTS}
             ORDER BY date ASC, ticker

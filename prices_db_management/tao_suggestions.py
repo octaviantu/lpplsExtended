@@ -50,7 +50,7 @@ class TaoSuggestions(TradeSuggestions):
                 SELECT date, ticker, close_price, high_price, low_price
                 FROM pricing_history
                 WHERE ticker = %s
-                AND date <= %s
+                AND date < %s
                 ORDER BY date DESC
                 LIMIT %s
             ) AS sub

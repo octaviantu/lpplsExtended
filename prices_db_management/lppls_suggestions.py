@@ -63,7 +63,7 @@ class LpplsSuggestions(TradeSuggestions):
             """
             SELECT date, ticker, close_price, high_price, low_price FROM pricing_history
             WHERE ticker = %s
-            AND date BETWEEN %s AND %s
+            AND date >= %s AND date < %s
             ORDER BY date ASC;
         """,
             (ticker, open_date, last_date),

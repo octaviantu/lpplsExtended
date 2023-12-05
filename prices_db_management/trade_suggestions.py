@@ -131,7 +131,7 @@ class TradeSuggestions(TypeCheckBase):
                 """
                 SELECT date, close_price FROM pricing_history
                 WHERE date = (
-                    SELECT MAX(date) FROM pricing_history WHERE date <= %s
+                    SELECT MAX(date) FROM pricing_history WHERE date < %s
                 )
                 AND ticker = %s;
             """,

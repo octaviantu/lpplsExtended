@@ -312,8 +312,8 @@ class AllTickers(TypeCheckBase):
             test_date = du.days_ago(i)
             day_of_week = du.day_of_week(test_date)
 
-            if day_of_week == 'Sunday':
-                print(f"Skipping {test_date} because it is a Sunday.")
+            if day_of_week in ['Sunday', 'Monday']:
+                print(f"Skipping {test_date} because it is a {day_of_week}.")
                 continue
 
             print(f"Will run simulation for: {test_date}, Day of Week: {day_of_week}")
