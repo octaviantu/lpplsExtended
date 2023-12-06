@@ -58,6 +58,7 @@ class TradeSuggestions(TypeCheckBase):
                 ticker VARCHAR(10),
                 confidence FLOAT CHECK (confidence >= 0 AND confidence <= 1),
                 position_size FLOAT,
+                daily_runs_count INT,
                 PRIMARY KEY (open_date, ticker, strategy_t),
                 CHECK (
                     (is_position_open AND close_price IS NULL) OR
@@ -69,6 +70,19 @@ class TradeSuggestions(TypeCheckBase):
                 )
             );
         """
+        )
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS lppls_suggestions_pop_times (
+                open_date DATE NOT NULL,
+                ticker VARCHAR(10) NOT NULL,
+                order_t order_type NOT NULL,
+                earliest_pop_date DATE,
+                latest_pop_date DATE,
+                PRIMARY KEY (open_date, ticker, order_t)
+            );
+            """
         )
 
     def is_position_open(self, cursor, ticker, strategy_type: StrategyType) -> bool:

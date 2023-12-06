@@ -16,9 +16,6 @@ STRATEGY_TYPE = StrategyType.SORNETTE
 class LpplsSuggestions(TradeSuggestions):
     def maybe_insert_suggestions(self, suggestions: List[Suggestion], cursor) -> None:
         for suggestion in suggestions:
-            if self.is_position_open(cursor, suggestion.ticker, STRATEGY_TYPE):
-                continue
-
             position_size = (
                 DEFAULT_POSITION_SIZE * suggestion.confidence / TOP_BUBBLE_CONFIDENCE_IN_PRACTICE
             )
@@ -27,10 +24,37 @@ class LpplsSuggestions(TradeSuggestions):
             assert suggestion.pop_dates_range is not None
             formmated_pop_start = du.ordinal_to_date(suggestion.pop_dates_range.first_pop_date)
             formmated_pop_end = du.ordinal_to_date(suggestion.pop_dates_range.last_pop_date)
+
             cursor.execute(
                 """
-                INSERT INTO suggestions (strategy_t, order_t, open_date, open_price, ticker, confidence, position_size, earliest_pop_date, latest_pop_date)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO lppls_suggestions_pop_times (ticker, open_date, order_t, earliest_pop_date, latest_pop_date)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (ticker, open_date, order_t) DO NOTHING
+            """,
+                (
+                    suggestion.ticker,
+                    formatted_open_date,
+                    suggestion.order_type.value,
+                    formmated_pop_start,
+                    formmated_pop_end
+                )
+            )
+
+            if self.is_position_open(cursor, suggestion.ticker, STRATEGY_TYPE):
+                cursor.execute(
+                    """
+                    UPDATE suggestions
+                    SET daily_runs_count = daily_runs_count + 1
+                    WHERE ticker = %s AND strategy_t = %s AND is_position_open = TRUE
+                    """,
+                    (suggestion.ticker, STRATEGY_TYPE.value),
+                )
+                continue
+
+            cursor.execute(
+                """
+                INSERT INTO suggestions (strategy_t, order_t, open_date, open_price, ticker, confidence, position_size, earliest_pop_date, latest_pop_date, daily_runs_count)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (open_date, ticker, strategy_t) DO NOTHING
             """,
                 (
@@ -43,8 +67,10 @@ class LpplsSuggestions(TradeSuggestions):
                     position_size,
                     formmated_pop_start,
                     formmated_pop_end,
+                    1
                 ),
             )
+
 
     def maybe_close(
         self, order_type: OrderType, ticker: str, open_date: str, last_date: str, cursor
