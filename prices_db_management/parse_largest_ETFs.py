@@ -12,23 +12,10 @@ import argparse
 from math import floor
 from typechecking import TypeCheckBase
 from date_utils import DateUtils as du
+from fetch_common import is_banned
 
 LARGEST_BY_SIZE = "https://etfdb.com/compare/market-cap/"
 LARGEST_BY_VOLUME = "https://etfdb.com/compare/volume/"
-
-# I don't want to trade leveraged ETFs - they decline in value because of their structure
-BANNED_KEYWORDS = ["Bear ", "Bull ", "Leveraged ", "3X ", "2X ", "1.5X "]
-
-BANNED_TICKERS = [
-    # MMF - fluctuations irrelevant
-    "SGOV",
-    "USFR",
-    "BIL",
-    "SHV",
-    # Short term treasury - fluctuations noisy
-    "SHY",
-    "VGSH",
-]
 
 
 class ParseLargetsETFs(TypeCheckBase):
@@ -86,7 +73,7 @@ class ParseLargetsETFs(TypeCheckBase):
             ticker = cells[0].text.strip()
             etf = cells[1].text.strip()
 
-            if any(keyword in etf for keyword in BANNED_KEYWORDS) or ticker in BANNED_TICKERS:
+            if is_banned(ticker, etf):
                 continue
 
             aum = floor(float(cells[AUM_ROW].text.strip().replace("$", "").replace(",", "")))

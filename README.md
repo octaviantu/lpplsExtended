@@ -33,6 +33,8 @@ DO NOT put the codebase under `Documents`, because the mac launcher won't be all
 
 # Other spefications
 
-The code always does not take into account today's price.
+1. The code always does not take into account today's price.
 That's because I want consistency: I usually run it before market open.
 If I run other historic simulations, they should also be before market open.
+
+2. As a consequence of 1, I don't run the code on Sundays and Mondays.

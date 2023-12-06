@@ -11,15 +11,11 @@ import yfinance as yf
 import argparse
 from typechecking import TypeCheckBase
 from date_utils import DateUtils as du
+from fetch_common import is_banned
 
 slickcharts_to_yahoo_ticker_mapping = {"BRK.B": "BRK-B"}
 
 MOST_ACTIVE_FETCH_COUNT = 200
-
-BANNED_TICKERS = [
-    # The price is too low (close to 1), making my log formulas not work
-    "GSAT"
-]
 
 
 class ParseMostTradedStocksUS(TypeCheckBase):
@@ -56,7 +52,7 @@ class ParseMostTradedStocksUS(TypeCheckBase):
             ticker = cells[0].text.strip()
             company = cells[1].text.strip()
 
-            if ticker in BANNED_TICKERS:
+            if is_banned(ticker, company):
                 continue
 
             cur.execute(
