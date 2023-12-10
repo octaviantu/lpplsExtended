@@ -6,8 +6,8 @@ import psycopg2
 from typing import List
 import yfinance as yf
 
-class ParseBase(TypeCheckBase):
 
+class ParseBase(TypeCheckBase):
     def get_connection(self):
         return psycopg2.connect(
             host=DB_HOST,
@@ -25,7 +25,9 @@ class ParseBase(TypeCheckBase):
         # Fetch stock data and insert into the database
         for asset in assets:
             # Check if ticker exists in the database
-            cursor.execute("SELECT MAX(date) FROM pricing_history WHERE ticker = %s", (asset.ticker,))
+            cursor.execute(
+                "SELECT MAX(date) FROM pricing_history WHERE ticker = %s", (asset.ticker,)
+            )
             last_date = cursor.fetchone()[0]
 
             if last_date is None:  # If ticker doesn't exist, fetch all the data in the last 4 years

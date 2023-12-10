@@ -15,10 +15,11 @@ BANNED_TICKERS = [
     # Leveraged QQQ
     "PSQ"
     # The price is too low (close to 1), making my log formulas not work
-    "GSAT"
+    "GSAT",
 ]
 
 SLICKCHARTS_TO_YAHOO_TICKER_MAPPING = {"BRK.B": "BRK-B", "BF.B": "BF-B"}
+
 
 def is_banned(ticker: str, security_name: str) -> bool:
     # In case the security is an ETF, reject some types of etfs.

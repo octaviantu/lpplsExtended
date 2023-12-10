@@ -61,6 +61,7 @@ class ClosedPosition:
         sign = 1 if self.order_type == OrderType.BUY else -1
         return sign * abs_sum
 
+
 @dataclass
 class AggregateClosedPositions:
     paid: float
@@ -69,6 +70,7 @@ class AggregateClosedPositions:
     timeout_count: int
     stop_loss_count: int
     closed_positions: List[ClosedPosition]
+
 
 @dataclass
 class StrategyResult:
@@ -87,7 +89,9 @@ class StrategyResult:
         timeout_count = 0
         stop_loss_count = 0
 
-        closed_positions = sorted(self.unfiltered_closed_positions, key=lambda x: (x.close_date, x.ticker))
+        closed_positions = sorted(
+            self.unfiltered_closed_positions, key=lambda x: (x.close_date, x.ticker)
+        )
         selected_positions = []
         for closed_position in closed_positions:
             if closed_position.daily_runs_count < self.desired_recommendation_count:
@@ -118,13 +122,17 @@ class StrategyResult:
                 paid += close_price * (position_size / open_price)
                 received += position_size
 
-        agg = AggregateClosedPositions(paid=paid, received=received, succesful_count=succesful_count,
-                                        timeout_count=timeout_count, stop_loss_count=stop_loss_count,
-                                        closed_positions=selected_positions)
+        agg = AggregateClosedPositions(
+            paid=paid,
+            received=received,
+            succesful_count=succesful_count,
+            timeout_count=timeout_count,
+            stop_loss_count=stop_loss_count,
+            closed_positions=selected_positions,
+        )
 
         self.cache[self.desired_recommendation_count] = agg
         return agg
-
 
     def compute_profit_percent(self) -> str:
         agg = self.aggregate_counts()
@@ -133,16 +141,14 @@ class StrategyResult:
         profit = 100 * (agg.received - agg.paid) / agg.paid
         return f"{round(profit, 2)}%"
 
-
     def compute_profit_absolute(self) -> float:
         agg = self.aggregate_counts()
         return agg.received - agg.paid
 
-
     def compute_trade_count(self) -> int:
         agg = self.aggregate_counts()
         return agg.succesful_count + agg.timeout_count + agg.stop_loss_count
-    
+
     def get_closed_positions(self) -> List[ClosedPosition]:
         agg = self.aggregate_counts()
         return agg.closed_positions

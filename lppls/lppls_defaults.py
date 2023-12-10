@@ -41,7 +41,7 @@ MAX_NR_CLUSTERS = 10
 
 
 OPTIMIZE_DISQUALIFY_PRICE_DIFF = 0.25
-OPTIMIZE_DISQUALIFY_TIME = 8 * 22 # 8 months, with working days
+OPTIMIZE_DISQUALIFY_TIME = 8 * 22  # 8 months, with working days
 OPTIMIZE_T1_STEP = 4
 
 

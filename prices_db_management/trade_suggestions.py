@@ -205,13 +205,14 @@ class TradeSuggestions(TypeCheckBase):
                 )
                 conn.commit()
 
-        strategy_results = StrategyResult(strategy_type=self.getStrategyType(), unfiltered_closed_positions=closed_positions)
+        strategy_results = StrategyResult(
+            strategy_type=self.getStrategyType(), unfiltered_closed_positions=closed_positions
+        )
 
         # Close the cursor and the connection
         cursor.close()
 
         return strategy_results
-
 
     def fetch_all_closed_suggestions(self, conn) -> StrategyResult:
         conn.cursor_factory = DictCursor
@@ -263,8 +264,9 @@ class TradeSuggestions(TypeCheckBase):
         # Close the cursor and the connection
         cursor.close()
 
-        return StrategyResult(strategy_type=self.getStrategyType(), unfiltered_closed_positions=closed_positions)
-
+        return StrategyResult(
+            strategy_type=self.getStrategyType(), unfiltered_closed_positions=closed_positions
+        )
 
     @abstractmethod
     def maybe_close(
@@ -275,4 +277,3 @@ class TradeSuggestions(TypeCheckBase):
     @abstractmethod
     def getStrategyType(self) -> StrategyType:
         pass
-

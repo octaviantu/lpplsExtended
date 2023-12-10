@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append(
     "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/common"
 )
@@ -42,12 +43,13 @@ scripts_to_run = [
     },
 ]
 
+
 def main():
     #  Don't run simulation if today is a Sunday or Monday.
     test_date = du.today()
     day_of_week = du.day_of_week(test_date)
 
-    if day_of_week in ['Sunday', 'Monday']:
+    if day_of_week in ["Sunday", "Monday"]:
         print(f"Skipping {test_date} because it is a {day_of_week}.")
         return
 

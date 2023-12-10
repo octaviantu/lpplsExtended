@@ -28,7 +28,7 @@ from lppls_defaults import (
     T2_STEP,
     MAX_SEARCHES,
     OPTIMIZE_T1_STEP,
-    RECENT_VISIBLE_WINDOWS
+    RECENT_VISIBLE_WINDOWS,
 )
 import argparse
 from matplotlib import pyplot as plt
@@ -70,7 +70,6 @@ DEFAULT_BACKTEST_DAYS_BACK_LPPLS = 40
 
 
 class AllTickers(TypeCheckBase):
-
     def get_connection(self):
         return psycopg2.connect(
             host=DB_HOST,
@@ -80,7 +79,9 @@ class AllTickers(TypeCheckBase):
             port=DB_PORT,
         )
 
-    def get_bubble_scores(self, sornette: Sornette, recent_windows: int, t1_step: int) -> List[BubbleScore]:
+    def get_bubble_scores(
+        self, sornette: Sornette, recent_windows: int, t1_step: int
+    ) -> List[BubbleScore]:
         return sornette.compute_bubble_scores(
             workers=8,
             recent_windows=recent_windows,
@@ -98,7 +99,6 @@ class AllTickers(TypeCheckBase):
         filter_file: str,
         should_optimize: bool,
     ) -> tuple[BubbleType | None, List[float], Sornette]:
-            
         sornette = Sornette(observations, filter_type, filter_file, should_optimize)
 
         relevant_windows = 1 if should_optimize else RECENT_RELEVANT_WINDOWS
@@ -207,16 +207,14 @@ class AllTickers(TypeCheckBase):
 
             if not bubble_type:
                 continue
-    
+
             print(f"{ticker} meets criteria")
             cursor.execute(
                 f"SELECT name, type FROM pricing_history WHERE ticker='{ticker}' LIMIT 1;"
             )
             name, asset_type = cursor.fetchone()
 
-            drawups, drawdowns, peak_image_name = Peaks(observations, ticker).plot_peaks(
-                test_date
-            )
+            drawups, drawdowns, peak_image_name = Peaks(observations, ticker).plot_peaks(test_date)
             peak_file_name = f"{peak_image_name.replace(' ', '_').replace('on', '')}.png"
 
             if not os.path.exists(PEAKS_DIR):
@@ -261,14 +259,14 @@ class AllTickers(TypeCheckBase):
             bubble_score_file_name = f"{ticker}.png"
             bubble_score_file_path = os.path.join(bubble_dir_path, bubble_score_file_name)
             plt.savefig(bubble_score_file_path, dpi=300, bbox_inches="tight")
-            plt.close('all')
+            plt.close("all")
 
             if not should_optimize:
                 rejections_file_name = f"{ticker}-rejections-breakdown.png"
                 rejected_file_path = os.path.join(bubble_dir_path, rejections_file_name)
                 sornette.plot_rejection_reasons(bubble_scores, ticker)
                 plt.savefig(rejected_file_path, dpi=300, bbox_inches="tight")
-                plt.close('all')
+                plt.close("all")
 
             bubble_assets.append(
                 {
@@ -313,7 +311,7 @@ class AllTickers(TypeCheckBase):
             test_date = du.days_ago(i)
             day_of_week = du.day_of_week(test_date)
 
-            if day_of_week in ['Sunday', 'Monday']:
+            if day_of_week in ["Sunday", "Monday"]:
                 print(f"Skipping {test_date} because it is a {day_of_week}.")
                 continue
 
@@ -329,18 +327,18 @@ if __name__ == "__main__":
     parser.add_argument(
         "--backtest-start",
         type=int,
-        nargs='?',
+        nargs="?",
         help="Number of days to start the backtest from today (or the end date if specified).",
         const=DEFAULT_BACKTEST_DAYS_BACK_LPPLS,
-        default=-1
+        default=-1,
     )
     parser.add_argument(
         "--backtest-end",
         type=int,
-        nargs='?',
+        nargs="?",
         help="Number of days to end the backtest from today. Requires --backtest-start to be set.",
         const=DEFAULT_BACKTEST_DAYS_BACK_LPPLS,
-        default=-1
+        default=-1,
     )
     parser.add_argument("--specific", action="store_true", help="Plot only specific stocks")
     parser.add_argument("--profile", action="store_true", help="Enable profiling")
@@ -363,7 +361,6 @@ if __name__ == "__main__":
         all_tickers.backtest(args.backtest_start, args.backtest_end)
     else:
         all_tickers.discover_daily(du.today())
-
 
 
 # To show only a specific set of tickers:

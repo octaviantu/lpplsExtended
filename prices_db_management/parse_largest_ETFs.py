@@ -15,8 +15,8 @@ from parse_base import ParseBase
 LARGEST_BY_SIZE = "https://etfdb.com/compare/market-cap/"
 LARGEST_BY_VOLUME = "https://etfdb.com/compare/volume/"
 
-class ParseLargetsETFs(ParseBase):
 
+class ParseLargetsETFs(ParseBase):
     def fetch_tickers(self, url: str) -> None:
         # Fetch the webpage content
         request_headers = {
@@ -84,7 +84,6 @@ class ParseLargetsETFs(ParseBase):
         cur.close()
         conn.close()
 
-
     def main(self):
         parser = argparse.ArgumentParser()
         parser.add_argument(
@@ -106,7 +105,8 @@ class ParseLargetsETFs(ParseBase):
         cursor.close()
         conn.close()
 
-        self.fetch_and_store_pricing_history(asset_type='ETF', assets=assets)
+        self.fetch_and_store_pricing_history(asset_type="ETF", assets=assets)
+
 
 if __name__ == "__main__":
     ParseLargetsETFs().main()

@@ -56,7 +56,6 @@ class ParseMostTradedStocksUS(ParseBase):
         cur.close()
         conn.close()
 
-
     def main(self):
         parser = argparse.ArgumentParser()
         parser.add_argument(
@@ -75,7 +74,7 @@ class ParseMostTradedStocksUS(ParseBase):
         cursor.close()
         conn.close()
 
-        self.fetch_and_store_pricing_history(asset_type='STOCK', assets=assets)
+        self.fetch_and_store_pricing_history(asset_type="STOCK", assets=assets)
 
 
 if __name__ == "__main__":

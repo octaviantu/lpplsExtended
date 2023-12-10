@@ -66,22 +66,25 @@ class ScorePreviousResults(TypeCheckBase):
         lppls_all_closed_3_days.desired_recommendation_count = 3
 
         self.write_closed_positions(
-            lppls_closed_now_3_days.get_closed_positions(), daily_dir_path + "/lppls-positions-3days.csv"
+            lppls_closed_now_3_days.get_closed_positions(),
+            daily_dir_path + "/lppls-positions-3days.csv",
         )
         self.write_closed_positions(
-            lppls_all_closed_3_days.get_closed_positions(), HISTORIC_DIR + "/lppls-all-positions-3days.csv"
+            lppls_all_closed_3_days.get_closed_positions(),
+            HISTORIC_DIR + "/lppls-all-positions-3days.csv",
         )
 
         self.write_aggregate_results(
-            [tao_closed_now, lppls_closed_now, lppls_closed_now_3_days], daily_dir_path + "/daily-aggregate.csv"
+            [tao_closed_now, lppls_closed_now, lppls_closed_now_3_days],
+            daily_dir_path + "/daily-aggregate.csv",
         )
 
         self.write_aggregate_results(
-            [tao_all_closed, lppls_all_closed, lppls_all_closed_3_days], daily_dir_path + "/historic-aggregate.csv"
+            [tao_all_closed, lppls_all_closed, lppls_all_closed_3_days],
+            daily_dir_path + "/historic-aggregate.csv",
         )
 
         conn.close()
-
 
     def write_closed_positions(
         self, closed_positions: List[ClosedPosition], file_path: str
@@ -119,7 +122,8 @@ class ScorePreviousResults(TypeCheckBase):
                 )
 
     def write_aggregate_results(
-        self, strategyResults: List[StrategyResult], file_path: str) -> None:
+        self, strategyResults: List[StrategyResult], file_path: str
+    ) -> None:
         all_closed_positions = [sr.get_closed_positions() for sr in strategyResults]
         if len(all_closed_positions) == 0:
             return
@@ -134,7 +138,6 @@ class ScorePreviousResults(TypeCheckBase):
             for result in strategyResults:
                 # Extracting each field
                 strategy_type = result.strategy_type.value
-                
 
                 agg = result.aggregate_counts()
                 successful_count = agg.succesful_count
@@ -155,7 +158,6 @@ class ScorePreviousResults(TypeCheckBase):
                 file.write(
                     f"{strategy_type}, {successful_count}, {timeout_count}, {stop_loss_count}, {paid}, {received}, {closed_positions}, {profit_percent}, {profit_absolute}, {trade_count}\n"
                 )
-
 
     def backtest(self, days_ago: int = 95, should_clear_previous: bool = False) -> None:
         if should_clear_previous:
@@ -183,7 +185,7 @@ class ScorePreviousResults(TypeCheckBase):
 
             # Commit the changes to the database
             conn.commit()
-            conn.close()  
+            conn.close()
 
         for i in range(days_ago, -1, -1):
             self.score_end_day(du.days_ago(i))
@@ -203,18 +205,16 @@ if __name__ == "__main__":
         default=-1,
     )
     # Add the --clear-previous argument
-    parser.add_argument(
-        "--clear-previous",
-        action='store_true', 
-        help="Clear previous results"
-    )
+    parser.add_argument("--clear-previous", action="store_true", help="Clear previous results")
 
     # Parse the arguments
     args = parser.parse_args()
 
     # Check if backtest argument is provided
     if args.backtest != -1:
-        ScorePreviousResults().backtest(days_ago=args.backtest, should_clear_previous=args.clear_previous)
+        ScorePreviousResults().backtest(
+            days_ago=args.backtest, should_clear_previous=args.clear_previous
+        )
     elif args.clear_previous:
         parser.error("--clear-previous requires --backtest")
     else:

@@ -36,8 +36,8 @@ class LpplsSuggestions(TradeSuggestions):
                     formatted_open_date,
                     suggestion.order_type.value,
                     formmated_pop_start,
-                    formmated_pop_end
-                )
+                    formmated_pop_end,
+                ),
             )
 
             if self.is_position_open(cursor, suggestion.ticker, STRATEGY_TYPE):
@@ -67,10 +67,9 @@ class LpplsSuggestions(TradeSuggestions):
                     position_size,
                     formmated_pop_start,
                     formmated_pop_end,
-                    1
+                    1,
                 ),
             )
-
 
     def maybe_close(
         self, order_type: OrderType, ticker: str, open_date: str, last_date: str, cursor

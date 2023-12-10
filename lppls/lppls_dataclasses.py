@@ -6,9 +6,10 @@ from date_utils import DateUtils as du
 import sys
 from typechecking import TypeCheckBase
 
+
 class BubbleType(Enum):
-    POSITIVE = "positive" # Means price is too getting to high, should sell
-    NEGATIVE = "negative" # Means price is getting too low, should buy
+    POSITIVE = "positive"  # Means price is too getting to high, should sell
+    NEGATIVE = "negative"  # Means price is getting too low, should buy
 
 
 class RejectionReason(Enum):

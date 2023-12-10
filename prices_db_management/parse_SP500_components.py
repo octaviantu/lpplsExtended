@@ -60,7 +60,6 @@ class ParseSP500Components(ParseBase):
         cur.close()
         conn.close()
 
-
     def main(self):
         parser = argparse.ArgumentParser()
         parser.add_argument(
@@ -75,13 +74,15 @@ class ParseSP500Components(ParseBase):
 
         conn = self.get_connection()
         cursor = conn.cursor()
-        cursor.execute(f"SELECT ticker, company FROM sp500_components ORDER BY CAST(portfolio_percent as FLOAT) DESC")
+        cursor.execute(
+            f"SELECT ticker, company FROM sp500_components ORDER BY CAST(portfolio_percent as FLOAT) DESC"
+        )
         rows = cursor.fetchall()
         assets = [Asset(ticker=row[0], name=row[1]) for row in rows]
         cursor.close()
         conn.close()
 
-        self.fetch_and_store_pricing_history(asset_type='STOCK', assets=assets)
+        self.fetch_and_store_pricing_history(asset_type="STOCK", assets=assets)
 
 
 if __name__ == "__main__":
