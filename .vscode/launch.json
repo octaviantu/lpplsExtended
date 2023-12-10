@@ -31,7 +31,7 @@
       "program": "${workspaceFolder}/tao/scan_tao.py",
       "args": [
         "--backtest",
-        "95"
+        "125"
       ]
     },
     {

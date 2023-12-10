@@ -122,7 +122,7 @@ class TradeSuggestions(TypeCheckBase):
         # Query to get all TAO_RSI suggestions that are open
         cursor.execute(
             """
-            SELECT ticker, open_price, position_size, order_t, open_date
+            SELECT ticker, open_price, position_size, order_t, open_date, daily_runs_count
             FROM suggestions 
             WHERE strategy_t = %s AND is_position_open = TRUE AND open_date <= %s;
         """,
@@ -139,6 +139,7 @@ class TradeSuggestions(TypeCheckBase):
             position_size = suggestion["position_size"]
             order_type = OrderType[suggestion["order_t"]]
             open_date = str(suggestion["open_date"])
+            daily_runs_count = suggestion["daily_runs_count"]
 
             # Query to get the latest price from pricing_history
             cursor.execute(
@@ -179,6 +180,7 @@ class TradeSuggestions(TypeCheckBase):
                         strategy_type=STRATEGY_TYPE,
                         close_reason=close_reason,
                         order_type=order_type,
+                        daily_runs_count=daily_runs_count,
                     )
                 )
 
@@ -203,24 +205,13 @@ class TradeSuggestions(TypeCheckBase):
                 )
                 conn.commit()
 
-        paid, received, succesful_count, timeout_count, stop_loss_count = self.aggregate_counts(
-            closed_positions
-        )
-
-        strategy_results = StrategyResult(
-            strategy_type=STRATEGY_TYPE,
-            succesful_count=succesful_count,
-            timeout_count=timeout_count,
-            stop_loss_count=stop_loss_count,
-            paid=paid,
-            received=received,
-            closed_positions=closed_positions,
-        )
+        strategy_results = StrategyResult(strategy_type=self.getStrategyType(), unfiltered_closed_positions=closed_positions)
 
         # Close the cursor and the connection
         cursor.close()
 
         return strategy_results
+
 
     def fetch_all_closed_suggestions(self, conn) -> StrategyResult:
         conn.cursor_factory = DictCursor
@@ -231,7 +222,7 @@ class TradeSuggestions(TypeCheckBase):
         # Query to get all TAO_RSI suggestions that are open
         cursor.execute(
             """
-            SELECT ticker, open_price, position_size, order_t, open_date, close_date, close_price, close_reason
+            SELECT ticker, open_price, position_size, order_t, open_date, close_date, close_price, close_reason, daily_runs_count
             FROM suggestions 
             WHERE strategy_t = %s AND is_position_open = FALSE
             ORDER BY open_date, close_date, ticker;
@@ -252,6 +243,7 @@ class TradeSuggestions(TypeCheckBase):
             last_date = str(suggestion["close_date"])
             close_price = suggestion["close_price"]
             close_reason = CloseReason[suggestion["close_reason"]]
+            daily_runs_count = suggestion["daily_runs_count"]
 
             closed_positions.append(
                 ClosedPosition(
@@ -264,25 +256,15 @@ class TradeSuggestions(TypeCheckBase):
                     strategy_type=STRATEGY_TYPE,
                     close_reason=close_reason,
                     order_type=order_type,
+                    daily_runs_count=daily_runs_count,
                 )
             )
 
         # Close the cursor and the connection
         cursor.close()
 
-        paid, received, succesful_count, timeout_count, stop_loss_count = self.aggregate_counts(
-            closed_positions
-        )
+        return StrategyResult(strategy_type=self.getStrategyType(), unfiltered_closed_positions=closed_positions)
 
-        return StrategyResult(
-            strategy_type=STRATEGY_TYPE,
-            succesful_count=succesful_count,
-            timeout_count=timeout_count,
-            stop_loss_count=stop_loss_count,
-            paid=paid,
-            received=received,
-            closed_positions=closed_positions,
-        )
 
     @abstractmethod
     def maybe_close(
@@ -294,39 +276,3 @@ class TradeSuggestions(TypeCheckBase):
     def getStrategyType(self) -> StrategyType:
         pass
 
-    def aggregate_counts(
-        self, closed_positions: List[ClosedPosition]
-    ) -> Tuple[float, float, int, int, int]:
-        paid = 0.0
-        received = 0.0
-        succesful_count = 0
-        timeout_count = 0
-        stop_loss_count = 0
-
-        closed_positions = sorted(closed_positions, key=lambda x: (x.close_date, x.ticker))
-        for closed_position in closed_positions:
-            open_price = closed_position.open_price
-            position_size = closed_position.position_size
-            order_type = closed_position.order_type
-            close_price = closed_position.close_price
-            close_reason = closed_position.close_reason
-
-            if not close_reason:
-                continue
-            if close_reason == CloseReason.TIMEOUT:
-                timeout_count += 1
-            elif close_reason == CloseReason.STOP_LOSS:
-                stop_loss_count += 1
-            elif close_reason in [CloseReason.KELTNER_CHANNELS, CloseReason.VALUE_INCREASE]:
-                succesful_count += 1
-            else:
-                raise Exception("Invalid close reason")
-
-            if order_type == OrderType.BUY:
-                paid += position_size
-                received += close_price * (position_size / open_price)
-            else:
-                paid += close_price * (position_size / open_price)
-                received += position_size
-
-        return paid, received, succesful_count, timeout_count, stop_loss_count
