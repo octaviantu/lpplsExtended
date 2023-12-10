@@ -18,6 +18,8 @@ BANNED_TICKERS = [
     "GSAT"
 ]
 
+SLICKCHARTS_TO_YAHOO_TICKER_MAPPING = {"BRK.B": "BRK-B", "BF.B": "BF-B"}
+
 def is_banned(ticker: str, security_name: str) -> bool:
     # In case the security is an ETF, reject some types of etfs.
     return any(keyword in security_name for keyword in BANNED_KEYWORDS) or ticker in BANNED_TICKERS
