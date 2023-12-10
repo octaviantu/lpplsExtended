@@ -12,7 +12,7 @@ try:
 
     cursor.execute(
         """
-        CREATE TYPE asset_type AS ENUM ('ETF', 'STOCK');
+        CREATE TYPE asset_type AS ENUM ('ETF', 'STOCK', 'INDEX');
     """
     )
 

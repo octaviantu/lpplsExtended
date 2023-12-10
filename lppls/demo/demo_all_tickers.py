@@ -28,9 +28,7 @@ from lppls_defaults import (
     T2_STEP,
     MAX_SEARCHES,
     OPTIMIZE_T1_STEP,
-    RECENT_VISIBLE_WINDOWS,
-    OPTIMIZE_DISQUALIFY_PRICE_DIFF,
-    OPTIMIZE_DISQUALIFY_TIME,
+    RECENT_VISIBLE_WINDOWS
 )
 import argparse
 from matplotlib import pyplot as plt
@@ -117,7 +115,7 @@ class AllTickers(TypeCheckBase):
         return None, [0.0], sornette
 
     def plot_specific(self, test_date: str) -> None:
-        SPECIFIC_TICKERS = ["TJX"]
+        SPECIFIC_TICKERS = ["^GDAXI"]
         conn = self.get_connection()
         cursor = conn.cursor()
         for ticker in SPECIFIC_TICKERS:
@@ -168,7 +166,10 @@ class AllTickers(TypeCheckBase):
         etf_query = """SELECT ticker
                         FROM pricing_history
                         WHERE type = 'ETF'"""
-        sql_query = f"({stock_query}) UNION ({etf_query})"
+        index_query = """SELECT ticker
+                        FROM pricing_history
+                        WHERE type = 'INDEX'"""
+        sql_query = f"({stock_query}) UNION ({etf_query}) UNION ({index_query})"
 
         cursor.execute(sql_query)
         tickers = cursor.fetchall()

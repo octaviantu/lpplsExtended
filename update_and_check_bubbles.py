@@ -21,6 +21,10 @@ scripts_to_run = [
         "log": "Fetching latest S&P500 pricing",
     },
     {
+        "cmd": ("python", "prices_db_management/parse_indexes.py"),
+        "log": "Fetching latest S&P500 pricing",
+    },
+    {
         "cmd": ("python", "lppls/demo/demo_all_tickers.py"),
         "log": "Running LPPLS fits on all available stocks and etfs",
     },

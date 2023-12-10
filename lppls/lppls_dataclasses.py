@@ -5,8 +5,6 @@ import numpy as np
 from date_utils import DateUtils as du
 import sys
 from typechecking import TypeCheckBase
-from dataclasses import dataclass
-
 
 class BubbleType(Enum):
     POSITIVE = "positive" # Means price is too getting to high, should sell
