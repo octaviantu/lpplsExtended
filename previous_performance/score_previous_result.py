@@ -60,6 +60,7 @@ class ScorePreviousResults(TypeCheckBase):
             lppls_all_closed.get_closed_positions(), HISTORIC_DIR + "/lppls-all-positions-1day.csv"
         )
 
+        # TODO(octaviant) - fix this weird way of having separate objects
         lppls_closed_now_3_days = deepcopy(lppls_closed_now)
         lppls_closed_now_3_days.desired_recommendation_count = 3
         lppls_all_closed_3_days = deepcopy(lppls_all_closed)
@@ -96,7 +97,7 @@ class ScorePreviousResults(TypeCheckBase):
         with open(file_path, "w") as file:
             # Write the header line
             file.write(
-                "Ticker, Open Date, Open Price, Close Date, Close Price, Position Size, Strategy Type, Close Reason, Order Type, Daily runs count, Profit Percent, Profit Absoluten"
+                "Ticker, Open Date, Open Price, Close Date, Close Price, Position Size, Strategy Type, Close Reason, Order Type, Daily runs count, Profit Percent, Profit Absolute\n"
             )
 
             for position in closed_positions:
