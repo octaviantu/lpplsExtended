@@ -1,5 +1,5 @@
 import psycopg2
-from typing import List, Tuple
+from typing import List
 from db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
 from db_dataclasses import (
     Suggestion,
@@ -13,12 +13,10 @@ from abc import abstractmethod
 from db_dataclasses import StrategyType
 from psycopg2.extras import DictCursor
 from typechecking import TypeCheckBase
+from date_utils import DateUtils as du
 
 STOP_LOS_THRESHOLD = -0.1  # 10%
-# Over thit profit, we check if we should close. This is a minimum required to close.
-# However, implementations of this class will have different criteria.
-MIN_PROFIT_THREDHOLD = 0.05  # 5%
-
+MIN_HOLD_PERIOD = 5 # hold the position for at least 5 days
 
 class TradeSuggestions(TypeCheckBase):
     def create_if_not_exists(self, cursor) -> None:
@@ -164,8 +162,7 @@ class TradeSuggestions(TypeCheckBase):
             close_reason = None
             if profit <= STOP_LOS_THRESHOLD:
                 close_reason = CloseReason.STOP_LOSS
-            elif profit >= MIN_PROFIT_THREDHOLD:
-                # Check conditions to close the position
+            elif du.date_to_ordinal(last_date) - du.date_to_ordinal(open_date) >= MIN_HOLD_PERIOD:
                 close_reason = self.maybe_close(order_type, ticker, open_date, last_date, cursor)
 
             if close_reason:

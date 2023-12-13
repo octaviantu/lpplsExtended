@@ -14,7 +14,7 @@
       "program": "${workspaceFolder}/previous_performance/score_previous_result.py",
       "args": [
         "--backtest",
-        "130",
+        "160",
         "--clear-previous"
       ]
     },
@@ -31,7 +31,7 @@
       "program": "${workspaceFolder}/tao/scan_tao.py",
       "args": [
         "--backtest",
-        "125"
+        "55"
       ]
     },
     {
