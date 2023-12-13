@@ -12,6 +12,7 @@ BANNED_TICKERS = [
     # Short term treasury - fluctuations noisy
     "SHY",
     "VGSH",
+    "JPST",
     # Leveraged QQQ
     "PSQ"
     # The price is too low (close to 1), making my log formulas not work
