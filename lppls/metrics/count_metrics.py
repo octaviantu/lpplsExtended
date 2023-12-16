@@ -63,6 +63,9 @@ class CountMetrics:
     @staticmethod
     def print_metrics():
         total = CountMetrics.bubble_accepted + CountMetrics.bubble_rejected
+        if total == 0:
+            return
+
         bubble_accepted_percentage = 100 * CountMetrics.bubble_accepted / total if total != 0 else 0
         bubble_rejected_percentage = 100 * CountMetrics.bubble_rejected / total if total != 0 else 0
 
