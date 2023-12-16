@@ -7,7 +7,7 @@ import random
 from filter_interface import FilterInterface
 import data_loader
 from statsmodels.tsa.ar_model import AutoReg
-from lppls_defaults import SIGNIFICANCE_LEVEL, ADF_SIGNIFICANCE_LEVEL
+from lppls_defaults import SIGNIFICANCE_LEVEL, ADF_SIGNIFICANCE_LEVEL, MAX_SEARCHES, TRIES_TO_GET_MINIMUM
 from count_metrics import CountMetrics
 from lppls_dataclasses import (
     ObservationSeries,
@@ -32,9 +32,7 @@ class FilterBitcoin2019B(FilterInterface):
     def __init__(self, filter_file="./lppls/conf/bitcoin2019_filterB.json"):
         self.filter_criteria = data_loader.load_config(filter_file)
 
-    def fit(
-        self, max_searches: int, observations: ObservationSeries, minimizer: str = "Nelder-Mead"
-    ) -> OptimizedParams | None:
+    def fit(self, observations: ObservationSeries, minimizer: str = "Nelder-Mead") -> OptimizedParams | None:
         """
         Args:
             max_searches (int): The maximum number of searches to perform before giving up. The literature suggests 25.
@@ -52,9 +50,10 @@ class FilterBitcoin2019B(FilterInterface):
         w_bounds = (self.filter_criteria.get("w_min"), self.filter_criteria.get("w_max"))
         search_bounds = [tc_bounds, m_bounds, w_bounds]
 
-        search_count = 0
+        tries = 0
+        min_fit, min_error= None, np.inf
         # find bubble
-        while search_count < max_searches:
+        for _ in range(0, MAX_SEARCHES):
             tc = random.uniform(*tc_bounds)
             m = random.uniform(*m_bounds)
             w = random.uniform(*w_bounds)
@@ -62,14 +61,31 @@ class FilterBitcoin2019B(FilterInterface):
             seed = np.array([tc, m, w])
 
             fit = self.estimate_params(observations, seed, minimizer, search_bounds)
+            if not fit:
+                continue
 
-            if fit:
-                return fit
+            tries += 1
+            current_error = self.compute_price_error(observations, fit)
+            if current_error < min_error:
+                min_fit = fit
+                min_error = current_error
 
-            search_count += 1
+            if tries == TRIES_TO_GET_MINIMUM:
+                assert min_fit != np.inf
+                return min_fit
 
-        CountMetrics.add_bubble_rejected_because_can_not_fit()
-        return None
+
+        if not min_fit:
+            CountMetrics.add_bubble_rejected_because_can_not_fit()
+
+        return min_fit
+
+
+    def compute_price_error(self, observations: ObservationSeries, optimized_params: OptimizedParams) -> float:
+        predicted_prices = LPPLSMath.get_log_price_predictions(observations, optimized_params)
+        actual_prices = observations.get_log_prices()
+        return sum([(actual_prices[i] - predicted_prices[i]) ** 2 for i in range(len(actual_prices))])
+
 
     def estimate_params(
         self,
@@ -102,8 +118,6 @@ class FilterBitcoin2019B(FilterInterface):
         self,
         oi: OptimizedInterval,
         observations: ObservationSeries,
-        t1_index: int,
-        t2_index: int,
         should_optimize: bool,
     ) -> BubbleFit:
         op = oi.optimized_params
@@ -133,7 +147,7 @@ class FilterBitcoin2019B(FilterInterface):
         if should_optimize and not O_in_range:
             return BubbleFit([RejectionReason.ANY_REASON], type=bubble_type)
 
-        obs_within_t1_t2 = observations.filter_before_tc(tc)[t1_index:t2_index]
+        obs_within_t1_t2 = observations.filter_before_tc(tc)[oi.t1_index:oi.t2_index]
         prices_in_range = super().is_price_in_range(
             obs_within_t1_t2, self.filter_criteria.get("relative_error_max"), op
         )
@@ -155,7 +169,7 @@ class FilterBitcoin2019B(FilterInterface):
             "lomb_test": passing_lomb_test,
             "ar1_test": passing_ar1_test,
         }
-        CountMetrics.add_bubble(conditions, t2_index)
+        CountMetrics.add_bubble(conditions, oi.t2_index)
 
         rejection_reasons = []
         if not O_in_range:

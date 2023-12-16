@@ -17,7 +17,7 @@ import sys
 from date_utils import DateUtils as du
 import matplotlib.dates as mdates
 from typechecking import TypeCheckBase
-
+from lppls_dataclasses import BubbleType
 
 class DataFit(TypeCheckBase):
     def __init__(self, observations: ObservationSeries, filter: FilterInterface):
@@ -51,9 +51,9 @@ class DataFit(TypeCheckBase):
         plt.xticks(rotation=45)
 
     def fit(
-        self, max_searches: int, observations: ObservationSeries, minimizer: str = "Nelder-Mead"
+        self, observations: ObservationSeries, minimizer: str = "Nelder-Mead"
     ) -> OptimizedParams | None:
-        return self.filter.fit(max_searches, observations, minimizer)
+        return self.filter.fit(observations, minimizer)
 
     def parallel_compute_t2_recent_fits(
         self,
@@ -76,7 +76,6 @@ class DataFit(TypeCheckBase):
                 i,
                 smallest_window_size,
                 t1_increment,
-                max_searches,
             )
             t2_fits_args.append(args)
 
@@ -94,7 +93,7 @@ class DataFit(TypeCheckBase):
         return optimized_intervals
 
     def compute_t1_fits(self, args) -> IntervalFits:
-        obs, window_size, t1_index, smallest_window_size, t1_increment, max_searches = args
+        obs, window_size, t1_index, smallest_window_size, t1_increment = args
 
         window_delta = window_size - smallest_window_size
 
@@ -104,22 +103,25 @@ class DataFit(TypeCheckBase):
         t2 = obs[-1].date_ordinal
         p2 = obs[-1].price
 
-        # have to store two indexes because trading days don't map to calendar days
-        t2_index = t1_index + len(obs) - 1
-
         # run n fits on the observation slice.
         for j in range(0, window_delta, t1_increment):
             obs_shrinking_slice = obs[j:window_size]
 
-            fit = self.fit(max_searches, obs_shrinking_slice)
+            optimized_params = self.fit(obs_shrinking_slice)
 
-            if not fit:
+            if not optimized_params:
                 continue
 
             nested_t1 = obs_shrinking_slice[0].date_ordinal
             nested_t2 = obs_shrinking_slice[-1].date_ordinal
+        
+            # have to store two indexes because trading days don't map to calendar days
+            nested_t1_index = t1_index + j
+            nested_t2_index = t1_index + window_size
 
-            optimizedInterval = OptimizedInterval(nested_t1, nested_t2, fit)
+            optimizedInterval = OptimizedInterval(t1=nested_t1, t2=nested_t2,
+                                                  t1_index=nested_t1_index, t2_index=nested_t2_index,
+                                                  optimized_params=optimized_params)
 
             # Append updated params_dict to windows
             optimized_intervals.append(optimizedInterval)
@@ -129,6 +131,4 @@ class DataFit(TypeCheckBase):
             t2=t2,
             p2=p2,
             optimized_intervals=optimized_intervals,
-            t1_index=t1_index,
-            t2_index=t2_index,
         )

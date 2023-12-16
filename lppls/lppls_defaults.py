@@ -10,6 +10,9 @@ T1_STEP = 2
 T2_STEP = 1
 
 MAX_SEARCHES = 25
+# 7 is an optimal number to get rid of spikes (can see from Lagrange coefficient computation from branch fixStartingPoint)
+TRIES_TO_GET_MINIMUM = 3
+
 
 # Lomb test from:
 # Real-time Prediction of Bitcoin Bubble Crashes (2019)

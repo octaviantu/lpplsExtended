@@ -124,6 +124,8 @@ class OptimizedParams:
 class OptimizedInterval:
     t1: int
     t2: int
+    t1_index: int
+    t2_index: int
     optimized_params: OptimizedParams
     # Make this an empty list by default
     bubble_fit: BubbleFit = None
@@ -135,8 +137,6 @@ class IntervalFits:
     t1: int
     t2: int
     p2: float
-    t1_index: int
-    t2_index: int
 
 
 @dataclass

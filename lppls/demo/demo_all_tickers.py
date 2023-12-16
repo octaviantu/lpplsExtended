@@ -115,7 +115,7 @@ class AllTickers(TypeCheckBase):
         return None, [0.0], sornette
 
     def plot_specific(self, test_date: str) -> None:
-        SPECIFIC_TICKERS = ["^GDAXI"]
+        SPECIFIC_TICKERS = ["TSLA"]
         conn = self.get_connection()
         cursor = conn.cursor()
         for ticker in SPECIFIC_TICKERS:
@@ -356,7 +356,7 @@ if __name__ == "__main__":
     if args.profile:
         cProfile.run("AllTickers().backtest(123, 122)", "profile_output.pstats")
     elif args.specific:
-        all_tickers.plot_specific(du.today())
+        all_tickers.plot_specific(du.days_ago(770))
     elif args.backtest_start != -1:
         all_tickers.backtest(args.backtest_start, args.backtest_end)
     else:

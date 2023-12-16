@@ -104,7 +104,7 @@ class BubbleScores(TypeCheckBase):
         ax2_0.plot(dates, neg_conf, label="bubble indicator (neg)", color="green", linewidth=2)
 
         # Calculate and plot rejection reasons
-        colors = ["blue", "orange", "purple", "brown", "cyan"]
+        colors = ["blue", "orange", "purple", "brown", "cyan", "gray"]
         rejection_percentages = {reason: [] for reason in RejectionReason}
         for bs in bubble_scores:
             total_intervals = len(bs.optimized_intervals)
@@ -196,12 +196,10 @@ class BubbleScores(TypeCheckBase):
             neg_qual_count = 0
             pos_count = 0
             neg_count = 0
-            t1_index = fit.t1_index
-            t2_index = fit.t2_index
 
             for idx, optimizedInterval in enumerate(fit.optimized_intervals):
                 bubble_fit = self.filter.check_bubble_fit(
-                    optimizedInterval, self.observations, t1_index, t2_index, should_optimize
+                    optimizedInterval, self.observations, should_optimize
                 )
 
                 if bubble_fit.type == BubbleType.POSITIVE:

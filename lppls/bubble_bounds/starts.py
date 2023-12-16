@@ -1,3 +1,9 @@
+# NOT USED - RUBBISH
+# The models will always be more overfitted for smaller windows.
+# The linear regression is DUMB.
+# The paper describing it 'Lagrange regularisation approach ...' by Demos, Sornette
+# has horrible code and it's unclear on page 3 wether we should add or subtract lambda.
+
 import sys
 
 sys.path.append("/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls")

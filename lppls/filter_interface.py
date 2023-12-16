@@ -3,7 +3,7 @@ import numpy as np
 from lppls_math import LPPLSMath
 from lppls_dataclasses import ObservationSeries, OptimizedParams, OptimizedInterval, BubbleFit
 from typechecking import TypeCheckBase
-
+from date_utils import DateUtils as du
 
 class FilterInterface(TypeCheckBase):
     @abstractmethod
@@ -17,8 +17,6 @@ class FilterInterface(TypeCheckBase):
         self,
         oi: OptimizedInterval,
         observations: ObservationSeries,
-        t1_index: int,
-        t2_index: int,
         should_optimize: bool,
     ) -> BubbleFit:
         pass
