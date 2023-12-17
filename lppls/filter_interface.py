@@ -8,7 +8,7 @@ from typechecking import TypeCheckBase
 class FilterInterface(TypeCheckBase):
     @abstractmethod
     def fit(
-        self, max_searches: int, obsservations: ObservationSeries, minimizer: str
+        self, max_searches: int, observations: ObservationSeries, minimizer: str
     ) -> OptimizedParams | None:
         pass
 

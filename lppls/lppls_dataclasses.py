@@ -81,7 +81,7 @@ class ObservationSeries(TypeCheckBase):
         return log_returns
 
     def get_log_prices(self):
-        return np.log(self.get_prices())
+        return list(np.log(self.get_prices()))
 
     def get_date_at_ordinal(self, date_ordinal: int):
         return self.observations[date_ordinal].date_ordinal

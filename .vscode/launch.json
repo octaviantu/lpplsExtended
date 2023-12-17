@@ -41,6 +41,12 @@
       "program": "${workspaceFolder}/lppls/demo/demo_starts_paper_code.py"
     },
     {
+      "name": "Specific ticker and time debug",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/lppls/demo/demo_specific_time.py"
+    },
+    {
       "name": "Bounds debug",
       "type": "python",
       "request": "launch",

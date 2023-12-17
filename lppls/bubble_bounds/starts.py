@@ -1,104 +1,130 @@
-import sys
-
-sys.path.append("/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls")
-
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from typing import List, Tuple
 from matplotlib import pyplot as plt
 from lppls_defaults import SMALLEST_WINDOW_SIZE
 from lppls_dataclasses import BubbleStart, BubbleType
-from date_utils import DateUtils as du
 from matplotlib import dates as mdates
 from typechecking import TypeCheckBase
+from filter_interface import FilterInterface
+from lppls_dataclasses import ObservationSeries
+from lppls_math import LPPLSMath
+from data_fit import DataFit
+from dataclasses import dataclass
+
+
+@dataclass
+class SquareErrors:
+    squared_errors: List[float]
+
+    def __len__(self):
+        return len(self.squared_errors)
+
+    def get_errors(self):
+        return self.squared_errors
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            # Handle slice objects
+            return ObservationSeries(self.squared_errors[key])
+        elif isinstance(key, int):
+            # Handle integer index
+            return self.squared_errors[key]
+        else:
+            raise TypeError("Invalid argument type.")
+
+    def get_normalised_errors(self):
+        max_element = max(self.squared_errors)
+        return [x / max_element for x in self.squared_errors]
+
 
 
 class Starts(TypeCheckBase):
-    def getSSE(self, Y, Yhat, p=1, normed=False):
-        """Obtain SSE (chi^2)
-        p -> No. of parameters
-        Y -> Data
-        Yhat -> Model
-        """
-        error = sum([(Y[i] - Yhat[i]) ** 2 for i in range(len(Y))])
-        obj = np.sum(error)
-        if normed == False:
-            obj = np.sum(error)
-        else:
-            obj = 1 / float(len(Y) - p) * np.sum(error)
-        return obj
 
-    def calculate_lambda_of_normed_cost(self, sse):
+    def calculate_lambda_of_normed_cost(self, ssen: SquareErrors) -> float:
         # Create linear regression object using statsmodels package
-        regr = LinearRegression(fit_intercept=False)
-
-        # create x range for the sse_ds
-        x_sse = np.arange(len(sse))
-        x_sse = x_sse.reshape(len(sse), 1)
+        regr = LinearRegression()
+        x_ssen = [[i] for i in range(len(ssen))]
 
         # Train the model using the training sets
-        res = regr.fit(x_sse, sse)
+        res = regr.fit(x_ssen, ssen.get_errors())
 
+        regression_line = res.predict(x_ssen)
+        # Plotting the data and the regression line
+        plt.figure(figsize=(10, 6))
+        plt.scatter(x_ssen, ssen.get_errors(), color='blue', label='SSEN Data')
+        plt.plot(x_ssen, regression_line, color='red', label='Regression Line')
+        plt.xlabel('Index')
+        plt.ylabel('SSEN Errors')
+        plt.title('Linear Regression Without Intercept on SSEN Data')
+        plt.legend()
+        plt.grid(True)
+
+        print('coef: ', res.coef_)
         return res.coef_[0]
 
-    def getLagrangeScore(
-        self, actual_prices: List[float], predicted_prices: List[float]
-    ) -> Tuple[List[float], float]:
-        ssrn_reg = []
-        for i in range(len(actual_prices) - SMALLEST_WINDOW_SIZE):
-            ssrn_reg.append(
-                self.getSSE(actual_prices[i:-1], predicted_prices[i:-1], normed=True)
-            )  # Classical SSE
-        lambda_coeff = self.calculate_lambda_of_normed_cost(ssrn_reg)
+
+    def get_lagrange_score(self, ssen: SquareErrors, interval_length: int) -> Tuple[SquareErrors, float]:
+        lambda_coeff = self.calculate_lambda_of_normed_cost(ssen)
 
         # Estimate the cost function pondered by lambda using a Shrinking Window.
-        ssrn_lgrn = []
-        for i in range(len(actual_prices) - SMALLEST_WINDOW_SIZE):
-            ssrn_lgrn_term = ssrn_reg[i] - lambda_coeff * len(actual_prices[i:-1])  # SSE lagrange
-            ssrn_lgrn.append(ssrn_lgrn_term)
+        ssen_lgrn = []
+        for i in range(len(ssen)):
+            window_len = interval_length - i
+            ssen_lgrn_term = ssen[i] + lambda_coeff * window_len  # SSE lagrange
+            ssen_lgrn.append(ssen_lgrn_term)
 
-        max_element = max(ssrn_lgrn)
-        ssrn_lgrn = [x / max_element for x in ssrn_lgrn]
+        return SquareErrors(ssen_lgrn), lambda_coeff
 
-        return ssrn_lgrn, lambda_coeff
 
-    def getSSE_and_SSEN_as_a_func_of_dt(
-        self, actual_prices: List[float], predicted_prices: List[float]
-    ):
+    def getSSE_and_SSEN_as_a_func_of_dt(self, observations: ObservationSeries, filter: FilterInterface) -> Tuple[SquareErrors, SquareErrors]:
         """Obtain SSE and SSE/N for a given shrinking fitting window"""
 
         # Get a piece of it: Shrinking Window
         _sse = []
         _ssen = []
-        for i in range(len(actual_prices) - SMALLEST_WINDOW_SIZE):  # loop t1 until: t1 = t2 - 10:
-            actual_prices_batch = actual_prices[i:-1]
-            predicted_prices_batch = predicted_prices[i:-1]
-            sse = self.getSSE(actual_prices_batch, predicted_prices_batch, normed=False)
-            ssen = self.getSSE(actual_prices_batch, predicted_prices_batch, normed=True)
+        for i in range(len(observations) - SMALLEST_WINDOW_SIZE):  # loop t1 until: t1 = t2 - 10:
+            current_obs = observations[i:-1]
+            actual_prices = current_obs.get_prices()
+            op = filter.fit(25, current_obs)
+
+            data_fit = DataFit(current_obs, filter)
+            if i > len(observations) - SMALLEST_WINDOW_SIZE - 10:
+                data_fit.plot_fit(None, op)
+
+            predicted_prices = list(np.exp(LPPLSMath.get_log_price_predictions(current_obs, op)))
+
+            assert len(actual_prices) == len(predicted_prices)
+            errors = [(actual_prices[i] - predicted_prices[i]) ** 2 for i in range(len(actual_prices))]
+            sse = sum(errors)
+            ssen = sse / float(len(actual_prices))
+
             _sse.append(sse)
             _ssen.append(ssen)
 
-        return _sse / max(_sse), _ssen / max(_ssen), _ssen  # returns results + data
+        print('SSE: ', _sse)
+        print('SSEN: ', _ssen)
+        return SquareErrors(_sse), SquareErrors(_ssen)  # returns results + data
 
-    def plot_all_fit_measures(self, actual_prices, predicted_prices, dates):
-        bounded_sse, bounded_ssen, _ = self.getSSE_and_SSEN_as_a_func_of_dt(
-            actual_prices, predicted_prices
-        )
-        ssen_reg, lambda_coeff = self.getLagrangeScore(actual_prices, predicted_prices)
-        formated_dates = [du.ordinal_to_date(d) for d in dates]
+
+    def plot_all_fit_measures(self, observations: ObservationSeries, filter: FilterInterface) -> None:
+        sse, ssen = self.getSSE_and_SSEN_as_a_func_of_dt(observations, filter)
+
+        ssen_lgrn, lambda_coeff = self.get_lagrange_score(ssen, len(observations))
+        formated_dates = observations.get_formatted_dates()
 
         plt.figure(figsize=(10, 6))
 
-        # Plot SSE, SSEN, SSEN Reg
-        scores_len = len(bounded_sse)
-        assert len(bounded_ssen) == scores_len and len(ssen_reg) == scores_len
+        # Plot SSE, SSEN, SSEN Regi
+        scores_len = len(sse)
+        assert len(ssen) == scores_len and len(ssen_lgrn) == scores_len
 
-        plt.plot(formated_dates[:scores_len], bounded_sse, color="green", label="SSE")
+        plt.plot(formated_dates[:scores_len], sse.get_normalised_errors(), color="green", label="SSE")
         plt.plot(
-            formated_dates[:scores_len], bounded_ssen, color="blue", linestyle="--", label="SSEN"
+            formated_dates[:scores_len], ssen.get_normalised_errors(), color="blue", linestyle="--", label="SSEN"
         )
         plt.plot(
-            formated_dates[:scores_len], ssen_reg, color="red", linestyle=":", label="SSEN Reg"
+            formated_dates[:scores_len], ssen_lgrn.get_normalised_errors(), color="red", linestyle=":", label="SSEN Reg"
         )
 
         # Set labels, title, and legend for the fit measures plot
@@ -121,12 +147,20 @@ class Starts(TypeCheckBase):
             bbox=dict(boxstyle="round", alpha=0.5),
         )
 
+        # Create a completely separate plot for the absolute value of errors
+        plt.figure(figsize=(10, 6))
+        plt.plot(formated_dates[:scores_len], ssen.get_errors(), color="purple", label="Prices")
+        plt.xlabel("Time")
+        plt.ylabel("Errors")
+        ax = plt.gca()
+        ax.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
+
+    
         # Create a completely separate plot for 'prices'
         plt.figure(figsize=(10, 6))
-        plt.plot(formated_dates, actual_prices, color="purple", label="Prices")
+        plt.plot(formated_dates, observations.get_prices(), color="purple", label="Prices")
 
         # Set labels and title for the prices plot
-
         plt.xlabel("Time")
         plt.ylabel("Price")
         plt.title("Price Over Time")
@@ -135,6 +169,22 @@ class Starts(TypeCheckBase):
         plt.legend()
 
         plt.tight_layout()
+
+
+    def compute_start_time_fixed(
+        self,
+        actual_prices: List[float],
+        fiter: FilterInterface
+    ) -> BubbleStart:
+        # "We impose the constraint that, for a given developingbubble, its start time t1*
+        # cannot be earlier than the previous peak, as determined in Figure 1.""
+        #
+        # Dissection of Bitcoin’s Multiscale Bubble History from January 2012 to February 2018
+
+        ssen_lgrn, _ = self.get_lagrange_score(actual_prices, fiter)
+
+        return ssen_lgrn.index(min(ssen_lgrn))    
+
 
     def compute_start_time(
         self,
@@ -151,9 +201,9 @@ class Starts(TypeCheckBase):
         last_extremity_index = 0
         if len(extremities) > 0:
             last_extremity_index = dates.index(extremities[-1].date_ordinal)
-        ssrn_lgrn, _ = self.getLagrangeScore(
+        ssen_lgrn, _ = self.get_lagrange_score(
             actual_prices[last_extremity_index:], predicted_prices[last_extremity_index:]
         )
 
-        min_index = last_extremity_index + ssrn_lgrn.index(min(ssrn_lgrn))
+        min_index = last_extremity_index + ssen_lgrn.index(min(ssen_lgrn))
         return BubbleStart(dates[min_index], bubble_type)

@@ -10,6 +10,7 @@ T1_STEP = 2
 T2_STEP = 1
 
 MAX_SEARCHES = 25
+TRIES_TO_GET_MINIMUM = 2 # A value of 7 removes most spuriosu results
 
 # Lomb test from:
 # Real-time Prediction of Bitcoin Bubble Crashes (2019)
