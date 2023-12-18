@@ -19,12 +19,11 @@ import psycopg2
 import matplotlib.pyplot as plt
 from peaks import Peaks
 from lppls_dataclasses import BubbleType
-from starts import Starts
+from archive.starts import Starts
 from sornette import Sornette
 from lppls_defaults import (
     LARGEST_WINDOW_SIZE,
     T1_STEP,
-    MAX_SEARCHES,
     SMALLEST_WINDOW_SIZE,
     RECENT_VISIBLE_WINDOWS,
 )
@@ -41,7 +40,6 @@ def get_bubble_scores(sornette: Sornette, default_fitting_params, recent_windows
         smallest_window_size=default_fitting_params["smallest_window_size"],
         t1_increment=5,
         t2_increment=2,
-        max_searches=MAX_SEARCHES,
     )
 
 

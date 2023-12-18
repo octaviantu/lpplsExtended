@@ -1,6 +1,5 @@
 from matplotlib import pyplot as plt
 import numpy as np
-from count_metrics import CountMetrics
 from lppls_dataclasses import (
     BubbleType,
     BubbleStart,
@@ -80,7 +79,6 @@ class BubbleScores(TypeCheckBase):
         ax1_0.set_ylabel("bubble indicator (pos)")
         ax2_0.set_ylabel("bubble indicator (neg)")
 
-        CountMetrics.print_metrics()
         plt.xticks(rotation=45)
 
     def plot_rejection_reasons(self, bubble_scores: List[BubbleScore], ticker: str) -> None:

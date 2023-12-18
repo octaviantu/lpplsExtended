@@ -8,9 +8,6 @@ sys.path.append(
     "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/common"
 )
 sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/metrics"
-)
-sys.path.append(
     "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/prices_db_management"
 )
 sys.path.append(
@@ -26,7 +23,6 @@ from lppls_defaults import (
     SMALLEST_WINDOW_SIZE,
     T1_STEP,
     T2_STEP,
-    MAX_SEARCHES,
     OPTIMIZE_T1_STEP,
     RECENT_VISIBLE_WINDOWS,
 )
@@ -88,8 +84,7 @@ class AllTickers(TypeCheckBase):
             window_size=LARGEST_WINDOW_SIZE,
             smallest_window_size=SMALLEST_WINDOW_SIZE,
             t1_increment=t1_step,
-            t2_increment=T2_STEP,
-            max_searches=MAX_SEARCHES,
+            t2_increment=T2_STEP
         )
 
     def is_in_bubble_state(

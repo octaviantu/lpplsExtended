@@ -11,7 +11,7 @@ import psycopg2
 from datetime import date
 import matplotlib.pyplot as plt
 from sornette import Sornette
-from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP, MAX_SEARCHES
+from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP
 from lppls_dataclasses import Observation, ObservationSeries
 
 
@@ -27,7 +27,6 @@ def execute_lppls_logic(observations, filter_type, filter_file):
         smallest_window_size=SMALLEST_WINDOW_SIZE,
         t1_increment=T1_STEP,
         t2_increment=T2_STEP,
-        max_searches=MAX_SEARCHES,
     )
     sornette.plot_bubble_scores(res_filtered, "VLO")
 

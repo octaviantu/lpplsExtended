@@ -13,7 +13,6 @@ from lppls_defaults import (
     MAX_SEARCHES,
     TRIES_TO_GET_MINIMUM,
 )
-from count_metrics import CountMetrics
 from lppls_dataclasses import (
     ObservationSeries,
     OptimizedParams,
@@ -80,9 +79,6 @@ class FilterBitcoin2019B(FilterInterface):
             if tries == TRIES_TO_GET_MINIMUM:
                 assert min_fit != np.inf
                 return min_fit
-
-        if not min_fit:
-            CountMetrics.add_bubble_rejected_because_can_not_fit()
 
         return min_fit
 
@@ -169,15 +165,6 @@ class FilterBitcoin2019B(FilterInterface):
         passing_ar1_test = self.is_ar1_process(obs_within_t1_t2, op)
         if should_optimize and not passing_ar1_test:
             return BubbleFit([RejectionReason.ANY_REASON], type=bubble_type)
-
-        conditions = {
-            "O": O_in_range,
-            "D": D_in_range,
-            "price": prices_in_range,
-            "lomb_test": passing_lomb_test,
-            "ar1_test": passing_ar1_test,
-        }
-        CountMetrics.add_bubble(conditions, oi.t2_index)
 
         rejection_reasons = []
         if not O_in_range:

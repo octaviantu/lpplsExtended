@@ -14,7 +14,7 @@ sys.path.append(
 
 import numpy as np
 from numpy.typing import NDArray
-from starts import Starts
+from archive.starts import Starts
 from matplotlib import pyplot as plt
 from datetime import datetime, timedelta
 import pandas as pd

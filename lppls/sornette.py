@@ -1,12 +1,8 @@
 import numpy as np
-from count_metrics import CountMetrics
 from bubble_scores import BubbleScores
 from data_fit import DataFit
-from filter_shanghai import FilterShanghai
 from filter_bitcoin2019B import FilterBitcoin2019B
-from filter_swiss import FilterSwiss
 from filter_interface import FilterInterface
-from filimonov_plot import FilimonovPlot
 from lppls_math import LPPLSMath
 from lppls_dataclasses import BubbleStart, ObservationSeries, BubbleType, Peak, BubbleScore
 from typechecking import TypeCheckBase
@@ -17,19 +13,13 @@ class Sornette(TypeCheckBase):
     def __init__(self, observations: ObservationSeries, filter_type, filter_file, should_optimize):
         filter: FilterInterface
 
-        if filter_type == "Shanghai":
-            filter = FilterShanghai(filter_file)
-        elif filter_type == "BitcoinB":
+        if filter_type == "BitcoinB":
             filter = FilterBitcoin2019B(filter_file)
-        elif filter_type == "Swiss":
-            filter = FilterSwiss(filter_file)
         else:
             raise Exception("Filter type not supported")
 
         self.data_fit = DataFit(observations, filter)
         self.bubble_scores = BubbleScores(observations, filter)
-        self.filimonov_plot = FilimonovPlot()
-        CountMetrics.reset()
         self.should_optimize = should_optimize
 
     def estimate_prices(self):
@@ -51,9 +41,6 @@ class Sornette(TypeCheckBase):
 
     def plot_rejection_reasons(self, bubble_scores: List[BubbleScore], ticker: str) -> None:
         self.bubble_scores.plot_rejection_reasons(bubble_scores, ticker)
-
-    def plot_filimonov(self):
-        self.filimonov_plot.plot_optimum(self.data_fit.observations)
 
     def compute_start_time(
         self, observations: ObservationSeries, bubble_type: BubbleType, extremities: List[Peak]

@@ -5,7 +5,7 @@ import numpy as np
 import random
 from filter_interface import FilterInterface
 import data_loader
-from count_metrics import CountMetrics
+from archive.count_metrics import CountMetrics
 from lppls_dataclasses import ObservationSeries, BubbleFit
 
 

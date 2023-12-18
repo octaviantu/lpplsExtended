@@ -1,10 +1,9 @@
 from typing import List
-import numpy as np
 from lppls_math import LPPLSMath
 from tqdm import tqdm
 from matplotlib import pyplot as plt
 from multiprocessing import Pool
-from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP, MAX_SEARCHES
+from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP
 from lppls_dataclasses import (
     BubbleStart,
     ObservationSeries,
@@ -17,7 +16,6 @@ import sys
 from date_utils import DateUtils as du
 import matplotlib.dates as mdates
 from typechecking import TypeCheckBase
-from lppls_dataclasses import BubbleType
 
 
 class DataFit(TypeCheckBase):
@@ -64,7 +62,6 @@ class DataFit(TypeCheckBase):
         smallest_window_size=SMALLEST_WINDOW_SIZE,
         t1_increment=T1_STEP,
         t2_increment=T2_STEP,
-        max_searches=MAX_SEARCHES,
     ) -> List[IntervalFits]:
         stop_windows_beginnings = len(self.observations) - window_size + 1
         start_windows_beginnings = max(len(self.observations) - window_size - recent_windows + 1, 0)

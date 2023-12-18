@@ -9,7 +9,7 @@ from date_utils import DateUtils as du
 class FilterInterface(TypeCheckBase):
     @abstractmethod
     def fit(
-        self, max_searches: int, obsservations: ObservationSeries, minimizer: str
+        self, observations: ObservationSeries, minimizer: str
     ) -> OptimizedParams | None:
         pass
 
