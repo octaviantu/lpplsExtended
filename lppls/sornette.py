@@ -67,4 +67,3 @@ class Sornette(TypeCheckBase):
         if len(extremities) > 0:
             last_extremity_index = dates.index(extremities[-1].date_ordinal)
         return BubbleStart(dates[last_extremity_index], bubble_type)
-

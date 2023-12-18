@@ -19,6 +19,7 @@ import matplotlib.dates as mdates
 from typechecking import TypeCheckBase
 from lppls_dataclasses import BubbleType
 
+
 class DataFit(TypeCheckBase):
     def __init__(self, observations: ObservationSeries, filter: FilterInterface):
         self.observations = observations
@@ -114,14 +115,18 @@ class DataFit(TypeCheckBase):
 
             nested_t1 = obs_shrinking_slice[0].date_ordinal
             nested_t2 = obs_shrinking_slice[-1].date_ordinal
-        
+
             # have to store two indexes because trading days don't map to calendar days
             nested_t1_index = t1_index + j
             nested_t2_index = t1_index + window_size
 
-            optimizedInterval = OptimizedInterval(t1=nested_t1, t2=nested_t2,
-                                                  t1_index=nested_t1_index, t2_index=nested_t2_index,
-                                                  optimized_params=optimized_params)
+            optimizedInterval = OptimizedInterval(
+                t1=nested_t1,
+                t2=nested_t2,
+                t1_index=nested_t1_index,
+                t2_index=nested_t2_index,
+                optimized_params=optimized_params,
+            )
 
             # Append updated params_dict to windows
             optimized_intervals.append(optimizedInterval)

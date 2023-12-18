@@ -5,6 +5,7 @@ from lppls_dataclasses import ObservationSeries, OptimizedParams, OptimizedInter
 from typechecking import TypeCheckBase
 from date_utils import DateUtils as du
 
+
 class FilterInterface(TypeCheckBase):
     @abstractmethod
     def fit(

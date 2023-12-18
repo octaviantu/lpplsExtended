@@ -16,7 +16,8 @@ from typechecking import TypeCheckBase
 from date_utils import DateUtils as du
 
 STOP_LOS_THRESHOLD = -0.1  # 10%
-MIN_HOLD_PERIOD = 5 # hold the position for at least 5 days
+MIN_HOLD_PERIOD = 5  # hold the position for at least 5 days
+
 
 class TradeSuggestions(TypeCheckBase):
     def create_if_not_exists(self, cursor) -> None:
