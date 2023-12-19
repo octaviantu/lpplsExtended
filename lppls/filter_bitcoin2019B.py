@@ -105,14 +105,11 @@ class FilterBitcoin2019B(FilterInterface):
             method=minimizer,
             bounds=search_bounds,
         )
+        # print(f'obtained cofs: {cofs}')
 
         if cofs.success:
-            tc = cofs.x[0]
-            m = cofs.x[1]
-            w = cofs.x[2]
-
-            rM = LPPLSMath.matrix_equation(observations, tc, m, w)
-            a, b, c1, c2 = rM[:, 0].tolist()
+            tc, m, w = cofs.x
+            a, b, c1, c2 = LPPLSMath.matrix_equation(observations, tc, m, w)
 
             return OptimizedParams(tc, m, w, a, b, c1, c2)
         else:

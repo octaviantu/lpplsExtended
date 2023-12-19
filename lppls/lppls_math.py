@@ -15,7 +15,7 @@ class LPPLSMath(TypeCheckBase):
         )
 
     @staticmethod
-    def matrix_equation(observations: ObservationSeries, tc, m, w):
+    def matrix_equation(observations: ObservationSeries, tc, m, w) -> List[float]:
         """
         Derive linear parameters in LPPLs from nonlinear ones.
         """
@@ -54,8 +54,8 @@ class LPPLSMath(TypeCheckBase):
         )
 
         matrix_2 = np.array([[np.sum(yi)], [np.sum(yifi)], [np.sum(yigi)], [np.sum(yihi)]])
+        return np.linalg.solve(matrix_1, matrix_2).flatten().tolist()
 
-        return np.linalg.solve(matrix_1, matrix_2)
 
     @staticmethod
     def minimize_squared_residuals(x, observations: ObservationSeries):
@@ -73,8 +73,7 @@ class LPPLSMath(TypeCheckBase):
         m = x[1]
         w = x[2]
 
-        rM = LPPLSMath.matrix_equation(observations, tc, m, w)
-        a, b, c1, c2 = rM[:, 0].tolist()
+        a, b, c1, c2 = LPPLSMath.matrix_equation(observations, tc, m, w)
         op = OptimizedParams(tc, m, w, a, b, c1, c2)
 
         return LPPLSMath.sum_of_squared_residuals(observations, op)
