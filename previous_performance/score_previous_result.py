@@ -1,4 +1,4 @@
-from tao_suggestions import TaoSuggestions
+from prices_db_management.tao_suggestions import TaoSuggestions
 from prices_db_management.lppls_suggestions import LpplsSuggestions
 from prices_db_management.db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
 from prices_db_management.db_dataclasses import StrategyResult, ClosedPosition

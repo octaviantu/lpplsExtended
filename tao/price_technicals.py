@@ -1,5 +1,5 @@
 from typing import List
-from tao_dataclasses import PriceData, ATR_RANGE, ATR_BAND_NR_PROFIT
+from tao.tao_dataclasses import PriceData, ATR_RANGE, ATR_BAND_NR_PROFIT
 import numpy as np
 from ta.trend import EMAIndicator
 import pandas as pd

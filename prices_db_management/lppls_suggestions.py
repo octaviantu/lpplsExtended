@@ -1,6 +1,9 @@
 from typing import List
 from prices_db_management.db_dataclasses import Suggestion, OrderType, CloseReason
-from prices_db_management.db_defaults import DEFAULT_POSITION_SIZE, TOP_BUBBLE_CONFIDENCE_IN_PRACTICE
+from prices_db_management.db_defaults import (
+    DEFAULT_POSITION_SIZE,
+    TOP_BUBBLE_CONFIDENCE_IN_PRACTICE,
+)
 from prices_db_management.trade_suggestions import TradeSuggestions
 from prices_db_management.db_dataclasses import StrategyType
 from common.date_utils import DateUtils as du

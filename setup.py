@@ -36,7 +36,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 
-print(f'find_packages: {find_packages()}')
+print(f"find_packages: {find_packages()}")
 
 setup(
     name="lppls",

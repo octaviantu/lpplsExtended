@@ -56,7 +56,6 @@ class LPPLSMath(TypeCheckBase):
         matrix_2 = np.array([[np.sum(yi)], [np.sum(yifi)], [np.sum(yigi)], [np.sum(yihi)]])
         return np.linalg.solve(matrix_1, matrix_2).flatten().tolist()
 
-
     @staticmethod
     def minimize_squared_residuals(x, observations: ObservationSeries):
         """

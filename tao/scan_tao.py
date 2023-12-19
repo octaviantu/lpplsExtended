@@ -6,12 +6,12 @@ from ta.momentum import StochasticOscillator
 from ta.trend import ADXIndicator
 import pandas as pd
 from prices_db_management.db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
-from tao_dataclasses import PriceData, FullTechnicalData, TipTechnicalData, ATR_RANGE
+from tao.tao_dataclasses import PriceData, FullTechnicalData, TipTechnicalData, ATR_RANGE
 from prices_db_management.db_dataclasses import OrderType, Suggestion
-from tao_suggestions import TaoSuggestions
+from prices_db_management.tao_suggestions import TaoSuggestions
 import matplotlib.pyplot as plt
 import os
-from price_technicals import PriceTechnicals
+from tao.price_technicals import PriceTechnicals
 from common.typechecking import TypeCheckBase
 from common.date_utils import DateUtils as du
 from matplotlib import dates as mdates

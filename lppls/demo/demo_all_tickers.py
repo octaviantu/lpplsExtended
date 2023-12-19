@@ -67,7 +67,7 @@ class AllTickers(TypeCheckBase):
             window_size=LARGEST_WINDOW_SIZE,
             smallest_window_size=SMALLEST_WINDOW_SIZE,
             t1_increment=t1_step,
-            t2_increment=T2_STEP
+            t2_increment=T2_STEP,
         )
 
     def is_in_bubble_state(
