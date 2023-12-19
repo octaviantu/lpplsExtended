@@ -1,7 +1,7 @@
 import psycopg2
 from typing import List
-from db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
-from db_dataclasses import (
+from prices_db_management.db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
+from prices_db_management.db_dataclasses import (
     Suggestion,
     StrategyResult,
     StrategyType,
@@ -10,10 +10,10 @@ from db_dataclasses import (
     ClosedPosition,
 )
 from abc import abstractmethod
-from db_dataclasses import StrategyType
+from prices_db_management.db_dataclasses import StrategyType
 from psycopg2.extras import DictCursor
-from typechecking import TypeCheckBase
-from date_utils import DateUtils as du
+from common.typechecking import TypeCheckBase
+from common.date_utils import DateUtils as du
 
 STOP_LOS_THRESHOLD = -0.1  # 10%
 MIN_HOLD_PERIOD = 5  # hold the position for at least 5 days

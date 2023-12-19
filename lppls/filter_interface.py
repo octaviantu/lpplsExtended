@@ -1,9 +1,9 @@
 from abc import abstractmethod
 import numpy as np
-from lppls_math import LPPLSMath
-from lppls_dataclasses import ObservationSeries, OptimizedParams, OptimizedInterval, BubbleFit
-from typechecking import TypeCheckBase
-from date_utils import DateUtils as du
+from lppls.lppls_math import LPPLSMath
+from lppls.lppls_dataclasses import ObservationSeries, OptimizedParams, OptimizedInterval, BubbleFit
+from common.typechecking import TypeCheckBase
+from common.date_utils import DateUtils as du
 
 
 class FilterInterface(TypeCheckBase):

@@ -3,14 +3,14 @@
 # J.C. Gerlach† , G. Demos†, D. Sornette†♮
 
 from typing import List
-from lppls_defaults import MIN_NR_CLUSTERS, MAX_NR_CLUSTERS
+from lppls.lppls_defaults import MIN_NR_CLUSTERS, MAX_NR_CLUSTERS
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 import numpy as np
-from lppls_dataclasses import BubbleStart, BubbleScore
-from db_dataclasses import PopRange
-from date_utils import DateUtils as du
-from typechecking import TypeCheckBase
+from lppls.lppls_dataclasses import BubbleStart, BubbleScore
+from prices_db_management.db_dataclasses import PopRange
+from common.date_utils import DateUtils as du
+from common.typechecking import TypeCheckBase
 
 MIN_POINTS_CLUSTER_RATIO = 3
 # Only extract windows from these last days

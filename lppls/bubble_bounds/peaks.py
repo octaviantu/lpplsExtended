@@ -1,8 +1,8 @@
 import numpy as np
 from typing import List, Dict, Tuple
 from collections import defaultdict
-from lppls_dataclasses import BubbleType, Peak, ObservationSeries
-from lppls_defaults import (
+from lppls.lppls_dataclasses import BubbleType, Peak, ObservationSeries
+from lppls.lppls_defaults import (
     EPSILON_RANGE_START,
     EPSILON_RANGE_END,
     EPSILON_STEP,
@@ -12,9 +12,9 @@ from lppls_defaults import (
     W_STEP,
 )
 import matplotlib.pyplot as plt
-from date_utils import DateUtils as du
+from common.date_utils import DateUtils as du
 import matplotlib.dates as mdates
-from typechecking import TypeCheckBase
+from common.typechecking import TypeCheckBase
 
 
 class Peaks(TypeCheckBase):

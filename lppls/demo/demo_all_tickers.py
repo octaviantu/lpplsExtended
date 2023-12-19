@@ -1,24 +1,7 @@
-import sys
-
-sys.path.append("/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls")
-sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/lppls/bubble_bounds"
-)
-sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/common"
-)
-sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/prices_db_management"
-)
-sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/previous_performance"
-)
-
-
 import csv
 import psycopg2
-from sornette import Sornette
-from lppls_defaults import (
+from lppls.sornette import Sornette
+from lppls.lppls_defaults import (
     LARGEST_WINDOW_SIZE,
     SMALLEST_WINDOW_SIZE,
     T1_STEP,
@@ -29,15 +12,15 @@ from lppls_defaults import (
 import argparse
 from matplotlib import pyplot as plt
 import os
-from lppls_dataclasses import BubbleScore, BubbleType, Observation, ObservationSeries
-from peaks import Peaks
+from lppls.lppls_dataclasses import BubbleScore, BubbleType, Observation, ObservationSeries
+from lppls.bubble_bounds.peaks import Peaks
 import warnings
-from pop_dates import PopDates
-from lppls_suggestions import LpplsSuggestions
-from db_dataclasses import Suggestion, OrderType
-from typechecking import TypeCheckBase
-from date_utils import DateUtils as du
-from db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
+from lppls.bubble_bounds.pop_dates import PopDates
+from prices_db_management.lppls_suggestions import LpplsSuggestions
+from prices_db_management.db_dataclasses import Suggestion, OrderType
+from common.typechecking import TypeCheckBase
+from common.date_utils import DateUtils as du
+from prices_db_management.db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
 from typing import List
 import cProfile
 

@@ -18,18 +18,18 @@ import pandas as pd
 import psycopg2
 import matplotlib.pyplot as plt
 from peaks import Peaks
-from lppls_dataclasses import BubbleType
+from lppls.lppls_dataclasses import BubbleType
 from archive.starts import Starts
 from sornette import Sornette
-from lppls_defaults import (
+from lppls.lppls_defaults import (
     LARGEST_WINDOW_SIZE,
     T1_STEP,
     SMALLEST_WINDOW_SIZE,
     RECENT_VISIBLE_WINDOWS,
 )
-from lppls_dataclasses import Observation, ObservationSeries
-from pop_dates import PopDates
-from date_utils import DateUtils as du
+from lppls.lppls_dataclasses import Observation, ObservationSeries
+from lppls.bubble_bounds.pop_dates import PopDates
+from common.date_utils import DateUtils as du
 
 
 def get_bubble_scores(sornette: Sornette, default_fitting_params, recent_windows):

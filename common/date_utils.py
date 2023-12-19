@@ -1,7 +1,7 @@
 from datetime import date
 import pandas as pd
 from datetime import datetime, timedelta
-from typechecking import TypeCheckBase
+from common.typechecking import TypeCheckBase
 
 
 class DateUtils(TypeCheckBase):

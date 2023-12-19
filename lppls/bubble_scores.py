@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 import numpy as np
-from lppls_dataclasses import (
+from lppls.lppls_dataclasses import (
     BubbleType,
     BubbleStart,
     ObservationSeries,
@@ -8,13 +8,13 @@ from lppls_dataclasses import (
     BubbleScore,
     RejectionReason,
 )
-from pop_dates import Cluster
+from lppls.bubble_bounds.pop_dates import Cluster
 from matplotlib.lines import Line2D
-from filter_interface import FilterInterface
+from lppls.filter_interface import FilterInterface
 from typing import List
-from date_utils import DateUtils as du
+from common.date_utils import DateUtils as du
 import matplotlib.dates as mdates
-from typechecking import TypeCheckBase
+from common.typechecking import TypeCheckBase
 
 
 class BubbleScores(TypeCheckBase):

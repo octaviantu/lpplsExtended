@@ -1,9 +1,3 @@
-import sys
-
-sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/common"
-)
-
 import requests
 from bs4 import BeautifulSoup
 import argparse

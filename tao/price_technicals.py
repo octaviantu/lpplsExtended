@@ -3,8 +3,8 @@ from tao_dataclasses import PriceData, ATR_RANGE, ATR_BAND_NR_PROFIT
 import numpy as np
 from ta.trend import EMAIndicator
 import pandas as pd
-from db_dataclasses import OrderType
-from typechecking import TypeCheckBase
+from prices_db_management.db_dataclasses import OrderType
+from common.typechecking import TypeCheckBase
 
 
 class PriceTechnicals(TypeCheckBase):

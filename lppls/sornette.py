@@ -1,11 +1,11 @@
 import numpy as np
-from bubble_scores import BubbleScores
-from data_fit import DataFit
-from filter_bitcoin2019B import FilterBitcoin2019B
-from filter_interface import FilterInterface
-from lppls_math import LPPLSMath
-from lppls_dataclasses import BubbleStart, ObservationSeries, BubbleType, Peak, BubbleScore
-from typechecking import TypeCheckBase
+from lppls.bubble_scores import BubbleScores
+from lppls.data_fit import DataFit
+from lppls.filter_bitcoin2019B import FilterBitcoin2019B
+from lppls.filter_interface import FilterInterface
+from lppls.lppls_math import LPPLSMath
+from lppls.lppls_dataclasses import BubbleStart, ObservationSeries, BubbleType, Peak, BubbleScore
+from common.typechecking import TypeCheckBase
 from typing import List
 
 

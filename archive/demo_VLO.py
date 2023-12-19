@@ -11,8 +11,8 @@ import psycopg2
 from datetime import date
 import matplotlib.pyplot as plt
 from sornette import Sornette
-from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP
-from lppls_dataclasses import Observation, ObservationSeries
+from lppls.lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP
+from lppls.lppls_dataclasses import Observation, ObservationSeries
 
 
 def execute_lppls_logic(observations, filter_type, filter_file):

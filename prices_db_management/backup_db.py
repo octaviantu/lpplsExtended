@@ -1,14 +1,8 @@
-import sys
-
-sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/common"
-)
-
 import subprocess
 import os
-from db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
-from typechecking import TypeCheckBase
-from date_utils import DateUtils as du
+from prices_db_management.db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
+from common.typechecking import TypeCheckBase
+from common.date_utils import DateUtils as du
 
 
 class BackupDb(TypeCheckBase):

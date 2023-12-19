@@ -1,21 +1,21 @@
 from typing import List
-from lppls_math import LPPLSMath
+from lppls.lppls_math import LPPLSMath
 from tqdm import tqdm
 from matplotlib import pyplot as plt
 from multiprocessing import Pool
-from lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP
-from lppls_dataclasses import (
+from lppls.lppls_defaults import LARGEST_WINDOW_SIZE, SMALLEST_WINDOW_SIZE, T1_STEP, T2_STEP
+from lppls.lppls_dataclasses import (
     BubbleStart,
     ObservationSeries,
     OptimizedInterval,
     IntervalFits,
     OptimizedParams,
 )
-from filter_interface import FilterInterface
+from lppls.filter_interface import FilterInterface
 import sys
-from date_utils import DateUtils as du
+from common.date_utils import DateUtils as du
 import matplotlib.dates as mdates
-from typechecking import TypeCheckBase
+from common.typechecking import TypeCheckBase
 
 
 class DataFit(TypeCheckBase):

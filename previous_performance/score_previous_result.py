@@ -9,13 +9,13 @@ sys.path.append(
 )
 
 from tao_suggestions import TaoSuggestions
-from lppls_suggestions import LpplsSuggestions
-from db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
-from db_dataclasses import StrategyResult, ClosedPosition
+from prices_db_management.lppls_suggestions import LpplsSuggestions
+from prices_db_management.db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
+from prices_db_management.db_dataclasses import StrategyResult, ClosedPosition
 import psycopg2
 import os
-from typechecking import TypeCheckBase
-from date_utils import DateUtils as du
+from common.typechecking import TypeCheckBase
+from common.date_utils import DateUtils as du
 import argparse
 from typing import List
 import shutil

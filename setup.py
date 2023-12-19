@@ -1,4 +1,4 @@
-import setuptools
+from setuptools import setup, find_packages
 from setuptools import Command
 import subprocess
 from typing import List
@@ -35,13 +35,16 @@ class TypeCheck(Command):
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-setuptools.setup(
+
+print(f'find_packages: {find_packages()}')
+
+setup(
     name="lppls",
     version="0.7",
     description="A Python module for fitting the LPPLS model to data.",
-    packages=["lppls"],
-    author="Octavian Tuchila, Josh Nielsen, Didier Sornette",
-    author_email="josh@boulderinvestment.tech",
+    packages=find_packages(),
+    author="Octavian Tuchila",
+    author_email="octaviantuchila14@gmail.com",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/octaviantu/lpplSornettePython",
@@ -61,8 +64,6 @@ setuptools.setup(
         "ta",
     ],
     zip_safe=False,
-    include_package_data=True,
-    package_data={"": ["data/*.csv"]},
     cmdclass={
         "format": FormatCode,
         "typecheck": TypeCheck,

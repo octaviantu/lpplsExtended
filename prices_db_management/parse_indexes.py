@@ -1,9 +1,3 @@
-import sys
-
-sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/common"
-)
-
 from parse_base import ParseBase
 from fetch_common import Asset
 

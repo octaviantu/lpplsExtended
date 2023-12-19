@@ -1,7 +1,7 @@
-from db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
+from prices_db_management.db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
 from fetch_common import Asset
-from typechecking import TypeCheckBase
-from date_utils import DateUtils as du
+from common.typechecking import TypeCheckBase
+from common.date_utils import DateUtils as du
 import psycopg2
 from typing import List
 import yfinance as yf

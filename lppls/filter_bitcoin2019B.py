@@ -1,19 +1,19 @@
 from typing import List, Tuple
 from scipy.optimize import minimize
 from scipy.signal import lombscargle
-from lppls_math import LPPLSMath
+from lppls.lppls_math import LPPLSMath
 import numpy as np
 import random
-from filter_interface import FilterInterface
-import data_loader
+from lppls.filter_interface import FilterInterface
+import lppls.data_loader as data_loader
 from statsmodels.tsa.ar_model import AutoReg
-from lppls_defaults import (
+from lppls.lppls_defaults import (
     SIGNIFICANCE_LEVEL,
     ADF_SIGNIFICANCE_LEVEL,
     MAX_SEARCHES,
     TRIES_TO_GET_MINIMUM,
 )
-from lppls_dataclasses import (
+from lppls.lppls_dataclasses import (
     ObservationSeries,
     OptimizedParams,
     OptimizedInterval,

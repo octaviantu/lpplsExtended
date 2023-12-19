@@ -1,7 +1,7 @@
 import numpy as np
-from lppls_dataclasses import ObservationSeries, OptimizedParams
+from lppls.lppls_dataclasses import ObservationSeries, OptimizedParams
 from typing import List
-from typechecking import TypeCheckBase
+from common.typechecking import TypeCheckBase
 
 
 class LPPLSMath(TypeCheckBase):

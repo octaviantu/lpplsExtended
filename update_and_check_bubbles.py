@@ -1,12 +1,6 @@
-import sys
-
-sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/common"
-)
-
 import subprocess
 import time
-from date_utils import DateUtils as du
+from common.date_utils import DateUtils as du
 
 scripts_to_run = [
     {

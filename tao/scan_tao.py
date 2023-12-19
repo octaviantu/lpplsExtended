@@ -1,12 +1,3 @@
-import sys
-
-sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/prices_db_management"
-)
-sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/common"
-)
-
 import psycopg2
 from typing import List, Tuple, Dict
 from ta.trend import EMAIndicator
@@ -14,15 +5,15 @@ from ta.momentum import RSIIndicator
 from ta.momentum import StochasticOscillator
 from ta.trend import ADXIndicator
 import pandas as pd
-from db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
+from prices_db_management.db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
 from tao_dataclasses import PriceData, FullTechnicalData, TipTechnicalData, ATR_RANGE
-from db_dataclasses import OrderType, Suggestion
+from prices_db_management.db_dataclasses import OrderType, Suggestion
 from tao_suggestions import TaoSuggestions
 import matplotlib.pyplot as plt
 import os
 from price_technicals import PriceTechnicals
-from typechecking import TypeCheckBase
-from date_utils import DateUtils as du
+from common.typechecking import TypeCheckBase
+from common.date_utils import DateUtils as du
 from matplotlib import dates as mdates
 import argparse
 

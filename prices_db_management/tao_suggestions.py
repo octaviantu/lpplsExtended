@@ -1,11 +1,11 @@
 from typing import List
-from db_dataclasses import Suggestion, StrategyType, OrderType, CloseReason
+from prices_db_management.db_dataclasses import Suggestion, StrategyType, OrderType, CloseReason
 from tao_dataclasses import ATR_RANGE
-from db_defaults import DEFAULT_POSITION_SIZE
-from trade_suggestions import TradeSuggestions
+from prices_db_management.db_defaults import DEFAULT_POSITION_SIZE
+from prices_db_management.trade_suggestions import TradeSuggestions
 from price_technicals import PriceTechnicals
 from tao_dataclasses import PriceData, MAX_DAYS_UNTIL_CLOSE_POSITION_TAO
-from date_utils import DateUtils as du
+from common.date_utils import DateUtils as du
 
 STRATEGY_TYPE = StrategyType.TAO_RSI
 
