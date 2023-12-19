@@ -1,13 +1,3 @@
-import sys
-
-sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/prices_db_management"
-)
-sys.path.append("/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/tao")
-sys.path.append(
-    "/Users/octaviantuchila/Development/MonteCarlo/Sornette/lppls_python_updated/common"
-)
-
 from tao_suggestions import TaoSuggestions
 from prices_db_management.lppls_suggestions import LpplsSuggestions
 from prices_db_management.db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
