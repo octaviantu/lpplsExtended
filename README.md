@@ -9,6 +9,11 @@ python update_and_check_bubbles.py
 
 # Development 
 
+Install dependencies:
+```
+pip install -e .
+```
+
 Format the code:
 ```
 python setup.py format

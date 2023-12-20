@@ -62,6 +62,7 @@ setup(
         "mypy",
         "typeguard",
         "ta",
+        "psycopg2",
     ],
     zip_safe=False,
     cmdclass={
