@@ -1,9 +1,10 @@
 import psycopg2
+from prices_db_management.db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
 
 try:
     # Connect to Postgres server
     conn = psycopg2.connect(
-        host="localhost", database="asset_prices", user="sornette", password="sornette", port="5432"
+        host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASSWORD, port=DB_PORT
     )
 
     conn.autocommit = True
@@ -12,9 +13,16 @@ try:
 
     cursor.execute(
         """
-        CREATE TYPE asset_type AS ENUM ('ETF', 'STOCK', 'INDEX');
-    """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'asset_type') THEN
+                CREATE TYPE asset_type AS ENUM ('ETF', 'STOCK', 'INDEX');
+            END IF;
+        END
+        $$;
+        """
     )
+
 
     # Create a table for stock prices
     cursor.execute(
@@ -33,8 +41,6 @@ try:
         );
     """
     )
-
-    print("Database created successfully")
 
 except Exception as e:
     print(f"Error: {e}")

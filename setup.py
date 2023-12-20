@@ -32,6 +32,10 @@ class TypeCheck(Command):
         subprocess.run(["mypy", "."])
 
 
+# Read requirements.txt for install_requires
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
@@ -40,7 +44,7 @@ print(f"find_packages: {find_packages()}")
 
 setup(
     name="lppls",
-    version="0.7",
+    version="0.1",
     description="A Python module for fitting the LPPLS model to data.",
     packages=find_packages(),
     author="Octavian Tuchila",
@@ -49,21 +53,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/octaviantu/lpplSornettePython",
     python_requires=">=3.10",
-    install_requires=[
-        "pandas",
-        "matplotlib",
-        "scipy",
-        "xarray",
-        "cma",
-        "tqdm",
-        "numba",
-        "black",
-        "statsmodels",
-        "mypy",
-        "typeguard",
-        "ta",
-        "psycopg2",
-    ],
+    install_requires=requirements,
     zip_safe=False,
     cmdclass={
         "format": FormatCode,

@@ -4,7 +4,11 @@ from common.date_utils import DateUtils as du
 
 scripts_to_run = [
     {
-        "cmd": ("python", "prices_db_management/parse_largest_ETFs.py"),
+        "cmd": ("python", "prices_db_management/create_db.py"),
+        "log": "Create DB if it doesn't exist",
+    },
+    {
+        "cmd": ("python", "prices_db_management/parse_largest_ETFs.py", "--fetch-tickers"),
         "log": "Fetching latest ETF pricing",
     },
     {

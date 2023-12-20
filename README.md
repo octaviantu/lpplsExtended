@@ -11,7 +11,7 @@ python update_and_check_bubbles.py
 
 Install dependencies:
 ```
-pip install -e .
+python setup.py install -e .
 ```
 
 Format the code:
@@ -35,6 +35,10 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.octaviantuchila.dail
 
 DO NOT put the codebase under `Documents`, because the mac launcher won't be allowed to access it.
 
+# Deploy to Google Cloud - Artifact Registry
+
+docker build --platform linux/amd64 -t europe-west2-docker.pkg.dev/sornette/lppls-reg/lppls:amd-64 .
+docker push europe-west2-docker.pkg.dev/sornette/lppls-reg/lppls:amd-64
 
 # Other spefications
 

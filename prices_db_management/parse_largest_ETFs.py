@@ -25,14 +25,7 @@ class ParseLargetsETFs(ParseBase):
         table = soup.find("table", {"class": "table"})
         rows = table.find_all("tr")
 
-        # Connect to the database
-        conn = psycopg2.connect(
-            host="localhost",
-            database="asset_prices",
-            user="sornette",
-            password="sornette",
-            port="5432",
-        )
+        conn = self.get_connection()
         cur = conn.cursor()
 
         cur.execute(

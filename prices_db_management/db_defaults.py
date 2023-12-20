@@ -1,8 +1,11 @@
-DB_HOST = "localhost"
+import os
+
+DB_HOST = os.getenv('DB_HOST', 'localhost')
+DB_PORT = os.getenv('DB_PORT', '5432')
 DB_NAME = "asset_prices"
 DB_USER = "sornette"
 DB_PASSWORD = "sornette"
-DB_PORT = "5432"
+
 
 # For simulating the results, this will be default sum invested.
 DEFAULT_POSITION_SIZE = 10000
