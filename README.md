@@ -35,6 +35,12 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.octaviantuchila.dail
 
 DO NOT put the codebase under `Documents`, because the mac launcher won't be allowed to access it.
 
+# Run on a Linux VM
+```
+sudo docker-compose up -d
+sudo docker-compose logs -f app
+```
+
 # Deploy to Google Cloud - Artifact Registry
 
 docker build --platform linux/amd64 -t europe-west2-docker.pkg.dev/sornette/lppls-reg/lppls:amd-64 .

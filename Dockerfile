@@ -25,4 +25,12 @@ RUN python setup.py install
 # Expose port for the app
 EXPOSE 8000
 
-CMD ["python", "/usr/src/app//update_and_check_bubbles.py", "--backtest-start", "400"]
+
+# Execute commands during build
+RUN python /usr/src/app/prices_db_management/create_db.py
+RUN python /usr/src/app/prices_db_management/parse_largest_ETFs.py --fetch-tickers
+RUN python /usr/src/app/prices_db_management/parse_most_traded_stocks_US.py --fetch-tickers
+RUN python /usr/src/app/prices_db_management/parse_SP500_components.py --fetch-tickers
+RUN python /usr/src/app/prices_db_management/parse_indexes.py
+
+CMD ["python", "/usr/src/app/lppls/demo/demo_all_tickers.py", "--backtest-start", "200"]
