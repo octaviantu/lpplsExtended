@@ -14,7 +14,7 @@
       "program": "${workspaceFolder}/previous_performance/score_previous_result.py",
       "args": [
         "--backtest",
-        "340",
+        "401",
         "--clear-previous"
       ]
     },

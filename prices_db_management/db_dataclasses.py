@@ -48,6 +48,7 @@ class ClosedPosition:
     close_reason: CloseReason
     order_type: OrderType
     daily_runs_count: int
+    confidence: float
 
     def compute_profit_percent(self) -> str:
         if self.open_price == 0.0:

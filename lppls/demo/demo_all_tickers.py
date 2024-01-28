@@ -8,6 +8,7 @@ from lppls.lppls_defaults import (
     T2_STEP,
     OPTIMIZE_T1_STEP,
     RECENT_VISIBLE_WINDOWS,
+    BUBBLE_THRESHOLD
 )
 import argparse
 from matplotlib import pyplot as plt
@@ -28,7 +29,6 @@ import cProfile
 warnings.filterwarnings("error", category=RuntimeWarning)
 
 
-BUBBLE_THRESHOLD = 0.25
 # windows that are close to the end of the data, to see if there is a recent bubble
 RECENT_RELEVANT_WINDOWS = 5
 LIMIT_OF_MOST_TRADED_COMPANIES = 250

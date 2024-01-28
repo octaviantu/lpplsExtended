@@ -87,7 +87,7 @@ class ScorePreviousResults(TypeCheckBase):
         with open(file_path, "w") as file:
             # Write the header line
             file.write(
-                "Ticker, Open Date, Open Price, Close Date, Close Price, Position Size, Strategy Type, Close Reason, Order Type, Daily runs count, Profit Percent, Profit Absolute\n"
+                "Ticker, Open Date, Open Price, Close Date, Close Price, Confidence, Position Size, Strategy Type, Close Reason, Order Type, Daily runs count, Profit Percent, Profit Absolute\n"
             )
 
             for position in closed_positions:
@@ -102,6 +102,7 @@ class ScorePreviousResults(TypeCheckBase):
                 close_reason = position.close_reason.value
                 order_type = position.order_type.value
                 daily_runs_count = position.daily_runs_count
+                confidence = position.confidence
 
                 # Calling methods of ClosedPosition
                 profit_percent = position.compute_profit_percent()
@@ -109,7 +110,7 @@ class ScorePreviousResults(TypeCheckBase):
 
                 # Writing data to the file
                 file.write(
-                    f"{ticker}, {open_date}, {open_price}, {close_date}, {close_price}, {position_size}, {strategy_type}, {close_reason}, {order_type}, {daily_runs_count}, {profit_percent}, {profit_absolute}\n"
+                    f"{ticker}, {open_date}, {open_price}, {close_date}, {close_price}, {confidence}, {position_size}, {strategy_type}, {close_reason}, {order_type}, {daily_runs_count}, {profit_percent}, {profit_absolute}\n"
                 )
 
     def write_aggregate_results(

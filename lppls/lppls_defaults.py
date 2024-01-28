@@ -52,3 +52,9 @@ OPTIMIZE_T1_STEP = 4
 LARGEST_WINDOW_SIZE_STRICT = 180
 SMALLEST_WINDOW_SIZE_STRICT = 20
 T1_STEP_STRICT = 1
+
+
+# Value over which an item is considered to be in a bubble
+BUBBLE_THRESHOLD = 0.25
+# Only bubbles over this value are scored in backtesting
+BUBBLE_SCORING_THRESHOLD = 0.25

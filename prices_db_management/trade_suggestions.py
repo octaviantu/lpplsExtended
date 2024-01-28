@@ -1,5 +1,6 @@
 import psycopg2
 from typing import List
+from lppls.lppls_defaults import BUBBLE_SCORING_THRESHOLD
 from prices_db_management.db_defaults import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
 from prices_db_management.db_dataclasses import (
     Suggestion,
@@ -118,14 +119,14 @@ class TradeSuggestions(TypeCheckBase):
 
         STRATEGY_TYPE = self.getStrategyType()
 
-        # Query to get all TAO_RSI suggestions that are open
+        # Query to get all suggestions that are open
         cursor.execute(
             """
-            SELECT ticker, open_price, position_size, order_t, open_date, daily_runs_count
+            SELECT ticker, open_price, position_size, order_t, open_date, daily_runs_count, confidence
             FROM suggestions 
-            WHERE strategy_t = %s AND is_position_open = TRUE AND open_date <= %s;
+            WHERE strategy_t = %s AND is_position_open = TRUE AND open_date <= %s and confidence >= %s;
         """,
-            (STRATEGY_TYPE.value, test_date),
+            (STRATEGY_TYPE.value, test_date, BUBBLE_SCORING_THRESHOLD),
         )
         suggestions = cursor.fetchall()
 
@@ -139,6 +140,7 @@ class TradeSuggestions(TypeCheckBase):
             order_type = OrderType[suggestion["order_t"]]
             open_date = str(suggestion["open_date"])
             daily_runs_count = suggestion["daily_runs_count"]
+            confidence = suggestion["confidence"]
 
             # Query to get the latest price from pricing_history
             cursor.execute(
@@ -179,6 +181,7 @@ class TradeSuggestions(TypeCheckBase):
                         close_reason=close_reason,
                         order_type=order_type,
                         daily_runs_count=daily_runs_count,
+                        confidence=confidence,
                     )
                 )
 
@@ -221,12 +224,12 @@ class TradeSuggestions(TypeCheckBase):
         # Query to get all TAO_RSI suggestions that are open
         cursor.execute(
             """
-            SELECT ticker, open_price, position_size, order_t, open_date, close_date, close_price, close_reason, daily_runs_count
+            SELECT ticker, open_price, position_size, confidence, order_t, open_date, close_date, close_price, close_reason, daily_runs_count
             FROM suggestions 
-            WHERE strategy_t = %s AND is_position_open = FALSE
+            WHERE strategy_t = %s AND is_position_open = FALSE AND confidence >= %s
             ORDER BY open_date, close_date, ticker;
         """,
-            (STRATEGY_TYPE.value,),
+            (STRATEGY_TYPE.value,BUBBLE_SCORING_THRESHOLD),
         )
         suggestions = cursor.fetchall()
 
@@ -243,6 +246,7 @@ class TradeSuggestions(TypeCheckBase):
             close_price = suggestion["close_price"]
             close_reason = CloseReason[suggestion["close_reason"]]
             daily_runs_count = suggestion["daily_runs_count"]
+            confidence = suggestion["confidence"]
 
             closed_positions.append(
                 ClosedPosition(
@@ -256,6 +260,7 @@ class TradeSuggestions(TypeCheckBase):
                     close_reason=close_reason,
                     order_type=order_type,
                     daily_runs_count=daily_runs_count,
+                    confidence=confidence,
                 )
             )
 

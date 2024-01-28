@@ -9,9 +9,9 @@ python update_and_check_bubbles.py
 
 # Development 
 
-Install dependencies:
+After making changes:
 ```
-python setup.py install -e .
+python setup.py install
 ```
 
 Format the code:
