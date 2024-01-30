@@ -9,9 +9,9 @@ python update_and_check_bubbles.py
 
 # Development 
 
-After making changes:
+This will allow debugging dependency packages and I won't need to install on every change.
 ```
-python setup.py install
+pip install -e .
 ```
 
 Format the code:

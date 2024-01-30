@@ -40,7 +40,8 @@ class TaoSuggestions(TradeSuggestions):
             )
 
     def maybe_close(
-        self, order_type: OrderType, ticker: str, open_date: str, last_date: str, cursor
+        self, order_type: OrderType, ticker: str, open_date: str, _open_price: float, last_date: str,
+        _last_price: float, cursor
     ) -> CloseReason | None:
         # Get pricing data for the ticker
         cursor.execute(

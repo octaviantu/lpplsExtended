@@ -15,6 +15,7 @@ from prices_db_management.db_dataclasses import StrategyType
 from psycopg2.extras import DictCursor
 from common.typechecking import TypeCheckBase
 from common.date_utils import DateUtils as du
+from prices_db_management.prices_utils import compute_profit
 
 STOP_LOS_THRESHOLD = -0.1  # 10%
 MIN_HOLD_PERIOD = 5  # hold the position for at least 5 days
@@ -159,14 +160,12 @@ class TradeSuggestions(TypeCheckBase):
 
             last_date, last_close_price = str(row[0]), row[1]
 
-            sign = 1 if order_type == OrderType.BUY else -1
-            profit = ((last_close_price - open_price) / open_price) * sign
-
+            profit = compute_profit(order_type, open_price, last_close_price)
             close_reason = None
             if profit <= STOP_LOS_THRESHOLD:
                 close_reason = CloseReason.STOP_LOSS
             elif du.date_to_ordinal(last_date) - du.date_to_ordinal(open_date) >= MIN_HOLD_PERIOD:
-                close_reason = self.maybe_close(order_type, ticker, open_date, last_date, cursor)
+                close_reason = self.maybe_close(order_type, ticker, open_date, open_price, last_date, last_close_price, cursor)
 
             if close_reason:
                 closed_positions.append(
@@ -273,7 +272,8 @@ class TradeSuggestions(TypeCheckBase):
 
     @abstractmethod
     def maybe_close(
-        self, order_type: OrderType, ticker: str, open_date: int, last_date: int, cursor
+        self, order_type: OrderType, ticker: str, open_date: str, open_price: float, last_date: str,
+        last_price: float, cursor
     ) -> CloseReason | None:
         pass
 

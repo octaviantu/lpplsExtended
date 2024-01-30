@@ -7,7 +7,7 @@ from prices_db_management.db_defaults import (
 from prices_db_management.trade_suggestions import TradeSuggestions
 from prices_db_management.db_dataclasses import StrategyType
 from common.date_utils import DateUtils as du
-
+from prices_db_management.prices_utils import compute_profit
 
 STRATEGY_TYPE = StrategyType.SORNETTE
 
@@ -75,7 +75,8 @@ class LpplsSuggestions(TradeSuggestions):
             )
 
     def maybe_close(
-        self, order_type: OrderType, ticker: str, open_date: str, last_date: str, cursor
+        self, order_type: OrderType, ticker: str, _open_date: str, open_price: float, last_date: str,
+        last_price: float, cursor
     ) -> CloseReason | None:
         cursor.execute(
             """
@@ -87,30 +88,7 @@ class LpplsSuggestions(TradeSuggestions):
         )
         latest_pop_date = str(cursor.fetchone()[0])
 
-        cursor.execute(
-            """
-            SELECT date, ticker, close_price, high_price, low_price FROM pricing_history
-            WHERE ticker = %s
-            AND date >= %s AND date < %s
-            ORDER BY date ASC;
-        """,
-            (ticker, open_date, last_date),
-        )
-        rows = cursor.fetchall()
-
-        closing_prices = [row["close_price"] for row in rows]
-
-        last_price = closing_prices[-1]
-
-        if order_type == OrderType.BUY:
-            min_price = min(closing_prices)
-            profit = (last_price - min_price) / min_price
-        elif order_type == OrderType.SELL:
-            max_price = max(closing_prices)
-            profit = -1 * (last_price - max_price) / max_price
-        else:
-            raise Exception("Invalid order type")
-
+        profit = compute_profit(order_type, open_price, last_price)
         if profit >= CLOSE_THRESHOLD_LPPLS:
             return CloseReason.VALUE_INCREASE
         if du.date_to_ordinal(
